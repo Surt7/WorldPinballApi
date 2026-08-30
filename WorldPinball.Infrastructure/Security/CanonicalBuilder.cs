@@ -1,0 +1,34 @@
+﻿using System.Security.Cryptography;
+using System.Text;
+
+namespace WorldPinball.Infrastructure.Security;
+
+public interface ICanonicalBuilder
+{
+    /// <summary>
+    /// Build the canonical string bytes that will be signed/verified.
+    /// Format: {ts}.{nonce}.{METHOD}.{path}.{bodySha256HexLower}
+    /// </summary>
+    byte[] Build(long ts, string nonce, string method, string path, string rawBody);
+}
+
+public sealed class CanonicalBuilder : ICanonicalBuilder
+{
+    public byte[] Build(long ts, string nonce, string method, string path, string rawBody)
+    {
+        if (ts <= 0) throw new ArgumentOutOfRangeException(nameof(ts));
+        if (string.IsNullOrWhiteSpace(nonce)) throw new ArgumentException("nonce manquant", nameof(nonce));
+        if (string.IsNullOrWhiteSpace(method)) throw new ArgumentException("method manquant", nameof(method));
+
+        // Important: must match the client exactly
+        var normalizedMethod = method.ToUpperInvariant();
+        var normalizedPath = path ?? string.Empty;
+
+        // Body hash (hex lower)
+        var bodyBytes = Encoding.UTF8.GetBytes(rawBody ?? string.Empty);
+        var bodyHashHexLower = Convert.ToHexString(SHA256.HashData(bodyBytes)).ToLowerInvariant();
+
+        var canonical = $"{ts}.{nonce}.{normalizedMethod}.{normalizedPath}.{bodyHashHexLower}";
+        return Encoding.UTF8.GetBytes(canonical);
+    }
+}

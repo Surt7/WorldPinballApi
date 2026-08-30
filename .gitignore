@@ -1,0 +1,44 @@
+# Build results
+bin/
+obj/
+
+# Rider / VS / IDE
+.vs/
+.idea/
+*.user
+*.suo
+*.cache
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# App settings secrets
+appsettings.Development.json
+appsettings.Production.json
+
+
+# Docker
+**/docker-data/
+**/pgdata/
+
+# Publish output
+publish/
+
+# Certificates
+*.pfx
+
+# ASP.NET Core Data Protection keys
+**/dpkeys/
+
+# Node (si plus tard RN web build)
+node_modules/
+
+# Swagger temp
+swagger.json

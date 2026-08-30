@@ -1,0 +1,348 @@
+Project WorldPinball {
+  database_type: 'PostgreSQL'
+  Note: 'Schema generated from the current EF Core AppDbContext model.'
+}
+
+Table public.ca_certificates {
+  ca_id uuid [pk]
+  ca_type integer [not null]
+  subject_dn text [not null]
+  issuer_dn text [not null]
+  serial_number text [not null]
+  thumbprint_sha256 text [not null]
+  cert_pem text [not null]
+  private_key_ref text
+  not_before_utc timestamptz [not null]
+  not_after_utc timestamptz [not null]
+  is_trusted boolean [not null]
+  is_active boolean [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz
+
+  indexes {
+    (ca_type, is_active) [name: 'ix_ca_certificates_ca_type_is_active']
+    not_after_utc [name: 'ix_ca_certificates_not_after_utc']
+    thumbprint_sha256 [unique, name: 'ix_ca_certificates_thumbprint_sha256']
+  }
+}
+
+Table public.devices {
+  device_id uuid [pk]
+  serial_physical text [not null]
+  status varchar(20) [not null]
+  public_key text
+  public_key_fingerprint text
+  key_type text
+  key_algorithm text
+  last_counter bigint [not null]
+  created_at_utc timestamptz [not null]
+  provisioned_at_utc timestamptz
+  activated_at_utc timestamptz
+  revoked_at_utc timestamptz
+  last_seen_at_utc timestamptz
+  client_version text
+  notes text
+  updated_at_utc timestamptz
+
+  indexes {
+    last_seen_at_utc [name: 'ix_devices_last_seen_at_utc']
+    public_key_fingerprint [name: 'ix_devices_public_key_fingerprint']
+    serial_physical [unique, name: 'ix_devices_serial_physical']
+    status [name: 'ix_devices_status']
+  }
+}
+
+Table public.game_modes {
+  mode_id uuid [pk]
+  code text [not null]
+  name text [not null]
+  description text
+  is_active boolean [not null]
+  created_at_utc timestamptz [not null]
+  updated_at_utc timestamptz
+
+  indexes {
+    code [unique, name: 'ix_game_modes_code']
+    is_active [name: 'ix_game_modes_is_active']
+  }
+}
+
+Table public.publishers {
+  publisher_id uuid [pk]
+  name text [not null]
+  slug text [not null]
+  created_at_utc timestamptz [not null]
+  updated_at_utc timestamptz
+
+  indexes {
+    name [unique, name: 'ix_publishers_name']
+    slug [unique, name: 'ix_publishers_slug']
+  }
+}
+
+Table public.regions {
+  region_id uuid [pk]
+  code text [not null]
+  name text [not null]
+  created_at_utc timestamptz [not null]
+  updated_at_utc timestamptz
+
+  indexes {
+    code [unique, name: 'ix_regions_code']
+  }
+}
+
+Table public.device_certificates {
+  device_cert_id uuid [pk]
+  device_id uuid [not null]
+  ca_id uuid [not null]
+  cert_serial_number text [not null]
+  cert_thumbprint_sha256 text [not null]
+  subject_dn text [not null]
+  issuer_dn text [not null]
+  cert_pem text [not null]
+  not_before_utc timestamptz [not null]
+  not_after_utc timestamptz [not null]
+  status integer [not null]
+  issued_at_utc timestamptz [not null]
+  revoked_at_utc timestamptz
+  revoke_reason text
+  superseded_by_device_cert_id uuid
+
+  indexes {
+    ca_id [name: 'ix_device_certificates_ca_id']
+    cert_thumbprint_sha256 [unique, name: 'ix_device_certificates_cert_thumbprint_sha256']
+    (device_id, not_after_utc) [name: 'ix_device_certificates_device_id_not_after_utc']
+    (device_id, status) [name: 'ix_device_certificates_device_id_status']
+    superseded_by_device_cert_id [name: 'ix_device_certificates_superseded_by_device_cert_id']
+  }
+}
+
+Table public.ip_licenses {
+  ip_id uuid [pk]
+  name text [not null]
+  slug text [not null]
+  publisher_id uuid
+  ip_owner text
+  release_year integer
+  is_active boolean [not null]
+  notes text
+  created_at_utc timestamptz [not null]
+  updated_at_utc timestamptz
+
+  indexes {
+    is_active [name: 'ix_ip_licenses_is_active']
+    name [unique, name: 'ix_ip_licenses_name']
+    publisher_id [name: 'ix_ip_licenses_publisher_id']
+    slug [unique, name: 'ix_ip_licenses_slug']
+  }
+}
+
+Table public.certificate_revocations {
+  revocation_id uuid [pk]
+  device_cert_id uuid [not null]
+  revoked_at_utc timestamptz [not null]
+  reason integer [not null]
+  revoked_by_user_id text [not null, note: 'External Keycloak subject (sub); no local user foreign key.']
+  notes text
+
+  indexes {
+    device_cert_id [unique, name: 'ix_certificate_revocations_device_cert_id']
+    revoked_at_utc [name: 'ix_certificate_revocations_revoked_at_utc']
+    revoked_by_user_id [name: 'ix_certificate_revocations_revoked_by_user_id']
+  }
+}
+
+Table public.ip_license_regions {
+  ip_id uuid [not null]
+  region_id uuid [not null]
+
+  indexes {
+    (ip_id, region_id) [pk, name: 'pk_ip_license_regions']
+    region_id [name: 'ix_ip_license_regions_region_id']
+  }
+}
+
+Table public.machines {
+  machine_id uuid [pk]
+  ip_id uuid [not null]
+  world_pinball_serial_number varchar(32) [not null]
+  manufacturer varchar(100)
+  manufacturer_model_code varchar(50)
+  manufacturer_model_name varchar(150)
+  manufacturer_model_year varchar(20)
+  manufacturer_serial_number varchar(100)
+  manufacturer_notes varchar(1000)
+  machine_notes varchar(1000)
+  location varchar(200)
+  voltage integer
+  frequency_hz integer
+  amperage numeric(6,2)
+  manufactured_date date
+  name varchar(150)
+  status varchar(20) [not null]
+  registered_at_utc timestamptz [not null]
+  updated_at_utc timestamptz
+
+  indexes {
+    ip_id [name: 'ix_machines_ip_id']
+    manufacturer_serial_number [name: 'ix_machines_manufacturer_serial_number']
+    status [name: 'ix_machines_status']
+    world_pinball_serial_number [unique, name: 'ix_machines_world_pinball_serial_number']
+  }
+}
+
+Table public.missions {
+  mission_id uuid [pk]
+  ip_id uuid
+  mode_id uuid
+  code text [not null]
+  title text [not null]
+  description text
+  mission_type varchar(30) [not null]
+  is_active boolean [not null]
+  created_at_utc timestamptz [not null]
+  updated_at_utc timestamptz
+
+  indexes {
+    code [unique, name: 'ix_missions_code']
+    ip_id [name: 'ix_missions_ip_id']
+    is_active [name: 'ix_missions_is_active']
+    mode_id [name: 'ix_missions_mode_id']
+  }
+}
+
+Table public.enrollment_tokens {
+  token_id uuid [pk]
+  token_hash text [not null]
+  token_type integer [not null]
+  machine_id uuid
+  device_id uuid
+  issued_by_user_id text [not null, note: 'External Keycloak subject (sub); no local user foreign key.']
+  issued_at timestamptz [not null]
+  expires_at timestamptz [not null]
+  consumed_at_utc timestamptz
+  consumed_by_device_id uuid
+  revoked_at timestamptz
+  max_uses integer [not null]
+  uses_count integer [not null]
+  notes text
+
+  indexes {
+    consumed_by_device_id [name: 'ix_enrollment_tokens_consumed_by_device_id']
+    device_id [name: 'ix_enrollment_tokens_device_id']
+    issued_by_user_id [name: 'ix_enrollment_tokens_issued_by_user_id']
+    machine_id [name: 'ix_enrollment_tokens_machine_id']
+    token_hash [unique, name: 'ix_enrollment_tokens_token_hash']
+    (token_type, expires_at) [name: 'ix_enrollment_tokens_token_type_expires_at']
+  }
+}
+
+Table public.game_sessions {
+  session_id uuid [pk]
+  machine_id uuid [not null]
+  device_id uuid [not null]
+  user_id text [note: 'External Keycloak subject (sub); nullable for anonymous sessions.']
+  mode_id uuid [not null]
+  started_at_utc timestamptz [not null]
+  ended_at_utc timestamptz
+  state varchar(20) [not null]
+  nonce text [not null]
+  client_version text
+
+  indexes {
+    (device_id, started_at_utc) [name: 'ix_game_sessions_device_id_started_at_utc']
+    (machine_id, started_at_utc) [name: 'ix_game_sessions_machine_id_started_at_utc']
+    (mode_id, started_at_utc) [name: 'ix_game_sessions_mode_id_started_at_utc']
+    nonce [unique, name: 'ix_game_sessions_nonce']
+    (user_id, started_at_utc) [name: 'ix_game_sessions_user_id_started_at_utc']
+  }
+}
+
+Table public.machine_devices {
+  machine_id uuid [not null]
+  device_id uuid [not null]
+  attached_at_utc timestamptz [not null]
+  detached_at_utc timestamptz
+  is_active boolean [not null]
+
+  indexes {
+    (machine_id, device_id) [pk, name: 'pk_machine_devices']
+    device_id [name: 'ix_machine_devices_device_id']
+    (machine_id, is_active) [name: 'ix_machine_devices_machine_id_is_active']
+  }
+}
+
+Table public.mission_progress {
+  mission_progress_id uuid [pk]
+  mission_id uuid [not null]
+  user_id text [not null, note: 'External Keycloak subject (sub); no local user foreign key.']
+  current_value integer [not null]
+  completed_at_utc timestamptz
+  updated_at_utc timestamptz [not null]
+  status varchar(20) [not null]
+
+  indexes {
+    mission_id [name: 'ix_mission_progress_mission_id']
+    status [name: 'ix_mission_progress_status']
+    (user_id, mission_id) [unique, name: 'ix_mission_progress_user_id_mission_id']
+    (user_id, updated_at_utc) [name: 'ix_mission_progress_user_id_updated_at_utc']
+  }
+}
+
+Table public.score_entries {
+  score_entry_id uuid [pk]
+  session_id uuid [not null]
+  user_id text [note: 'External Keycloak subject (sub); nullable for anonymous scores.']
+  device_id uuid [not null]
+  machine_id uuid [not null]
+  ip_id uuid [not null]
+  mode_id uuid [not null]
+  score integer [not null]
+  achieved_at_utc timestamptz [not null]
+  is_validated boolean [not null]
+  validation_reason text
+
+  indexes {
+    (device_id, achieved_at_utc) [name: 'ix_score_entries_device_id_achieved_at_utc']
+    (ip_id, mode_id, score, achieved_at_utc) [name: 'ix_score_entries_ip_id_mode_id_score_achieved_at_utc']
+    (machine_id, achieved_at_utc) [name: 'ix_score_entries_machine_id_achieved_at_utc']
+    mode_id [name: 'ix_score_entries_mode_id']
+    session_id [unique, name: 'ix_score_entries_session_id']
+    (user_id, achieved_at_utc) [name: 'ix_score_entries_user_id_achieved_at_utc']
+  }
+}
+
+Ref: public.device_certificates.ca_id > public.ca_certificates.ca_id [delete: cascade]
+Ref: public.device_certificates.device_id > public.devices.device_id [delete: cascade]
+Ref: public.device_certificates.superseded_by_device_cert_id > public.device_certificates.device_cert_id [delete: restrict]
+
+Ref: public.certificate_revocations.device_cert_id - public.device_certificates.device_cert_id [delete: cascade]
+
+Ref: public.ip_licenses.publisher_id > public.publishers.publisher_id [delete: restrict]
+Ref: public.ip_license_regions.ip_id > public.ip_licenses.ip_id [delete: cascade]
+Ref: public.ip_license_regions.region_id > public.regions.region_id [delete: cascade]
+
+Ref: public.machines.ip_id > public.ip_licenses.ip_id [delete: restrict]
+
+Ref: public.missions.ip_id > public.ip_licenses.ip_id [delete: restrict]
+Ref: public.missions.mode_id > public.game_modes.mode_id [delete: restrict]
+
+Ref: public.enrollment_tokens.machine_id > public.machines.machine_id [delete: restrict]
+Ref: public.enrollment_tokens.device_id > public.devices.device_id [delete: restrict]
+Ref: public.enrollment_tokens.consumed_by_device_id > public.devices.device_id [delete: restrict]
+
+Ref: public.game_sessions.machine_id > public.machines.machine_id [delete: restrict]
+Ref: public.game_sessions.device_id > public.devices.device_id [delete: restrict]
+Ref: public.game_sessions.mode_id > public.game_modes.mode_id [delete: restrict]
+
+Ref: public.machine_devices.machine_id > public.machines.machine_id [delete: cascade]
+Ref: public.machine_devices.device_id > public.devices.device_id [delete: cascade]
+
+Ref: public.mission_progress.mission_id > public.missions.mission_id [delete: cascade]
+
+Ref: public.score_entries.session_id - public.game_sessions.session_id [delete: cascade]
+Ref: public.score_entries.device_id > public.devices.device_id [delete: restrict]
+Ref: public.score_entries.machine_id > public.machines.machine_id [delete: restrict]
+Ref: public.score_entries.ip_id > public.ip_licenses.ip_id [delete: restrict]
+Ref: public.score_entries.mode_id > public.game_modes.mode_id [delete: restrict]

@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16
+    container_name: worldpinball-db
+    environment:
+      POSTGRES_DB: worldpinball
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    ports:
+      - "5432:5432"
+    volumes:
+      - worldpinball_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    container_name: worldpinball-adminer
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      - db
+
+volumes:
+  worldpinball_pgdata:

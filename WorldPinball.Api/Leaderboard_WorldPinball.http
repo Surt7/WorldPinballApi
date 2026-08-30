@@ -1,0 +1,5 @@
+@WorldPinball_HostAddress = http://localhost:5085
+
+GET {{WorldPinball_HostAddress}}/api/health
+Accept: application/json
+###
