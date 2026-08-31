@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.Tokens;
-using WorldPinball.Api.Errors;
 using WorldPinball.Api.Health;
 using WorldPinball.Api.OpenApi;
 using WorldPinball.Infrastructure.Security;
@@ -34,9 +33,6 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
         .AddSupportedCultures(supportedCultures)
         .AddSupportedUICultures(supportedCultures);
 });
-builder.Services.AddProblemDetails();
-builder.Services.AddExceptionHandler<DomainExceptionHandler>();
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -112,7 +108,6 @@ app.UseSwaggerUI(options =>
 app.MapApiHealthChecks();
 
 app.UseRequestLocalization();
-app.UseExceptionHandler();
 app.UseRouting();
 
 app.UseAuthentication();

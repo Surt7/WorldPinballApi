@@ -1,7 +1,5 @@
 ﻿using WorldPinball.Domain.Enums;
 
-using WorldPinball.Domain.Errors;
-
 namespace WorldPinball.Domain.Entities;
 
 public class Machine
@@ -26,16 +24,10 @@ public class Machine
     {
 
         if (ipId == Guid.Empty)
-            throw new DomainValidationException(
-                MachineErrorCodes.EmptyIpId,
-                ErrorMessages.EmptyIpId,
-                nameof(ipId));
+            throw new ArgumentException(ErrorMessages.EmptyIpId, nameof(ipId));
 
         if (string.IsNullOrEmpty(serialNumber))
-            throw new DomainValidationException(
-                MachineErrorCodes.EmptySerialNumber,
-                ErrorMessages.EmptySerialNumber,
-                nameof(serialNumber));
+            throw new ArgumentException(ErrorMessages.EmptySerialNumber, nameof(serialNumber));
 
         WorldPinballSerialNumber = serialNumber;
         MachineId = Guid.NewGuid();
@@ -90,9 +82,7 @@ public class Machine
 
         if (status == MachineStatus.PendingEnrollment && Status != MachineStatus.PendingEnrollment)
         {
-            throw new DomainRuleException(
-                MachineErrorCodes.CannotReturnToPendingEnrollment,
-                ErrorMessages.CannotReturnToPendingEnrollment);
+            throw new InvalidOperationException(ErrorMessages.CannotReturnToPendingEnrollment);
         }
 
         Status = status;
@@ -103,9 +93,7 @@ public class Machine
     {
         if (Status != MachineStatus.PendingEnrollment)
         {
-            throw new DomainRuleException(
-                MachineErrorCodes.CannotCompleteEnrollment,
-                ErrorMessages.CannotCompleteEnrollment);
+            throw new InvalidOperationException(ErrorMessages.CannotCompleteEnrollment);
         }
 
         Status = MachineStatus.Active;
@@ -116,16 +104,12 @@ public class Machine
     {
         if (Status == MachineStatus.Revoked)
         {
-            throw new DomainRuleException(
-                MachineErrorCodes.RevokedMachineCannotBeReactivated,
-                ErrorMessages.RevokedMachineCannotBeReactivated);
+            throw new InvalidOperationException(ErrorMessages.RevokedMachineCannotBeReactivated);
         }
 
         if (Status == MachineStatus.PendingEnrollment)
         {
-            throw new DomainRuleException(
-                MachineErrorCodes.PendingEnrollmentRequiresCompletion,
-                ErrorMessages.PendingEnrollmentRequiresCompletion);
+            throw new InvalidOperationException(ErrorMessages.PendingEnrollmentRequiresCompletion);
         }
 
         Status = MachineStatus.Active;
