@@ -1,18 +1,56 @@
 ﻿using WorldPinball.Domain.Enums;
 
+using WorldPinball.Domain.Errors;
+
 namespace WorldPinball.Domain.Entities;
 
 public class Machine
 {
-    public Guid MachineId { get; set; }
+    private static class ErrorMessages
+    {
+        public const string EmptyIpId = "The IP license identifier cannot be empty.";
+        public const string EmptySerialNumber = "The WorldPinball serial number cannot be empty.";
+        public const string CannotReturnToPendingEnrollment =
+            "A machine cannot return to pending enrollment.";
+        public const string CannotCompleteEnrollment =
+            "Only a machine pending enrollment can complete enrollment.";
+        public const string RevokedMachineCannotBeReactivated =
+            "A revoked machine cannot be reactivated.";
+        public const string PendingEnrollmentRequiresCompletion =
+            "A machine pending enrollment must complete enrollment before activation.";
+    }
 
+    private Machine() { } // Utilisé par EF Core
 
-    public Guid IpId { get; set; }
+    public Machine(Guid ipId, string serialNumber)
+    {
+
+        if (ipId == Guid.Empty)
+            throw new DomainValidationException(
+                MachineErrorCodes.EmptyIpId,
+                ErrorMessages.EmptyIpId,
+                nameof(ipId));
+
+        if (string.IsNullOrEmpty(serialNumber))
+            throw new DomainValidationException(
+                MachineErrorCodes.EmptySerialNumber,
+                ErrorMessages.EmptySerialNumber,
+                nameof(serialNumber));
+
+        WorldPinballSerialNumber = serialNumber;
+        MachineId = Guid.NewGuid();
+        IpId = ipId;
+        Status = MachineStatus.PendingEnrollment;
+    }
+
+    public Guid MachineId { get; private set; }
+
+    public Guid IpId { get; private set; }
     public IpLicense IpLicense { get; set; } = null!;
 
 
     //Identifiant interne WorldPinball
-    public string WorldPinballSerialNumber { get; set; } = null!;
+    public string WorldPinballSerialNumber { get; private set; } = null!;
 
     public string? Manufacturer { get; set; }
     public string? ManufacturerModelCode { get; set; }
@@ -32,19 +70,45 @@ public class Machine
 
     public string? Name { get; set; }
 
-    public MachineStatus Status { get; set; } = MachineStatus.Active; //Statut possible: Active , Inactive, Maintenance, Retired
+    public MachineStatus Status { get; private set; } = MachineStatus.PendingEnrollment;
 
-    public DateTime RegisteredAtUtc { get; set; } = DateTime.UtcNow;
-    public DateTime? UpdatedAtUtc { get; set; }
+    public DateTime RegisteredAtUtc { get; private set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAtUtc { get; private set; }
 
-    public ICollection<MachineDevice> MachineDevices { get; set; } = [];
+    public ICollection<MachineDevice> MachineDevices { get; private set; } = [];
     public ICollection<EnrollmentToken> EnrollmentTokens { get; private set; } = [];
 
 
 
     public void SetStatus(MachineStatus status)
     {
+        if (status == MachineStatus.Active)
+        {
+            Activate();
+            return;
+        }
+
+        if (status == MachineStatus.PendingEnrollment && Status != MachineStatus.PendingEnrollment)
+        {
+            throw new DomainRuleException(
+                MachineErrorCodes.CannotReturnToPendingEnrollment,
+                ErrorMessages.CannotReturnToPendingEnrollment);
+        }
+
         Status = status;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void CompleteEnrollment()
+    {
+        if (Status != MachineStatus.PendingEnrollment)
+        {
+            throw new DomainRuleException(
+                MachineErrorCodes.CannotCompleteEnrollment,
+                ErrorMessages.CannotCompleteEnrollment);
+        }
+
+        Status = MachineStatus.Active;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 
@@ -52,8 +116,19 @@ public class Machine
     {
         if (Status == MachineStatus.Revoked)
         {
-            throw new InvalidOperationException("A retired machine cannot be reactivated.");
+            throw new DomainRuleException(
+                MachineErrorCodes.RevokedMachineCannotBeReactivated,
+                ErrorMessages.RevokedMachineCannotBeReactivated);
         }
 
+        if (Status == MachineStatus.PendingEnrollment)
+        {
+            throw new DomainRuleException(
+                MachineErrorCodes.PendingEnrollmentRequiresCompletion,
+                ErrorMessages.PendingEnrollmentRequiresCompletion);
+        }
+
+        Status = MachineStatus.Active;
+        UpdatedAtUtc = DateTime.UtcNow;
     }
 }

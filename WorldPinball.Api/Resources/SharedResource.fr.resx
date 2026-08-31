@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+  <data name="Errors.ValidationTitle" xml:space="preserve"><value>Erreur de validation</value></data>
+  <data name="Errors.DomainRuleTitle" xml:space="preserve"><value>Violation d’une règle métier</value></data>
+  <data name="Machine.EmptyIpId" xml:space="preserve"><value>L’identifiant de la licence IP ne peut pas être vide.</value></data>
+  <data name="Machine.EmptySerialNumber" xml:space="preserve"><value>Le numéro de série WorldPinball ne peut pas être vide.</value></data>
+  <data name="Machine.CannotReturnToPendingEnrollment" xml:space="preserve"><value>Une machine ne peut pas revenir en attente d’enrôlement.</value></data>
+  <data name="Machine.CannotCompleteEnrollment" xml:space="preserve"><value>Seule une machine en attente d’enrôlement peut terminer son enrôlement.</value></data>
+  <data name="Machine.RevokedMachineCannotBeReactivated" xml:space="preserve"><value>Une machine révoquée ne peut pas être réactivée.</value></data>
+  <data name="Machine.PendingEnrollmentRequiresCompletion" xml:space="preserve"><value>Une machine en attente d’enrôlement doit terminer son enrôlement avant d’être activée.</value></data>
+</root>

@@ -28,7 +28,6 @@ public class AdminMachinesController : ControllerBase
         ISecretService secretService)
     {
         _db = db;
-
         _ipLicenseRepository = ipLicenseRepository;
         _secretService = secretService;
     }
@@ -49,16 +48,12 @@ public class AdminMachinesController : ControllerBase
         // Important : on génère le token AVANT de créer la machine, car le token a besoin du MachineId pour être créé (lié à la machine)
 
         var now = DateTime.UtcNow;
+        string serialNumber = req.WorldPinballSerialNumber;
 
-
-        var machine = new Machine
+        var machine = new Machine(ip.IpId, serialNumber)
         {
-            MachineId = Guid.NewGuid(),
-            IpId = ip.IpId,
-            WorldPinballSerialNumber = req.WorldPinballSerialNumber,
             Name = req.Name,
-            Status = MachineStatus.Active,
-            RegisteredAtUtc = DateTime.UtcNow
+
         };
 
         var enrollmentToken = new EnrollmentToken(

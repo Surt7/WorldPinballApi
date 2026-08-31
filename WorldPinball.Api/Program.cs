@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.Tokens;
+using WorldPinball.Api.Errors;
 using WorldPinball.Api.Health;
 using WorldPinball.Api.OpenApi;
 using WorldPinball.Infrastructure.Security;
@@ -23,6 +24,18 @@ var keycloakAudience = builder.Configuration["Keycloak:Audience"]
 // -------------------- Services --------------------
 builder.Services.AddInfrastructure(builder.Configuration);
 
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    string[] supportedCultures = ["en", "fr"];
+
+    options
+        .SetDefaultCulture("en")
+        .AddSupportedCultures(supportedCultures)
+        .AddSupportedUICultures(supportedCultures);
+});
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<DomainExceptionHandler>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -98,6 +111,8 @@ app.UseSwaggerUI(options =>
 
 app.MapApiHealthChecks();
 
+app.UseRequestLocalization();
+app.UseExceptionHandler();
 app.UseRouting();
 
 app.UseAuthentication();
