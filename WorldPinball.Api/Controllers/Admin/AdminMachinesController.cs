@@ -1,12 +1,8 @@
 ﻿//using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Contracts.Admin.Machine;
-using WorldPinball.Application.Security;
-using WorldPinball.Domain.Entities;
-using WorldPinball.Domain.Enums;
-using WorldPinball.Infrastructure.Persistence;
+using WorldPinball.Application.Features.Machines.Admin;
+using WorldPinball.Application.Features.Machines.Admin.Commands;
 
 
 namespace WorldPinball.Api.Controllers.Admin;
@@ -14,63 +10,56 @@ namespace WorldPinball.Api.Controllers.Admin;
 
 [ApiController]
 [Route("api/v1/admin/machines")]
-public class AdminMachinesController : ControllerBase
+public sealed class AdminMachinesController(
+    ProvisionMachineHandler handler) : ControllerBase
 {
-    private readonly AppDbContext _db;
-
-    private readonly IIpLicenseRepository _ipLicenseRepository;
-
-    private readonly ISecretService _secretService;
-
-    public AdminMachinesController(
-        AppDbContext db,
-        IIpLicenseRepository ipLicenseRepository,
-        ISecretService secretService)
-    {
-        _db = db;
-        _ipLicenseRepository = ipLicenseRepository;
-        _secretService = secretService;
-    }
 
     [HttpPost("provision")]
-    public async Task<ActionResult<ProvisionMachineResponse>> Provision([FromBody] ProvisionMachineRequest req)
+    public async Task<ActionResult<ProvisionMachineResponse>> Provision(
+        [FromBody] ProvisionMachineRequest req,
+        CancellationToken ct)
     {
         
         
         var displayName = req.DisplayName;
+        var serialNumber = req.WorldPinballSerialNumber;
+        var ip = req.IpSlug;
+        var issuedByUser = "Administrator-PM-01";
         
-        if (string.IsNullOrWhiteSpace(displayName))
+        if (string.IsNullOrWhiteSpace(displayName)) throw new ArgumentException("The display name cannot be empty.", nameof(displayName));
+        if (string.IsNullOrWhiteSpace(serialNumber)) throw new ArgumentException("The Serial Number cannot be empty.", nameof(serialNumber));
+        if (string.IsNullOrWhiteSpace(ip)) throw new ArgumentException("The Ip name cannot be empty.", nameof(ip));
+        if (string.IsNullOrWhiteSpace(issuedByUser)) throw new ArgumentException("the issuer cannot be empty.", nameof(issuedByUser));
+        
+        var cmd = new ProvisionMachineCommand(
+            serialNumber,
+            ip,
+            displayName,
+            issuedByUser
+            );
+
+        var resultProvisioning = await handler.HandleAsync(cmd, ct);
+
+        return resultProvisioning switch
         {
-            throw new ArgumentException(
-                "The display name cannot be empty.",
-                nameof(displayName));
-        }
-            
-        // 1) check IP  (Intellectual Property / licence ex : Resident Evil)
-        var ip = await _ipLicenseRepository.GetActiveBySlugAsync(req.IpSlug, HttpContext.RequestAborted);
-        if (ip is null)
-            return NotFound(new { message = "ipSlug inconnu/inactif" });
-        
+            ProvisionMachineResult.Success success =>
+                Ok(new ProvisionMachineResponse(
+                    success.MachineId,
+                    success.EnrollmentToken)),
 
-        // 2) serial unique
-        var exists = await _db.Machines.AnyAsync(x => x.WorldPinballSerialNumber == req.WorldPinballSerialNumber);
-        if (exists)
-            return Conflict(new { message = "serial_number déjà existant" });
-       
+            ProvisionMachineResult.UnknownIp unknownIp =>
+                NotFound(new
+                {
+                    message = $"ipSlug inconnu/inactif: {unknownIp.IpSlug}"
+                }),
 
+            ProvisionMachineResult.DuplicateSerial duplicateSerial =>
+                Conflict(new
+                {
+                    message = $"serial_number déjà existant: {duplicateSerial.SerialNumber}"
+                }),
 
-   
-       
-
-        _db.Machines.Add(machine);
-        _db.EnrollmentTokens.Add(enrollmentToken);
-
-        await _db.SaveChangesAsync();
-
-   
-        return Ok(new ProvisionMachineResponse(
-            machine.MachineId,
-            enrollmentSecret.PlainBase64
-            ));
+            _ => StatusCode(StatusCodes.Status500InternalServerError)
+        };
     }
 }
