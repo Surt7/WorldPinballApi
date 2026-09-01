@@ -8,6 +8,7 @@ public class Machine
     {
         public const string EmptyIpId = "The IP license identifier cannot be empty.";
         public const string EmptySerialNumber = "The WorldPinball serial number cannot be empty.";
+        public const string EmptyDisplayName = "The display name cannot be empty.";
         public const string CannotReturnToPendingEnrollment =
             "A machine cannot return to pending enrollment.";
         public const string CannotCompleteEnrollment =
@@ -20,19 +21,24 @@ public class Machine
 
     private Machine() { } // Utilisé par EF Core
 
-    public Machine(Guid ipId, string serialNumber)
+    public Machine(Guid ipId, string serialNumber, string  displayName)
     {
 
         if (ipId == Guid.Empty)
             throw new ArgumentException(ErrorMessages.EmptyIpId, nameof(ipId));
 
-        if (string.IsNullOrEmpty(serialNumber))
+        if (string.IsNullOrWhiteSpace(serialNumber))
             throw new ArgumentException(ErrorMessages.EmptySerialNumber, nameof(serialNumber));
 
-        WorldPinballSerialNumber = serialNumber;
+        if (string.IsNullOrWhiteSpace(displayName))
+            throw new ArgumentException(ErrorMessages.EmptyDisplayName, nameof(displayName));
+        
+        DisplayName = displayName.Trim();
+        WorldPinballSerialNumber = serialNumber.Trim();
         MachineId = Guid.NewGuid();
         IpId = ipId;
         Status = MachineStatus.PendingEnrollment;
+        RegisteredAtUtc = DateTime.UtcNow;
     }
 
     public Guid MachineId { get; private set; }
@@ -60,11 +66,11 @@ public class Machine
     public DateOnly? ManufacturedDate { get; set; }
 
 
-    public string? Name { get; set; }
+    public string DisplayName { get; private set; }
 
     public MachineStatus Status { get; private set; } = MachineStatus.PendingEnrollment;
 
-    public DateTime RegisteredAtUtc { get; private set; } = DateTime.UtcNow;
+    public DateTime RegisteredAtUtc { get; private set;}
     public DateTime? UpdatedAtUtc { get; private set; }
 
     public ICollection<MachineDevice> MachineDevices { get; private set; } = [];

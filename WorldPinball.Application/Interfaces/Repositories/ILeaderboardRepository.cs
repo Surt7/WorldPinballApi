@@ -1,6 +1,7 @@
-﻿using WorldPinball.Application.Features.Leaderboard.Public.Dtos;
+using WorldPinball.Application.Features.Leaderboard.Public.Dtos;
 
-namespace WorldPinball.Application.Abstractions.Repositories
+
+namespace WorldPinball.Application.Interfaces.Repositories
 {
     public interface ILeaderboardRepository
     {

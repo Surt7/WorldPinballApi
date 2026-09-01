@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WorldPinball.Application.Abstractions.Repositories;
+using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Features.IpLicenses.Public.Dtos;
 using WorldPinball.Domain.Entities;
 

@@ -1,4 +1,4 @@
-﻿namespace WorldPinball.Application.Features.Leaderboard.Public.Dtos;
+namespace WorldPinball.Application.Features.Leaderboard.Public.Dtos;
 
 public sealed record LeaderboardRowDto(
     Guid ScoreEntryId,

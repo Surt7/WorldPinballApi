@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WorldPinball.Application.Abstractions.Repositories;
+using WorldPinball.Application.Interfaces.Repositories;
 
 
 namespace WorldPinball.Api.Controllers.Public

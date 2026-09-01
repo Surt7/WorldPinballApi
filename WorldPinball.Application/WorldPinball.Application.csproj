@@ -17,6 +17,7 @@
   <ItemGroup>
     <Folder Include="Features\Leaderboard\Admin\" />
     <Folder Include="Features\IpLicenses\Admin\" />
+    <Folder Include="Features\Machines\Public\" />
   </ItemGroup>
 
 </Project>

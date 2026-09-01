@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WorldPinball.Application.Features.GameModes.Public.Dtos;
-using WorldPinball.Application.Abstractions.Repositories;
+using WorldPinball.Application.Interfaces.Repositories;
 
 namespace WorldPinball.Infrastructure.Persistence.Repositories
 {

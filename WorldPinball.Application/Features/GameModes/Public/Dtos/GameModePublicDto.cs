@@ -1,4 +1,4 @@
-﻿namespace WorldPinball.Application.Features.GameModes.Public.Dtos;
+namespace WorldPinball.Application.Features.GameModes.Public.Dtos;
 
 public sealed record GameModePublicDto(
     Guid ModeId,

@@ -56,7 +56,7 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
 
             e.Property(x => x.ManufacturedDate);
 
-            e.Property(x => x.Name)
+            e.Property(x => x.DisplayName)
                 .HasMaxLength(150);
 
             e.Property(x => x.Status)

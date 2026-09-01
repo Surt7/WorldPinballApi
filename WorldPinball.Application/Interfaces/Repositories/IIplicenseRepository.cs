@@ -1,7 +1,7 @@
 ﻿using WorldPinball.Domain.Entities;
 using WorldPinball.Application.Features.IpLicenses.Public.Dtos;
 
-namespace WorldPinball.Application.Abstractions.Repositories;
+namespace WorldPinball.Application.Interfaces.Repositories;
 
 
 public interface IIpLicenseRepository

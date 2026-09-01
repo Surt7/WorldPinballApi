@@ -656,10 +656,10 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("manufacturer_serial_number");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("DisplayName")
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)")
-                        .HasColumnName("name");
+                        .HasColumnName("display_name");
 
                     b.Property<DateTime>("RegisteredAtUtc")
                         .HasColumnType("timestamp with time zone")

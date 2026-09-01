@@ -4,7 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using WorldPinball.Api.Health;
 using WorldPinball.Api.OpenApi;
 using WorldPinball.Infrastructure.Security;
-using WorldPinball.Application.Abstractions.Repositories;
+using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Infrastructure;
 using WorldPinball.Infrastructure.Persistence.Repositories;
 

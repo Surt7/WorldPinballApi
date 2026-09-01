@@ -1,0 +1,15 @@
+using WorldPinball.Domain.Entities;
+
+namespace WorldPinball.Application.Interfaces.Repositories;
+
+public interface IMachineWriteRepository
+{
+    Task<bool> SerialExistsAsync(
+        string serialNumber,
+        CancellationToken ct = default);
+    
+Task AddProvisioningAsync(
+        Machine machine,
+        EnrollmentToken enrollmentToken,
+        CancellationToken ct = default);
+}

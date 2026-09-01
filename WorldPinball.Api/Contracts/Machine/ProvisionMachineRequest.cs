@@ -3,6 +3,6 @@
 public sealed record ProvisionMachineRequest(
     string WorldPinballSerialNumber,
     string IpSlug,
-    string? Name,
+    string DisplayName,
        string? PublicKey
 );

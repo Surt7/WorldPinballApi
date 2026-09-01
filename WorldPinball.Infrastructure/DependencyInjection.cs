@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using WorldPinball.Application.Abstractions.Repositories;
+using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
+using WorldPinball.Application.Features.Machines.Admin;
 using WorldPinball.Application.Security;
 using WorldPinball.Infrastructure.Persistence;
 using WorldPinball.Infrastructure.Persistence.Repositories;
@@ -36,8 +37,11 @@ public static class DependencyInjection
         services.AddScoped<ISecretService, SecretService>();
         services.AddScoped<IIpLicenseRepository, IpLicenseRepository>();
         services.AddScoped<ILeaderboardRepository, LeaderboardRepository>();
+        services.AddScoped<IMachineReadRepository, MachineReadRepository>();
+        services.AddScoped<IMachineWriteRepository, MachineWriteRepository>();
 
         services.AddScoped<GetLeaderboardHandler>();
+        services.AddScoped<ProvisionMachineHandler>();
 
         return services;
     }

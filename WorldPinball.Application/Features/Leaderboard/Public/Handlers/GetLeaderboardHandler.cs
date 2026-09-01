@@ -1,4 +1,4 @@
-﻿using WorldPinball.Application.Abstractions.Repositories;
+﻿using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Features.Leaderboard.Public.Dtos;
 using WorldPinball.Application.Features.Leaderboard.Public.Queries.GetLeaderboard;
 
