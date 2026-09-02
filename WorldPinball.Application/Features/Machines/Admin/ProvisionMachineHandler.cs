@@ -9,7 +9,9 @@ namespace WorldPinball.Application.Features.Machines.Admin;
 public sealed class ProvisionMachineHandler(
     IIpLicenseRepository ipLicenseRepository,
     IMachineWriteRepository machineWriteRepository,
-    ISecretService secretService)
+    ISecretService secretService,
+    TimeProvider timeProvider
+    ):IProvisionMachineHandler
 {
     
     public async Task<ProvisionMachineResult> HandleAsync(
@@ -33,18 +35,21 @@ public sealed class ProvisionMachineHandler(
             return new ProvisionMachineResult.DuplicateSerial(cmd.WorldPinballSerialNumber);
         
         var enrollmentSecret = secretService.Generate();
-
+        var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
+        
         var machine = new Machine(
             ipLicense.IpId,
             cmd.WorldPinballSerialNumber,
-            cmd.DisplayName);
+            cmd.DisplayName,
+            nowUtc
+            );
 
         var enrollmentToken = new EnrollmentToken(
             tokenHash: enrollmentSecret.HashHex,
             tokenType: EnrollmentTokenType.DeviceEnroll,
             issuedByUserId: cmd.IssuedByUserId,
-            issuedAt: machine.RegisteredAtUtc,
-            expiresAt: machine.RegisteredAtUtc.AddHours(24),
+            issuedAt: nowUtc,
+            expiresAt: nowUtc.AddHours(24),
             machineId: machine.MachineId,
             deviceId: null,
             maxUses: 1);

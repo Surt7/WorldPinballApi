@@ -2,23 +2,27 @@
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 using FluentAssertions;
-using NSubstitute.Core;
 
 namespace WorldPinball.Tests.Domain.Entities;
 
-
-
-
 public class MachineTests
 {
+    private static readonly DateTime RegisteredAtUtc = new(
+        2026, 9, 2, 12, 0, 0,
+        DateTimeKind.Utc);
+
     [Fact]
     public void Constructor_WhenIpIdIsEmpty_ShouldThrowArgumentException()
     {
-
         var ipId = Guid.Empty;
         var serialNumber = "WP-K7M4-9X2P-R8HD";
-var displayName = "Godzilla — Salle principale";
-        Action act = () => new Machine(ipId, serialNumber,displayName);
+        var displayName = "Godzilla — Salle principale";
+
+        Action act = () => new Machine(
+            ipId,
+            serialNumber,
+            displayName,
+            RegisteredAtUtc);
 
         act.Should()
             .Throw<ArgumentException>()
@@ -33,8 +37,13 @@ var displayName = "Godzilla — Salle principale";
         var ipId = Guid.NewGuid();
         var serialNumber = "WP-K7M4-9X2P-R8HD";
         var displayName = "Godzilla — Salle principale";
+
         // Act
-        var machinePinball = new Machine(ipId, serialNumber,displayName);
+        var machinePinball = new Machine(
+            ipId,
+            serialNumber,
+            displayName,
+            RegisteredAtUtc);
 
         // Assert
         machinePinball.IpId.Should()
@@ -48,11 +57,33 @@ var displayName = "Godzilla — Salle principale";
         var ipId = Guid.NewGuid();
         var serialNumber = "WP-K7M4-9X2P-R8HD";
         var displayName = "Godzilla — Salle principale";
+
         // Act
-        var machinePinball = new Machine(ipId, serialNumber,displayName);
+        var machinePinball = new Machine(
+            ipId,
+            serialNumber,
+            displayName,
+            RegisteredAtUtc);
 
         // Assert
         machinePinball.MachineId.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public void Constructor_ShouldAssignRegisteredAtUtc()
+    {
+        // Arrange
+        var ipId = Guid.NewGuid();
+
+        // Act
+        var machine = new Machine(
+            ipId,
+            "WP-K7M4-9X2P-R8HD",
+            "Godzilla — Salle principale",
+            RegisteredAtUtc);
+
+        // Assert
+        machine.RegisteredAtUtc.Should().Be(RegisteredAtUtc);
     }
 
     [Fact]
@@ -61,8 +92,12 @@ var displayName = "Godzilla — Salle principale";
         var ipId = Guid.NewGuid();
         var serialNumber = string.Empty;
         var displayName = "Godzilla — Salle principale";
-        
-        Action act = () => new Machine(ipId, serialNumber,displayName);
+
+        Action act = () => new Machine(
+            ipId,
+            serialNumber,
+            displayName,
+            RegisteredAtUtc);
 
         act.Should().Throw<ArgumentException>()
             .WithParameterName("serialNumber");
@@ -77,7 +112,11 @@ var displayName = "Godzilla — Salle principale";
         var serialNumber = "WP-K7M4-9X2P-R8HD";
         var displayName = "Godzilla — Salle principale";
         
-        var machinePinball = new Machine(ipId, serialNumber,displayName);
+        var machinePinball = new Machine(
+            ipId,
+            serialNumber,
+            displayName,
+            RegisteredAtUtc);
         machinePinball.SetStatus(MachineStatus.Revoked);
 
         // Act
@@ -92,15 +131,16 @@ var displayName = "Godzilla — Salle principale";
     [Fact]
     public void Constructor_ShouldInitializeStatusToPendingEnrollment()
     {
-         
         var ipId = Guid.NewGuid();
         var serialNumber = "WP-K7M4-9X2P-R8HD";
         var displayName = "Godzilla — Salle principale";
-        
-        
-        var machine = new Machine(ipId, serialNumber,displayName);
-            
-        
+
+        var machine = new Machine(
+            ipId,
+            serialNumber,
+            displayName,
+            RegisteredAtUtc);
+
         machine.Status.Should().Be(MachineStatus.PendingEnrollment);
     }
     
@@ -108,13 +148,15 @@ var displayName = "Godzilla — Salle principale";
     [Fact]
     public void Constructor_WhenDisplayNameIsEmpty_ShouldThrowArgumentException()
     {
-   
         var ipId = Guid.NewGuid();
         var serialNumber = "WP-K7M4-9X2P-R8HD";
         var displayName = string.Empty;
-        
-       Action act = () => new Machine(ipId, serialNumber,displayName);
-       
+
+        Action act = () => new Machine(
+            ipId,
+            serialNumber,
+            displayName,
+            RegisteredAtUtc);
 
         // Assert
         act.Should()

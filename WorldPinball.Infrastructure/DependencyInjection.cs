@@ -16,6 +16,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
+        // -------------------- Time Provider --------------------
+        services.AddSingleton(TimeProvider.System);
+        
+        
         var cs = config.GetConnectionString("DefaultConnection")
                  ?? throw new InvalidOperationException(
                      "Connection string 'DefaultConnection' is missing.");
@@ -41,7 +45,9 @@ public static class DependencyInjection
         services.AddScoped<IMachineWriteRepository, MachineWriteRepository>();
 
         services.AddScoped<GetLeaderboardHandler>();
-        services.AddScoped<ProvisionMachineHandler>();
+        services.AddScoped<
+            IProvisionMachineHandler,
+            ProvisionMachineHandler>();
 
         return services;
     }

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Application.Features.Machines.Admin;
 using WorldPinball.Application.Features.Machines.Admin.Commands;
-
+using FluentValidation;
 
 namespace WorldPinball.Api.Controllers.Admin;
 
@@ -11,7 +11,9 @@ namespace WorldPinball.Api.Controllers.Admin;
 [ApiController]
 [Route("api/v1/admin/machines")]
 public sealed class AdminMachinesController(
-    ProvisionMachineHandler handler) : ControllerBase
+    IProvisionMachineHandler handler,
+    IValidator<ProvisionMachineRequest> requestValidator) 
+    : ControllerBase
 {
 
     [HttpPost("provision")]
@@ -19,7 +21,18 @@ public sealed class AdminMachinesController(
         [FromBody] ProvisionMachineRequest req,
         CancellationToken ct)
     {
-        
+        var validationResult = await requestValidator.ValidateAsync(req, ct);
+        if (!validationResult.IsValid)
+        {
+            foreach (var failure in validationResult.Errors)
+            {
+            ModelState.AddModelError(
+                failure.PropertyName,
+                failure.ErrorMessage);
+            }
+            
+            return ValidationProblem(ModelState);
+        }
         
         var displayName = req.DisplayName;
         var serialNumber = req.WorldPinballSerialNumber;
@@ -62,4 +75,7 @@ public sealed class AdminMachinesController(
             _ => StatusCode(StatusCodes.Status500InternalServerError)
         };
     }
+    
+    
+    
 }

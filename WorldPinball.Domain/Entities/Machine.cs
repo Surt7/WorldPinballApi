@@ -21,7 +21,11 @@ public class Machine
 
     private Machine() { } // Utilisé par EF Core
 
-    public Machine(Guid ipId, string serialNumber, string  displayName)
+    public Machine(
+        Guid ipId,
+        string serialNumber,
+        string displayName,
+        DateTime registeredAtUtc)
     {
 
         if (ipId == Guid.Empty)
@@ -38,7 +42,7 @@ public class Machine
         MachineId = Guid.NewGuid();
         IpId = ipId;
         Status = MachineStatus.PendingEnrollment;
-        RegisteredAtUtc = DateTime.UtcNow;
+        RegisteredAtUtc = registeredAtUtc;
     }
 
     public Guid MachineId { get; private set; }
@@ -70,7 +74,7 @@ public class Machine
 
     public MachineStatus Status { get; private set; } = MachineStatus.PendingEnrollment;
 
-    public DateTime RegisteredAtUtc { get; private set;}
+    public DateTime RegisteredAtUtc { get; private set; }
     public DateTime? UpdatedAtUtc { get; private set; }
 
     public ICollection<MachineDevice> MachineDevices { get; private set; } = [];

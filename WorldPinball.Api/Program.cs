@@ -7,8 +7,12 @@ using WorldPinball.Infrastructure.Security;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Infrastructure;
 using WorldPinball.Infrastructure.Persistence.Repositories;
+using FluentValidation;
+using WorldPinball.Api.Localization;
+using WorldPinball.Application.Contracts.Admin.Machine;
+using WorldPinball.Api.Validation.Admin;
 
-
+// -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
 var builder = WebApplication.CreateBuilder(args);
 
 var keycloakAuthority = builder.Configuration["Keycloak:Authority"]
@@ -17,31 +21,23 @@ var keycloakAudience = builder.Configuration["Keycloak:Audience"]
     ?? throw new InvalidOperationException("Keycloak:Audience is missing.");
 
 
-
-
-
 // -------------------- Services --------------------
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
-builder.Services.Configure<RequestLocalizationOptions>(options =>
-{
-    string[] supportedCultures = ["en", "fr"];
+builder.Services.AddWorldPinballLocalization();
 
-    options
-        .SetDefaultCulture("en")
-        .AddSupportedCultures(supportedCultures)
-        .AddSupportedUICultures(supportedCultures);
-});
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+// ----------------------------------------
 builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();
 builder.Services.AddScoped<ICanonicalBuilder, CanonicalBuilder>();
 builder.Services.AddSingleton<ISignatureVerifier, EcdsaP256SignatureVerifier>();
 builder.Services.AddScoped<IGameModeRepository, GameModeRepository>();
 builder.Services.AddScoped<IIpLicenseRepository, IpLicenseRepository>();
-
+builder.Services.AddScoped<IValidator<ProvisionMachineRequest>,
+    ProvisionMachineRequestValidator>();
 
 // DataProtection keys folder (dev vs prod)
 var keysDir = builder.Environment.IsDevelopment()
@@ -85,9 +81,8 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseWorldPinballApiDocumentation();
-}
+    
 
-// -------------------- Swagger UI --------------------
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint(
@@ -102,10 +97,13 @@ app.UseSwaggerUI(options =>
 
     options.OAuthUsePkce();
 });
+}
+
 
 // -------------------- Healthcheck --------------------
 
 app.MapApiHealthChecks();
+// -------------------- USE -------------------- USE -------------------- USE --------------------//
 
 app.UseRequestLocalization();
 app.UseRouting();

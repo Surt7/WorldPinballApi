@@ -34,7 +34,8 @@ public sealed class MachineProvisionningHandlerTests
         var handler = new ProvisionMachineHandler(
             ipLicenseRepository,
             machineWriteRepository,
-            secretService);
+            secretService,
+            TimeProvider.System);
 
         var command = new ProvisionMachineCommand(
             WorldPinballSerialNumber: "WP-123",
@@ -97,7 +98,8 @@ public sealed class MachineProvisionningHandlerTests
         var handler = new ProvisionMachineHandler(
             ipLicenseRepository,
             machineWriteRepository,
-            secretService);
+            secretService,
+            TimeProvider.System);
 
         var command = new ProvisionMachineCommand(
             WorldPinballSerialNumber: serialNumber,
@@ -114,5 +116,79 @@ public sealed class MachineProvisionningHandlerTests
             .Which;
         
         duplicateSerial.SerialNumber.Should().Be(serialNumber);
+    }
+    
+    
+    [Fact]
+    public async Task HandleAsync_WhenProvisioningDataIsValid_ShouldReturnSuccess()
+    {
+        
+        //Arrange
+        const string serialNumber = "WP-123";
+        const string ipSlug = "resident-evil";
+        const string plainToken = "plain-enrollment-token";
+        const string tokenHash = "hashed-enrollment-token";
+        
+        var ipLicenseRepository = Substitute.For<IIpLicenseRepository>();
+        
+        var machineWriteRepository = Substitute.For<IMachineWriteRepository>();
+        var secretService = Substitute.For<ISecretService>();
+
+        var activeIp = new IpLicense
+        {
+            IpId = Guid.NewGuid(),
+            Name = "Resident Evil",
+            Slug = ipSlug,
+            IsActive = true
+        };
+        
+        ipLicenseRepository
+            .GetActiveBySlugAsync(
+                ipSlug,
+                Arg.Any<CancellationToken>())
+            .Returns(activeIp);
+        
+        
+        machineWriteRepository.SerialExistsAsync(
+            serialNumber,
+            Arg.Any<CancellationToken>()
+        ).Returns(false);
+        
+        secretService.Generate()
+            .Returns(new SecretGenerationResult(
+                PlainBase64: plainToken,
+                HashHex: tokenHash,
+                Encrypted:"encrypted-token"));
+            
+        var handler = new ProvisionMachineHandler(
+            ipLicenseRepository,
+            machineWriteRepository,
+            secretService,
+            TimeProvider.System);
+        
+        var command = new ProvisionMachineCommand(
+            WorldPinballSerialNumber: serialNumber,
+            IpSlug: ipSlug,
+            DisplayName: "Resident Evil",
+            IssuedByUserId: "admin-123");
+        
+        // Act
+        var result = await handler.HandleAsync(command);
+
+        // Assert 
+        var success = result.Should()
+            .BeOfType<ProvisionMachineResult.Success>()
+            .Which;
+        
+        success.MachineId.Should().NotBeEmpty();
+        success.EnrollmentToken.Should().Be(plainToken);
+        
+        await machineWriteRepository
+            .Received(1)
+            .AddProvisioningAsync(
+                Arg.Any<Machine>(),
+                Arg.Any<EnrollmentToken>(),
+        Arg.Any<CancellationToken>());
+
     }
 }
