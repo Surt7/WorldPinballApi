@@ -9,10 +9,12 @@ using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Infrastructure;
 using WorldPinball.Infrastructure.Persistence.Repositories;
 using FluentValidation;
+using WorldPinball.Api.Middleware;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Api.Validation.Admin;
 
 // -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
+
 try
 {
 
@@ -139,4 +141,7 @@ catch(Exception ex)
 {
     Log.Fatal(ex, "Application start-up failed");
     throw;
+}
+public partial class Program
+{
 }

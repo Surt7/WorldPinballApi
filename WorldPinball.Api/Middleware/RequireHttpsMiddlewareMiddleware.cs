@@ -1,5 +1,5 @@
 ﻿using WorldPinball.Api.Errors;
-
+namespace WorldPinball.Api.Middleware;
 public sealed class RequireHttpsMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(

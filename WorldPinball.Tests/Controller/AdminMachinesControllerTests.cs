@@ -7,6 +7,8 @@ using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace WorldPinball.Tests.Controller;
 
@@ -41,7 +43,20 @@ public class AdminMachinesControllerTests
             "Resident Evil",
             null);
         
+        // create controller
         var controller = new AdminMachinesController(handler,validator);
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(
+                    new ClaimsIdentity(
+                        [
+                            new Claim("sub", "test-admin-id")
+                        ],
+                        authenticationType: "Test"))
+            }
+        };
 
         var result = await controller.Provision(
             request,
