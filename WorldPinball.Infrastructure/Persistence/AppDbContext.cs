@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WorldPinball.Domain.Entities;
 
+
 namespace WorldPinball.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
@@ -16,6 +17,9 @@ public class AppDbContext : DbContext
     public DbSet<GameMode> GameModes => Set<GameMode>();
     public DbSet<Domain.Entities.Machine> Machines => Set<Domain.Entities.Machine>();
     public DbSet<Device> Devices => Set<Device>();
+    public DbSet<CaCertificate> CaCertificates => Set<CaCertificate>();
+    public DbSet<DeviceCertificate> DeviceCertificates => Set<DeviceCertificate>();
+    public DbSet<CertificateRevocation> CertificateRevocations => Set<CertificateRevocation>();
     public DbSet<GameSession> GameSessions => Set<GameSession>();
     public DbSet<ScoreEntry> ScoreEntries => Set<ScoreEntry>();
     public DbSet<EnrollmentToken> EnrollmentTokens => Set<EnrollmentToken>();

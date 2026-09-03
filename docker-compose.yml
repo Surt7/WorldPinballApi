@@ -16,7 +16,19 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-
+    
+  seq:
+    image: datalust/seq:2026.1
+    container_name: worldpinball-seq
+    environment:
+      ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_ADMINPASSWORD: ${SEQ_ADMIN_PASSWORD:?SEQ_ADMIN_PASSWORD must be set}
+    ports:
+      - "5341:80"
+    volumes:
+      - worldpinball_seqdata:/data
+    restart: unless-stopped
+    
   redis:
     image: redis:8.10.1-alpine
     container_name: worldpinball-redis
@@ -131,6 +143,7 @@ services:
 
 volumes:
   worldpinball_pgdata:
+  worldpinball_seqdata:
   worldpinball_redisdata:
   worldpinball_rabbitmqdata:
   worldpinball_kafkadata:

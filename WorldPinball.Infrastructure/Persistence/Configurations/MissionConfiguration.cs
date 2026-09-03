@@ -11,7 +11,7 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
 
         public void Configure(EntityTypeBuilder<Mission> e)
         {
-
+            
             // =========================
             // missions
             // =========================

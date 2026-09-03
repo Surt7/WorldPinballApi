@@ -17,8 +17,8 @@ public class AdminMachinesControllerTests
     {
         var expectedMachineId = Guid.NewGuid();
         const string expectedEnrollmentToken = "enrollment-token";
-
-        var validator = Substitute.For<IValidator<ProvisionMachineRequest>>();
+        
+               var validator = Substitute.For<IValidator<ProvisionMachineRequest>>();
         validator
             .ValidateAsync(
                 Arg.Any<ProvisionMachineRequest>(),

@@ -1,4 +1,5 @@
-﻿using WorldPinball.Application.Features.Machines.Admin.Commands;
+﻿using Microsoft.Extensions.Logging;
+using WorldPinball.Application.Features.Machines.Admin.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Security;
 using WorldPinball.Domain.Entities;
@@ -10,9 +11,19 @@ public sealed class ProvisionMachineHandler(
     IIpLicenseRepository ipLicenseRepository,
     IMachineWriteRepository machineWriteRepository,
     ISecretService secretService,
+    ILogger<ProvisionMachineHandler> logger,
     TimeProvider timeProvider
     ):IProvisionMachineHandler
 {
+    //event id for seq log
+    private static readonly EventId MachineProvisioned =
+        new(2000, nameof(MachineProvisioned));
+    
+    private static readonly EventId MachineProvisioningUnknownIp =
+        new(2001, nameof(MachineProvisioningUnknownIp));
+
+    private static readonly EventId MachineProvisioningDuplicateSerial = 
+        new(2002, nameof(MachineProvisioningDuplicateSerial));
     
     public async Task<ProvisionMachineResult> HandleAsync(
         ProvisionMachineCommand cmd,
@@ -24,7 +35,13 @@ public sealed class ProvisionMachineHandler(
             ct);
 
         if (ipLicense is null)
+        {
+            logger.LogWarning(
+                MachineProvisioningUnknownIp,
+                "Machine provisioning rejected: IP {IpSlug} was not found.",
+                cmd.IpSlug);
             return new ProvisionMachineResult.UnknownIp(cmd.IpSlug);
+        }
         
         // check if WorldPinballSerialNumber exist  ( it's a internal serial number to worldPinball)
         var serialExists = await machineWriteRepository.SerialExistsAsync(
@@ -32,7 +49,14 @@ public sealed class ProvisionMachineHandler(
             ct);
 
         if (serialExists)
+        {
+            logger.LogWarning(
+                MachineProvisioningDuplicateSerial,
+                "Machine provisioning rejected: serial number {SerialNumber} already exists.",
+                cmd.WorldPinballSerialNumber);
+            
             return new ProvisionMachineResult.DuplicateSerial(cmd.WorldPinballSerialNumber);
+        }
         
         var enrollmentSecret = secretService.Generate();
         var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
@@ -58,6 +82,15 @@ public sealed class ProvisionMachineHandler(
             machine,
             enrollmentToken,
             ct);
+        
+        logger.LogInformation(
+            MachineProvisioned,
+            "Machine {MachineId} provisioned for IP {IpId} ({IpSlug}) by {IssuedByUserId}.",
+            machine.MachineId,
+            machine.IpId,
+            cmd.IpSlug,
+            cmd.IssuedByUserId);
+        
         
         return new ProvisionMachineResult.Success(
             machine.MachineId,

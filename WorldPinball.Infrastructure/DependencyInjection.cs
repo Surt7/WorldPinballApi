@@ -7,8 +7,11 @@ using WorldPinball.Application.Features.Machines.Admin;
 using WorldPinball.Application.Security;
 using WorldPinball.Infrastructure.Persistence;
 using WorldPinball.Infrastructure.Persistence.Repositories;
+using WorldPinball.Infrastructure.Persistence.Seed;
 using WorldPinball.Infrastructure.Security;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace WorldPinball.Infrastructure;
 
@@ -16,6 +19,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
+        
+
         // -------------------- Time Provider --------------------
         services.AddSingleton(TimeProvider.System);
         
@@ -50,5 +55,34 @@ public static class DependencyInjection
             ProvisionMachineHandler>();
 
         return services;
+    }
+
+    public static async Task MigrateDatabaseAsync(
+        this IServiceProvider serviceProvider,
+        CancellationToken cancellationToken = default)
+    {
+        await using var scope = serviceProvider.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await context.Database.MigrateAsync(cancellationToken);
+    }
+
+    public static async Task SeedDevelopmentDataAsync(
+        this IServiceProvider serviceProvider,
+        CancellationToken cancellationToken = default)
+    {
+        await using var scope = serviceProvider.CreateAsyncScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var timeProvider = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+        var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+        
+        var logger =
+            loggerFactory.CreateLogger(
+                "WorldPinball.DevelopmentDataSeeder");
+        await DevelopmentDataSeeder.SeedAsync(
+            context,
+            timeProvider,
+            logger,
+            cancellationToken);
     }
 }

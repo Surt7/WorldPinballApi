@@ -5,6 +5,8 @@ using WorldPinball.Application.Features.Machines.Admin.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Security;
 using WorldPinball.Domain.Entities;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 
 namespace WorldPinball.Tests.Application.Features.Machines.Admin;
 
@@ -23,6 +25,7 @@ public sealed class MachineProvisionningHandlerTests
         var machineWriteRepository =
             Substitute.For<IMachineWriteRepository>();
 
+        var logger = new FakeLogger<ProvisionMachineHandler>();
         var secretService = Substitute.For<ISecretService>();
 
         ipLicenseRepository
@@ -35,6 +38,7 @@ public sealed class MachineProvisionningHandlerTests
             ipLicenseRepository,
             machineWriteRepository,
             secretService,
+            logger,
             TimeProvider.System);
 
         var command = new ProvisionMachineCommand(
@@ -67,6 +71,7 @@ public sealed class MachineProvisionningHandlerTests
         const string serialNumber = "WP-123";
         const string ipSlug = "resident-evil";
 
+        var logger = new FakeLogger<ProvisionMachineHandler>();
         var ipLicenseRepository =
             Substitute.For<IIpLicenseRepository>();
 
@@ -99,6 +104,7 @@ public sealed class MachineProvisionningHandlerTests
             ipLicenseRepository,
             machineWriteRepository,
             secretService,
+            logger,
             TimeProvider.System);
 
         var command = new ProvisionMachineCommand(
@@ -148,6 +154,7 @@ public sealed class MachineProvisionningHandlerTests
                 Arg.Any<CancellationToken>())
             .Returns(activeIp);
         
+        var logger = new FakeLogger<ProvisionMachineHandler>();
         
         machineWriteRepository.SerialExistsAsync(
             serialNumber,
@@ -164,6 +171,7 @@ public sealed class MachineProvisionningHandlerTests
             ipLicenseRepository,
             machineWriteRepository,
             secretService,
+            logger,
             TimeProvider.System);
         
         var command = new ProvisionMachineCommand(

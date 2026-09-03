@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Domain.Entities;
 
@@ -6,6 +7,7 @@ namespace WorldPinball.Infrastructure.Persistence.Repositories;
 
 public sealed class MachineWriteRepository(AppDbContext db) : IMachineWriteRepository
 {
+    
     public Task<bool> SerialExistsAsync(
         string serialNumber,
         CancellationToken ct = default)

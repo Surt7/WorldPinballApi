@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace WorldPinball.Api.Health;
+using WorldPinball.Api.Health;
+
+namespace WorldPinball.Api.Extensions;
 
 public static class HealthCheckExtensions
 {

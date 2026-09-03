@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 
-namespace WorldPinball.Api.Localization;
+namespace WorldPinball.Api.Extensions;
 
 public static class LocalizationServiceCollectionExtensions
 {

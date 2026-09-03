@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
 
-namespace WorldPinball.Api.OpenApi;
+namespace WorldPinball.Api.Extensions;
 
 public static class OpenApiExtensions
 {

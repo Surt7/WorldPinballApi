@@ -604,6 +604,12 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnType("numeric(6,2)")
                         .HasColumnName("amperage");
 
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("display_name");
+
                     b.Property<int?>("FrequencyHz")
                         .HasColumnType("integer")
                         .HasColumnName("frequency_hz");
@@ -655,11 +661,6 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("manufacturer_serial_number");
-
-                    b.Property<string>("DisplayName")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)")
-                        .HasColumnName("display_name");
 
                     b.Property<DateTime>("RegisteredAtUtc")
                         .HasColumnType("timestamp with time zone")
