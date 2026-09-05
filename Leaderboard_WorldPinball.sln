@@ -12,7 +12,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Éléments de solution", "Éléments de solution", "{9C8CB701-102D-CF49-A3E0-89AC09D42C2C}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
-		docker-compose.yml = docker-compose.yml
 		global.json = global.json
 		.env = .env
 	EndProjectSection
@@ -24,6 +23,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C3D2FF15-3421-41F9-AB6D-471CB098C5D9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{BA3965FD-BF12-49DD-9E31-05FF7816518A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "observability", "observability", "{A1AC0535-74DB-4139-9F86-E7D9E79473A7}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.observability.yml = docker-compose.observability.yml
+		docker\observability\otel-collector.yml = docker\observability\otel-collector.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +66,7 @@ Global
 		{38D3AA6E-9DCE-4D61-9DBE-03E56A281008} = {C3D2FF15-3421-41F9-AB6D-471CB098C5D9}
 		{3AAD11C1-E4F6-F6A4-76DD-3AEF2439F223} = {C3D2FF15-3421-41F9-AB6D-471CB098C5D9}
 		{6F2816D1-5375-48A7-A60D-2B560D143459} = {BA3965FD-BF12-49DD-9E31-05FF7816518A}
+		{A1AC0535-74DB-4139-9F86-E7D9E79473A7} = {9C8CB701-102D-CF49-A3E0-89AC09D42C2C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {132A21DD-F51F-4BC1-8C0F-D792224700B8}

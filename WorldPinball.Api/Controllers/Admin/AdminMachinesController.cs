@@ -1,4 +1,4 @@
-﻿//using Microsoft.AspNetCore.DataProtection;
+﻿
 using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Application.Features.Machines.Admin;

@@ -40,7 +40,15 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
 
             e.Property(x => x.ManufacturerNotes)
                 .HasMaxLength(1000);
-
+            
+            e.Property(x => x.Nonce)
+                    .HasMaxLength(64)
+                .IsRequired();
+            
+            e.Property(x => x.IdempotencyKey)
+                .HasMaxLength(32)
+                .IsRequired();
+            
             e.Property(x => x.MachineNotes)
                 .HasMaxLength(1000);
 

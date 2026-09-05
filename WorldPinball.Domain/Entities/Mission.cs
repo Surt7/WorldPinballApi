@@ -15,6 +15,7 @@
         public DateTime CreatedAtUtc { get; private set; } = DateTime.UtcNow;
         public DateTime? UpdatedAtUtc { get; set; }
         // ✅ relation pivot
+        
 
     }
 }

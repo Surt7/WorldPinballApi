@@ -614,6 +614,11 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("frequency_hz");
 
+                    b.Property<Guid>("IdempotencyKey")
+                        .HasMaxLength(32)
+                        .HasColumnType("uuid")
+                        .HasColumnName("idempotency_key");
+
                     b.Property<Guid>("IpId")
                         .HasColumnType("uuid")
                         .HasColumnName("ip_id");
@@ -661,6 +666,12 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("manufacturer_serial_number");
+
+                    b.Property<string>("Nonce")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("nonce");
 
                     b.Property<DateTime>("RegisteredAtUtc")
                         .HasColumnType("timestamp with time zone")

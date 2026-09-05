@@ -1,0 +1,9 @@
+﻿services:
+  otel-collector:
+    image: otel/opentelemetry-collector:0.160.0
+    container_name: worldpinball-otel-collector
+    volumes:
+      - ./docker/observability/otel-collector.yml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+    restart: unless-stopped

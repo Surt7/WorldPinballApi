@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace WorldPinball.Infrastructure.Persistence.Seed;
 
@@ -148,7 +149,15 @@ public static class DevelopmentDataSeeder
                 var revocations = CreateCertificateRevocations(deviceCertificates, now);
                 await context.CertificateRevocations.AddRangeAsync(revocations, cancellationToken);
             }
-
+            foreach (var machine in context.ChangeTracker
+                         .Entries<Machine>()
+                         .Select(x => x.Entity))
+            {
+                Console.WriteLine(
+                    $"Nonce={machine.Nonce?.Length} | " +
+                    $"Manufacturer={machine.Manufacturer?.Length} | " +
+                    $"Model={machine.ManufacturerModelName?.Length}");
+            }
             await context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             
@@ -160,6 +169,7 @@ public static class DevelopmentDataSeeder
         {
             logger.LogError(
                 SeedFailed,
+                exception,
                 "Development database seeding failed.");
             throw;
         }
@@ -245,7 +255,9 @@ public static class DevelopmentDataSeeder
                 licenses[f.Random.Int(0, licenses.Count - 1)].IpId,
                 $"WP-{f.IndexFaker + 1:00000}",
                 $"Flipper {f.Commerce.ProductAdjective()} {f.IndexFaker + 1}",
-                Utc(f.Date.Past(2, now))))
+                Utc(f.Date.Past(2, now)),
+                f.Random.Guid(),
+                WebEncoders.Base64UrlEncode(f.Random.Bytes(32))))
             .RuleFor(x => x.Manufacturer, f => f.Company.CompanyName())
             .RuleFor(x => x.ManufacturerModelCode, f => $"MODEL-{f.IndexFaker + 1:000}")
             .RuleFor(x => x.ManufacturerModelName, f => f.Commerce.ProductName())

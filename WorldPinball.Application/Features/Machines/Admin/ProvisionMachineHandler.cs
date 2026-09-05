@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System.Security.Cryptography;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Features.Machines.Admin.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Security;
@@ -60,12 +62,17 @@ public sealed class ProvisionMachineHandler(
         
         var enrollmentSecret = secretService.Generate();
         var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
+        var idempotencyKey = Guid.NewGuid();
+        var bytes = RandomNumberGenerator.GetBytes(32);
+        var nonce = WebEncoders.Base64UrlEncode(bytes);
         
         var machine = new Machine(
             ipLicense.IpId,
             cmd.WorldPinballSerialNumber,
             cmd.DisplayName,
-            nowUtc
+            nowUtc,
+            idempotencyKey,
+            nonce
             );
 
         var enrollmentToken = new EnrollmentToken(

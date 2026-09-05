@@ -17,15 +17,20 @@ public class Machine
             "A revoked machine cannot be reactivated.";
         public const string PendingEnrollmentRequiresCompletion =
             "A machine pending enrollment must complete enrollment before activation.";
+        public const string EmptyNonce = "The nonce is mandatory.";
+        public const string EmptyIdempotencyKey = "The Idempontency Key is mandatory.";
     }
 
-    private Machine() { } // Utilisé par EF Core
+    private Machine() { } // Used by EF Core
 
     public Machine(
         Guid ipId,
         string serialNumber,
         string displayName,
-        DateTime registeredAtUtc)
+        DateTime registeredAtUtc,
+        Guid idempotencyKey,
+        string nonce
+        )
     {
 
         if (ipId == Guid.Empty)
@@ -37,12 +42,20 @@ public class Machine
         if (string.IsNullOrWhiteSpace(displayName))
             throw new ArgumentException(ErrorMessages.EmptyDisplayName, nameof(displayName));
         
+        if (idempotencyKey == Guid.Empty)
+            throw new ArgumentException(ErrorMessages.EmptyIdempotencyKey, nameof(idempotencyKey));
+
+        if (string.IsNullOrWhiteSpace(nonce))
+            throw new ArgumentException(ErrorMessages.EmptyNonce, nameof(nonce));
+        
         DisplayName = displayName.Trim();
         WorldPinballSerialNumber = serialNumber.Trim();
         MachineId = Guid.NewGuid();
         IpId = ipId;
         Status = MachineStatus.PendingEnrollment;
         RegisteredAtUtc = registeredAtUtc;
+        IdempotencyKey = idempotencyKey;
+        Nonce = nonce.Trim();
     }
 
     public Guid MachineId { get; private set; }
@@ -50,8 +63,9 @@ public class Machine
     public Guid IpId { get; private set; }
     public IpLicense IpLicense { get; set; } = null!;
 
-
-    //Identifiant interne WorldPinball
+    public  Guid IdempotencyKey { get;private set; }
+    public  string Nonce { get; private set; }
+    //Internal serial number WorldPinball
     public string WorldPinballSerialNumber { get; private set; } = null!;
 
     public string? Manufacturer { get; set; }
@@ -63,7 +77,7 @@ public class Machine
     public string? MachineNotes { get; set; }
     public string? Location { get; set; }
 
-    // Infos techniques étiquettes
+    // Technical label informations
     public int? Voltage { get; set; }
     public int? FrequencyHz { get; set; }
     public decimal? Amperage { get; set; }
