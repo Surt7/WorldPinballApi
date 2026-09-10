@@ -700,11 +700,19 @@ namespace WorldPinball.Infrastructure.Migrations
                     b.HasKey("MachineId")
                         .HasName("pk_machines");
 
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_machines_idempotency_key");
+
                     b.HasIndex("IpId")
                         .HasDatabaseName("ix_machines_ip_id");
 
                     b.HasIndex("ManufacturerSerialNumber")
                         .HasDatabaseName("ix_machines_manufacturer_serial_number");
+
+                    b.HasIndex("Nonce")
+                        .IsUnique()
+                        .HasDatabaseName("ix_machines_nonce");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("ix_machines_status");

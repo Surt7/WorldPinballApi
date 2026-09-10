@@ -2,10 +2,14 @@
 using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Application.Features.Machines.Admin;
-using WorldPinball.Application.Features.Machines.Admin.Commands;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.WebUtilities;
+using WorldPinball.Api.Contracts.Machine;
+using WorldPinball.Application.Features.Machines.Admin.Provision;
+using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
 
 namespace WorldPinball.Api.Controllers.Admin;
 
@@ -59,11 +63,14 @@ public sealed class AdminMachinesController(
         var displayName = req.DisplayName;
         var serialNumber = req.WorldPinballSerialNumber;
         var ip = req.IpSlug;
+        var idempotencyKey = req.IdempotencyKey;
+
 
         var cmd = new ProvisionMachineCommand(
             serialNumber,
             ip,
             displayName,
+            idempotencyKey,
             issuedByUser
             );
 
@@ -81,7 +88,11 @@ public sealed class AdminMachinesController(
                 {
                     message = $"Unknow or inactive Ip slug: {unknownIp.IpSlug}"
                 }),
-
+            ProvisionMachineResult.SameIdempotencyKey key =>
+                NotFound(new
+                {
+                    message = $"Unknow or inactive Ip slug: {key.IdempotentKey}"
+                }),
             ProvisionMachineResult.DuplicateSerial duplicateSerial =>
                 Conflict(new
                 {

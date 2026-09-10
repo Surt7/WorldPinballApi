@@ -1,4 +1,4 @@
-﻿namespace WorldPinball.Application.Features.Machines.Admin;
+﻿namespace WorldPinball.Application.Features.Machines.Admin.Provision;
 
 public abstract record ProvisionMachineResult
 {
@@ -13,6 +13,15 @@ public abstract record ProvisionMachineResult
     
     public sealed record DuplicateSerial(
         string SerialNumber
+    ):ProvisionMachineResult;
+    
+    
+    public sealed record NonceExist(
+        string Nonce
+    ):ProvisionMachineResult;
+    
+    public sealed record SameIdempotencyKey(
+        Guid IdempotentKey
     ):ProvisionMachineResult;
     
 }

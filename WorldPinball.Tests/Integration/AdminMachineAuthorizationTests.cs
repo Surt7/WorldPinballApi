@@ -3,9 +3,11 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
 using NSubstitute;
+using WorldPinball.Api.Contracts.Machine;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Application.Features.Machines.Admin;
-using WorldPinball.Application.Features.Machines.Admin.Commands;
+using WorldPinball.Application.Features.Machines.Admin.Provision;
+using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
 
 namespace WorldPinball.Tests.Integration;
 
@@ -71,7 +73,7 @@ public class AdminMachineAuthorizationTests : IClassFixture<WorldPinballApiFacto
         // Avoid database work while letting the real controller complete its successful HTTP path.
         var expectedMachineId = Guid.NewGuid();
         const string expectedEnrollmentToken = "integration-enrollment-token";
-
+        var idempotencyKey = Guid.NewGuid();
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
             url);
@@ -95,6 +97,7 @@ public class AdminMachineAuthorizationTests : IClassFixture<WorldPinballApiFacto
             new ProvisionMachineRequest(
                 "WP-INTEGRATION-001",
                 "resident-evil",
+                idempotencyKey,
                 "Integration machine",
                 null));
         var response = await _client.SendAsync(request);

@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using WorldPinball.Application.Features.Machines.Admin;
+using WorldPinball.Application.Features.Machines.Admin.Provision;
 
 namespace WorldPinball.Tests.Integration;
 

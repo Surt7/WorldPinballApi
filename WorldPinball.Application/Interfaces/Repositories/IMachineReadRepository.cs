@@ -1,4 +1,4 @@
-using WorldPinball.Application.Features.Machines.Dtos;
+using WorldPinball.Application.Features.Machines.Admin.Provision.Dtos;
 
 namespace WorldPinball.Application.Interfaces.Repositories;
 

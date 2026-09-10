@@ -79,6 +79,12 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
 
             e.HasIndex(x => x.WorldPinballSerialNumber)
                 .IsUnique();
+            
+            e.HasIndex(x => x.IdempotencyKey)
+                .IsUnique();
+            
+            e.HasIndex(x => x.Nonce)
+                .IsUnique();
 
             e.HasIndex(x => x.ManufacturerSerialNumber);
 

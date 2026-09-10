@@ -12,6 +12,7 @@ using WorldPinball.Infrastructure.Security;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using WorldPinball.Application.Features.Machines.Admin.Provision;
 
 namespace WorldPinball.Infrastructure;
 

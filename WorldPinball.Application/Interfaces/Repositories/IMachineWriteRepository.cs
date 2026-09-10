@@ -7,6 +7,11 @@ public interface IMachineWriteRepository
     Task<bool> SerialExistsAsync(
         string serialNumber,
         CancellationToken ct = default);
+
+    Task<bool> SameIdempotencyKeyExistsAsync(
+        Guid idempotencyKey,
+        CancellationToken ct = default);
+    
     
 Task AddProvisioningAsync(
         Machine machine,

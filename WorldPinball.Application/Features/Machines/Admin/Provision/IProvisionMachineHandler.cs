@@ -1,6 +1,6 @@
-﻿using WorldPinball.Application.Features.Machines.Admin.Commands;
+﻿using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
 
-namespace WorldPinball.Application.Features.Machines.Admin;
+namespace WorldPinball.Application.Features.Machines.Admin.Provision;
 
 public interface IProvisionMachineHandler
 {

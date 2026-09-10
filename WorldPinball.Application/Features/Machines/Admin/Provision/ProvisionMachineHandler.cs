@@ -1,13 +1,13 @@
 ﻿using System.Security.Cryptography;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
-using WorldPinball.Application.Features.Machines.Admin.Commands;
+using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Security;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 
-namespace WorldPinball.Application.Features.Machines.Admin;
+namespace WorldPinball.Application.Features.Machines.Admin.Provision;
 
 public sealed class ProvisionMachineHandler(
     IIpLicenseRepository ipLicenseRepository,
@@ -27,6 +27,9 @@ public sealed class ProvisionMachineHandler(
     private static readonly EventId MachineProvisioningDuplicateSerial = 
         new(2002, nameof(MachineProvisioningDuplicateSerial));
     
+    private static readonly EventId MachineProvisioningSameIdempotencyKey = 
+        new(2002, nameof(MachineProvisioningSameIdempotencyKey));
+    
     public async Task<ProvisionMachineResult> HandleAsync(
         ProvisionMachineCommand cmd,
         CancellationToken ct = default)
@@ -44,9 +47,21 @@ public sealed class ProvisionMachineHandler(
                 cmd.IpSlug);
             return new ProvisionMachineResult.UnknownIp(cmd.IpSlug);
         }
+
+        
+        bool sameIdempotencyKey = await machineWriteRepository.SameIdempotencyKeyExistsAsync(cmd.IdempotencyKey, ct);
+        if (sameIdempotencyKey)
+        {
+            logger.LogWarning(
+                MachineProvisioningUnknownIp,
+                "Same Idempotencykey {IdempotencyKey} already exists.",
+                cmd.IdempotencyKey);
+            return new ProvisionMachineResult.SameIdempotencyKey(cmd.IdempotencyKey);
+        }
+        
         
         // check if WorldPinballSerialNumber exist  ( it's a internal serial number to worldPinball)
-        var serialExists = await machineWriteRepository.SerialExistsAsync(
+        bool serialExists = await machineWriteRepository.SerialExistsAsync(
             cmd.WorldPinballSerialNumber,
             ct);
 

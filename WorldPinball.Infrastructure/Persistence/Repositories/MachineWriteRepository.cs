@@ -16,7 +16,16 @@ public sealed class MachineWriteRepository(AppDbContext db) : IMachineWriteRepos
             machine => machine.WorldPinballSerialNumber == serialNumber,
             ct);
     }
-
+    public Task<bool> SameIdempotencyKeyExistsAsync(
+        Guid idempotencyKey,
+        CancellationToken ct = default)
+    {
+         return   db.Machines.AnyAsync(
+             machine => machine.IdempotencyKey == idempotencyKey,
+             ct);;
+    }
+    
+    
     public async Task AddProvisioningAsync(
         Machine machine,
         EnrollmentToken enrollmentToken,

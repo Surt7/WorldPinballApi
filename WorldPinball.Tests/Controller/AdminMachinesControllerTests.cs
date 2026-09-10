@@ -1,6 +1,5 @@
 ﻿using NSubstitute;
 using WorldPinball.Application.Features.Machines.Admin;
-using WorldPinball.Application.Features.Machines.Admin.Commands;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Api.Controllers.Admin;
 using FluentAssertions;
@@ -9,6 +8,9 @@ using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using WorldPinball.Api.Contracts.Machine;
+using WorldPinball.Application.Features.Machines.Admin.Provision;
+using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
 
 namespace WorldPinball.Tests.Controller;
 
@@ -19,7 +21,7 @@ public class AdminMachinesControllerTests
     {
         var expectedMachineId = Guid.NewGuid();
         const string expectedEnrollmentToken = "enrollment-token";
-        
+        var idempotencyKey = Guid.NewGuid();
                var validator = Substitute.For<IValidator<ProvisionMachineRequest>>();
         validator
             .ValidateAsync(
@@ -40,6 +42,7 @@ public class AdminMachinesControllerTests
         var request = new ProvisionMachineRequest(
             "WP-123",
             "resident-evil",
+            idempotencyKey,
             "Resident Evil",
             null);
         

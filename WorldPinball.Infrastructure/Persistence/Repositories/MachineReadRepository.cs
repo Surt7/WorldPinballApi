@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WorldPinball.Application.Features.Machines.Dtos;
+using WorldPinball.Application.Features.Machines.Admin.Provision.Dtos;
 using WorldPinball.Application.Interfaces.Repositories;
 
 namespace WorldPinball.Infrastructure.Persistence.Repositories;

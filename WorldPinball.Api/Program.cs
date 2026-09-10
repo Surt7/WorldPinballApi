@@ -9,9 +9,14 @@ using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Infrastructure;
 using WorldPinball.Infrastructure.Persistence.Repositories;
 using FluentValidation;
+using WorldPinball.Api.Contracts.Machine;
 using WorldPinball.Api.Middleware;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Api.Validation.Admin;
+using WorldPinball.Domain.Entities;
+using AutoMapper;
+using WorldPinball.Application.Features.Machines.Public.Profile;
+
 
 // -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
 
@@ -29,7 +34,9 @@ try
                             ?? throw new InvalidOperationException("Keycloak:Authority is missing.");
     var keycloakAudience = builder.Configuration["Keycloak:Audience"]
                            ?? throw new InvalidOperationException("Keycloak:Audience is missing.");
-
+    
+    
+    builder.Services.AddAutoMapper(cfg => { }, typeof(EnrollmentMappingProfile));
 
 // -------------------- Services --------------------
     builder.Services.AddInfrastructure(builder.Configuration);
