@@ -10,6 +10,10 @@ public class EnrollmentToken
         public const string TokenType = "Invalid token type.";
         public const string IssuedByUserId = "The provided issued by is invalid / empty.";
         public const string IssuedAt = "Issued date cannot be empty.";
+        public const string RevokedAt = "Token revoked.";
+        public const string ExpiredAt = "Token expired.";
+        public const string AlreadyConsumed = "Token already consumed.";
+        public const string DifferentDevice = "Token has different device Id";
     }
 
     public Guid TokenId { get; private set; }
@@ -82,10 +86,10 @@ public class EnrollmentToken
 
     public void Consume(Guid deviceId, DateTime now)
     {
-        if (RevokedAt is not null) throw new InvalidOperationException("Token revoked.");
-        if (now >= ExpiresAtUtc) throw new InvalidOperationException("Token expired."); ;
-        if (UsesCount >= MaxUses) throw new InvalidOperationException("Token already consumed.");
-        if ( DeviceId.HasValue && deviceId != DeviceId) throw new InvalidOperationException("Token has different device Id");
+        if (RevokedAt is not null) throw new InvalidOperationException(ErrorMessages.RevokedAt);
+        if (now >= ExpiresAtUtc) throw new InvalidOperationException(ErrorMessages.ExpiredAt); ;
+        if (UsesCount >= MaxUses) throw new InvalidOperationException(ErrorMessages.AlreadyConsumed);
+        if ( DeviceId.HasValue && deviceId != DeviceId) throw new InvalidOperationException(ErrorMessages.DifferentDevice);
      
         
         UsesCount++;

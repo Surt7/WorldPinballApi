@@ -21,9 +21,9 @@ public class ScoreEntry
     public Guid ModeId { get; set; }
     public GameMode Mode { get; set; } = null!;
 
-    public int Score { get; set; }
-    public DateTime AchievedAtUtc { get; set; }
+    public int Score { get;private set; }
+    public DateTime? AchievedAtUtc { get;private set; }
 
-    public bool IsValidated { get; set; } = true;
-    public string? ValidationReason { get; set; }
+    public bool IsValidated { get; private set; }
+    public string? ValidationReason { get;private set; }
 }

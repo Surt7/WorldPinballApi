@@ -5,12 +5,12 @@ using WorldPinball.Application.Features.Machines.Public.Dto;
 
 namespace WorldPinball.Infrastructure.Persistence.Repositories;
 
-public class DeviceEnrollmentRepository : IDeviceEnrollmentRepository
+public class DeviceEnrollmentReadRepository : IDeviceEnrollmentReadRepository
 {
     private readonly AppDbContext _db;
 
 
-    public DeviceEnrollmentRepository(AppDbContext db)
+    public DeviceEnrollmentReadRepository(AppDbContext db)
     {
         _db = db;
     }
@@ -30,12 +30,5 @@ public class DeviceEnrollmentRepository : IDeviceEnrollmentRepository
             .AnyAsync(d => d.SerialPhysical == serialPhysical, cancellationToken);
     }
 
-    public async Task SaveEnrollmentAsync(Device device, MachineDevice machineDevice, EnrollmentToken enrollmentToken,
-        CancellationToken cancellationToken = default)
-    {
-        _db.Devices.Add(device);
-        _db.MachineDevices.Add(machineDevice);
-        _db.EnrollmentTokens.Update(enrollmentToken);
-        await _db.SaveChangesAsync(cancellationToken);
-    }
+
 }

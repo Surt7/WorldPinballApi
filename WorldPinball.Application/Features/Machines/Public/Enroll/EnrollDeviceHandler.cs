@@ -8,7 +8,8 @@ using WorldPinball.Domain.Entities;
 namespace WorldPinball.Application.Features.Machines.Public;
 
 public sealed class EnrollDeviceHandler(
-    IDeviceEnrollmentRepository deviceEnrollmentRepository,
+    IDeviceEnrollmentWriteRepository deviceEnrollmentWriteRepository,
+    IDeviceEnrollmentReadRepository deviceEnrollmentReadRepository,
     ILogger<EnrollDeviceHandler> logger,
     TimeProvider timeProvider
 ) : IEnrollDeviceHandler
@@ -37,12 +38,12 @@ public sealed class EnrollDeviceHandler(
         byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(plainTextEnrollementToken));
         string tokenHash = Convert.ToHexString(hashBytes);
 
-        EnrollmentToken? token = await deviceEnrollmentRepository.GetTokenByHashAsync(tokenHash, ct);
+        EnrollmentToken? token = await deviceEnrollmentReadRepository.GetTokenByHashAsync(tokenHash, ct);
 
         if (token == null)
             return new EnrollDeviceResult.InvalidToken("Token not found");
 
-        if (await deviceEnrollmentRepository.DeviceSerialExistsAsync(cmd.DeviceSerialNumber, ct))
+        if (await deviceEnrollmentReadRepository.DeviceSerialExistsAsync(cmd.DeviceSerialNumber, ct))
             return new EnrollDeviceResult.DeviceAlreadyEnrolled(cmd.DeviceSerialNumber);
 
 
@@ -72,7 +73,7 @@ public sealed class EnrollDeviceHandler(
         {
             return new EnrollDeviceResult.InvalidToken(ex.Message);
         }
-        await deviceEnrollmentRepository.SaveEnrollmentAsync(device, machineDevice, token, ct);
+        await deviceEnrollmentWriteRepository.SaveEnrollmentAsync(device, machineDevice, token, ct);
 
         return new EnrollDeviceResult.Success(
             DeviceId: device.DeviceId,

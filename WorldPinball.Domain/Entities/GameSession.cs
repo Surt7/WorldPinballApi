@@ -1,28 +1,137 @@
-﻿using WorldPinball.Domain.Enums;
+using WorldPinball.Domain.Enums;
 
 namespace WorldPinball.Domain.Entities;
 
 public class GameSession
 {
-    public Guid SessionId { get; set; }
+    
+    private static class ErrorMessages
+    {
+        public const string MachineId = "MachineId cannot be empty.";
+        public const string DeviceId = "DeviceId cannot be empty";
+        public const string ModeId = "ModeId cannot be empty.";
+        public const string UserId = "UserId cannot be empty.";
+        public const string Nonce = "Nonce cannot be empty.";
+        public const string StartedAtUtc = "StartedAtUtc must be a valid date.";
+        public const string ClientVersion = "ClientVersion cannot be empty.";
+        public const string EndSession = "Cannot end a session that is not in Started state.";
+        public const string Earlier = "EndedAtUtc cannot be earlier than StartedAtUtc.";
+        public const string PauseSession = "Can only pause an active session.";
+        public const string ResumeSession = "Can only resume a paused session.";
+        public const string ClosedSession = "Session is already closed.";
+    }
+    private GameSession() { }
+    
+    public Guid SessionId { get; private set; }
 
-    public Guid MachineId { get; set; }
-    public Machine Machine { get; set; } = null!;
+    public Guid MachineId { get; private set; }
+    public Machine Machine { get;private set; }
 
-    public Guid DeviceId { get; set; }
-    public Device Device { get; set; } = null!;
+    public Guid DeviceId { get; private set; }
+    public Device Device { get; private set; }
 
-    public string? UserId { get; set; }
+    public string UserId { get;private set; }
 
-    public Guid ModeId { get; set; }
-    public GameMode Mode { get; set; } = null!;
+    public Guid ModeId { get;private set; }
+    public GameMode Mode { get; private set; }
 
-    public DateTime StartedAtUtc { get; set; }
-    public DateTime? EndedAtUtc { get; set; }
+    public DateTime StartedAtUtc { get;private set; }
+    public DateTime? EndedAtUtc { get;private set; }
 
-    public GameSessionState State { get; set; } = GameSessionState.Started;
-    public string Nonce { get; set; } = null!;
-    public string? ClientVersion { get; set; }
+    public GameSessionState State { get; private set; }
+    public string Nonce { get;private set; }
+    public string ClientVersion { get;private set; }
 
-    public ScoreEntry? ScoreEntry { get; set; }
+    public ScoreEntry? ScoreEntry { get;private set; }
+    
+    
+    public GameSession(
+        Guid machineId,
+        Guid deviceId,
+        Guid modeId,
+        string userId,
+        string clientVersion,
+        string nonce,
+        DateTime startedAtUtc)
+    {
+        if (machineId == Guid.Empty)
+            throw new ArgumentException(ErrorMessages.MachineId, nameof(machineId));
+        
+        if (deviceId == Guid.Empty)
+            throw new ArgumentException(ErrorMessages.DeviceId, nameof(deviceId));
+        
+        if (modeId == Guid.Empty)
+            throw new ArgumentException(ErrorMessages.ModeId, nameof(modeId));
+        
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new ArgumentException(ErrorMessages.UserId, nameof(userId));
+        
+        if (string.IsNullOrWhiteSpace(clientVersion))
+            throw new ArgumentException(ErrorMessages.ClientVersion, nameof(clientVersion));
+        
+        if (string.IsNullOrWhiteSpace(nonce))
+            throw new ArgumentException(ErrorMessages.Nonce, nameof(nonce));
+        
+        if (startedAtUtc == default)
+            throw new ArgumentException(ErrorMessages.StartedAtUtc, nameof(startedAtUtc));
+        
+        SessionId = Guid.NewGuid();
+        MachineId = machineId;
+        DeviceId = deviceId;
+        ModeId = modeId;
+        UserId = userId;
+        ClientVersion = clientVersion;
+        Nonce = nonce;
+        StartedAtUtc = startedAtUtc;
+        State = GameSessionState.Started;
+        
+        
+        
+    }
+    
+    public void Pause()
+    {
+        if (State is not (GameSessionState.Started or GameSessionState.Resumed))
+            throw new InvalidOperationException(ErrorMessages.PauseSession);
+
+        State = GameSessionState.Paused;
+    }
+
+    public void Resume()
+    {
+        if (State is not GameSessionState.Paused)
+            throw new InvalidOperationException(ErrorMessages.ResumeSession);
+
+        State = GameSessionState.Resumed;
+    }
+
+    public void End(DateTime endedAtUtc)
+    {
+        if (State is not (GameSessionState.Started or GameSessionState.Resumed or GameSessionState.Paused))
+            throw new InvalidOperationException(ErrorMessages.EndSession);
+        if (endedAtUtc < StartedAtUtc)
+            throw new ArgumentException(ErrorMessages.Earlier, nameof(endedAtUtc));
+        EndedAtUtc = endedAtUtc;
+        State = GameSessionState.Ended;
+    }
+
+    public void Abandon(DateTime abandonedAtUtc)
+    {
+        if (State is GameSessionState.Ended or GameSessionState.Abandoned or GameSessionState.Aborted or GameSessionState.Cancelled)
+            throw new InvalidOperationException(ErrorMessages.ClosedSession);
+        if (abandonedAtUtc < StartedAtUtc)
+            throw new ArgumentException(ErrorMessages.Earlier, nameof(abandonedAtUtc));
+        EndedAtUtc = abandonedAtUtc;
+        State = GameSessionState.Abandoned;
+    }
+
+    public void Abort(DateTime abortedAtUtc)
+    {
+        if (State is GameSessionState.Ended or GameSessionState.Abandoned or GameSessionState.Aborted or GameSessionState.Cancelled)
+            throw new InvalidOperationException(ErrorMessages.ClosedSession);
+        if (abortedAtUtc < StartedAtUtc)
+            throw new ArgumentException(ErrorMessages.Earlier, nameof(abortedAtUtc));
+        EndedAtUtc = abortedAtUtc;
+        State = GameSessionState.Aborted;
+    }
 }
