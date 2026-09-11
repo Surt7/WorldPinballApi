@@ -51,8 +51,16 @@ try
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();
     builder.Services.AddScoped<ICanonicalBuilder, CanonicalBuilder>();
     builder.Services.AddSingleton<ISignatureVerifier, EcdsaP256SignatureVerifier>();
+    
     builder.Services.AddScoped<IGameModeRepository, GameModeRepository>();
-    builder.Services.AddScoped<IIpLicenseRepository, IpLicenseRepository>();
+    builder.Services.AddScoped<IIpLicenseReadRepository, IpLicenseReadRepository>();
+    
+    builder.Services.AddScoped<IDeviceEnrollmentReadRepository, DeviceEnrollmentReadRepository>();
+    builder.Services.AddScoped<IDeviceEnrollmentWriteRepository, DeviceEnrollmentWriteRepository>();
+    
+    builder.Services.AddScoped<IMachineReadRepository, MachineReadRepository>();
+    builder.Services.AddScoped<IMachineWriteRepository, MachineWriteRepository>();
+    
     builder.Services.AddScoped<IValidator<ProvisionMachineRequest>,
         ProvisionMachineRequestValidator>();
 

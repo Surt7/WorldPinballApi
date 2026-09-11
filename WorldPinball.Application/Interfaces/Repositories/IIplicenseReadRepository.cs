@@ -4,7 +4,7 @@ using WorldPinball.Application.Features.IpLicenses.Public.Dtos;
 namespace WorldPinball.Application.Interfaces.Repositories;
 
 
-public interface IIpLicenseRepository
+public interface IIpLicenseReadRepository
 {
     Task<IpLicense?> GetActiveBySlugAsync(
         string slug,

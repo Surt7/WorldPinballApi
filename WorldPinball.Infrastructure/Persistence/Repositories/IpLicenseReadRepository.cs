@@ -5,10 +5,10 @@ using WorldPinball.Domain.Entities;
 
 namespace WorldPinball.Infrastructure.Persistence.Repositories;
 
-public class IpLicenseRepository : IIpLicenseRepository
+public class IpLicenseReadRepository : IIpLicenseReadRepository
 {
     private readonly AppDbContext _db;
-    public IpLicenseRepository(AppDbContext db)
+    public IpLicenseReadRepository(AppDbContext db)
     {
         _db = db;
     }

@@ -10,7 +10,7 @@ using WorldPinball.Domain.Enums;
 namespace WorldPinball.Application.Features.Machines.Admin.Provision;
 
 public sealed class ProvisionMachineHandler(
-    IIpLicenseRepository ipLicenseRepository,
+    IIpLicenseReadRepository ipLicenseRepository,
     IMachineWriteRepository machineWriteRepository,
     ISecretService secretService,
     ILogger<ProvisionMachineHandler> logger,

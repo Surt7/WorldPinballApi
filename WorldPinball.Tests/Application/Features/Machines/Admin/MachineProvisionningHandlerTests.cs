@@ -20,8 +20,8 @@ public sealed class MachineProvisionningHandlerTests
         // Arrange
         const string ipSlug = "resident-evil";
 
-        var ipLicenseRepository =
-            Substitute.For<IIpLicenseRepository>();
+        var ipLicenseReadRepository =
+            Substitute.For<IIpLicenseReadRepository>();
 
         var machineWriteRepository =
             Substitute.For<IMachineWriteRepository>();
@@ -29,14 +29,14 @@ public sealed class MachineProvisionningHandlerTests
         var logger = new FakeLogger<ProvisionMachineHandler>();
         var secretService = Substitute.For<ISecretService>();
         var idempotencyKey = Guid.NewGuid();
-        ipLicenseRepository
+        ipLicenseReadRepository
             .GetActiveBySlugAsync(
                 ipSlug,
                 Arg.Any<CancellationToken>())
             .Returns((IpLicense?)null);
 
         var handler = new ProvisionMachineHandler(
-            ipLicenseRepository,
+            ipLicenseReadRepository,
             machineWriteRepository,
             secretService,
             logger,
@@ -59,7 +59,7 @@ public sealed class MachineProvisionningHandlerTests
 
         unknownIp.IpSlug.Should().Be(ipSlug);
 
-        await ipLicenseRepository
+        await ipLicenseReadRepository
             .Received(1)
             .GetActiveBySlugAsync(
                 ipSlug,
@@ -75,7 +75,7 @@ public sealed class MachineProvisionningHandlerTests
 
         var logger = new FakeLogger<ProvisionMachineHandler>();
         var ipLicenseRepository =
-            Substitute.For<IIpLicenseRepository>();
+            Substitute.For<IIpLicenseReadRepository>();
 
         var machineWriteRepository =
             Substitute.For<IMachineWriteRepository>();
@@ -139,7 +139,7 @@ public sealed class MachineProvisionningHandlerTests
         const string plainToken = "plain-enrollment-token";
         const string tokenHash = "hashed-enrollment-token";
         
-        var ipLicenseRepository = Substitute.For<IIpLicenseRepository>();
+        var ipLicenseReadRepository = Substitute.For<IIpLicenseReadRepository>();
         
         var machineWriteRepository = Substitute.For<IMachineWriteRepository>();
         var secretService = Substitute.For<ISecretService>();
@@ -153,7 +153,7 @@ public sealed class MachineProvisionningHandlerTests
             IsActive = true
         };
         
-        ipLicenseRepository
+        ipLicenseReadRepository
             .GetActiveBySlugAsync(
                 ipSlug,
                 Arg.Any<CancellationToken>())
@@ -173,7 +173,7 @@ public sealed class MachineProvisionningHandlerTests
                 Encrypted:"encrypted-token"));
             
         var handler = new ProvisionMachineHandler(
-            ipLicenseRepository,
+            ipLicenseReadRepository,
             machineWriteRepository,
             secretService,
             logger,
@@ -217,7 +217,7 @@ public sealed class MachineProvisionningHandlerTests
         const string tokenHash = "hashed-enrollment-token";
         // const string nonce = "hmylhaDqKqx9Y/V04JWEIKa8rvZYpiJLDYEfmRAupdA=";
         
-        var ipLicenseRepository = Substitute.For<IIpLicenseRepository>();
+        var ipLicenseReadRepository = Substitute.For<IIpLicenseReadRepository>();
         var machineWriteRepository = Substitute.For<IMachineWriteRepository>();
         var secretService = Substitute.For<ISecretService>();
         var idempotencyKey = Guid.NewGuid();
@@ -231,7 +231,7 @@ public sealed class MachineProvisionningHandlerTests
             IsActive = true
         };
         
-        ipLicenseRepository
+        ipLicenseReadRepository
             .GetActiveBySlugAsync(
                 ipSlug,
                 Arg.Any<CancellationToken>())
@@ -247,7 +247,7 @@ public sealed class MachineProvisionningHandlerTests
                 Encrypted:"encrypted-token"));
             
         var handler = new ProvisionMachineHandler(
-            ipLicenseRepository,
+            ipLicenseReadRepository,
             machineWriteRepository,
             secretService,
             logger,

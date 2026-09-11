@@ -45,7 +45,7 @@ public static class DependencyInjection
                 name: "Database",
                 tags: ["database"]);
         services.AddScoped<ISecretService, SecretService>();
-        services.AddScoped<IIpLicenseRepository, IpLicenseRepository>();
+        services.AddScoped<IIpLicenseReadRepository, IpLicenseReadRepository>();
         services.AddScoped<ILeaderboardRepository, LeaderboardRepository>();
         services.AddScoped<IMachineReadRepository, MachineReadRepository>();
         services.AddScoped<IMachineWriteRepository, MachineWriteRepository>();

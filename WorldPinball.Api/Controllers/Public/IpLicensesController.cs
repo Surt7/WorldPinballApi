@@ -5,7 +5,7 @@ namespace WorldPinball.Api.Controllers.Public
 {
     [Route("api/v1/ip-licenses")]
     [ApiController]
-    public class IpLicensesController(IIpLicenseRepository ipLicenseRepository) : ControllerBase
+    public class IpLicensesController(IIpLicenseReadRepository ipLicenseRepository) : ControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
