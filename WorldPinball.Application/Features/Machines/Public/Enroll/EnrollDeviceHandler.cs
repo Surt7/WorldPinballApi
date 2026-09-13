@@ -1,15 +1,17 @@
 using System.Security.Cryptography;
-using System.Text;
 using Microsoft.Extensions.Logging;
+using WorldPinball.Application.Features.Machines.Public.Enroll;
 using WorldPinball.Application.Features.Machines.Public.Enroll.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
+using WorldPinball.Application.Security.CA;
 using WorldPinball.Domain.Entities;
 
-namespace WorldPinball.Application.Features.Machines.Public.Enroll;
+namespace WorldPinball.Application.Features.Machines.Public;
 
 public sealed class EnrollDeviceHandler(
     IDeviceEnrollmentWriteRepository deviceEnrollmentWriteRepository,
     IDeviceEnrollmentReadRepository deviceEnrollmentReadRepository,
+    ICertificateAuthorityService caService,
     ILogger<EnrollDeviceHandler> logger,
     TimeProvider timeProvider
 ) : IEnrollDeviceHandler
@@ -40,9 +42,17 @@ public sealed class EnrollDeviceHandler(
                 cmd.PlainEnrollmentToken,
                 $"{nameof(cmd.PlainEnrollmentToken)}" +
                 $" cannot be null or empty");
-
-        byte[] hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(plainTextEnrollementToken));
-        string tokenHash = Convert.ToHexString(hashBytes);
+        
+        Span<byte> secretBytes = stackalloc byte[32];
+        if (!Convert.TryFromBase64String(plainTextEnrollementToken, secretBytes, out _))
+        {
+            return new EnrollDeviceResult.InvalidToken("Invalid token format");
+        }
+        
+        Span<byte> hashBytes = stackalloc byte[SHA256.HashSizeInBytes];
+        SHA256.HashData(secretBytes, hashBytes);
+        
+        string tokenHash = Convert.ToHexString(hashBytes).ToLowerInvariant();
 
         EnrollmentToken? token = await deviceEnrollmentReadRepository.GetTokenByHashAsync(tokenHash, ct);
 
@@ -79,7 +89,7 @@ public sealed class EnrollDeviceHandler(
             AttachedAtUtc = now,
             IsActive = true
         };
-        
+
         try
         {
             token.Consume(device.DeviceId, now);
@@ -96,6 +106,21 @@ public sealed class EnrollDeviceHandler(
 
         await deviceEnrollmentWriteRepository.SaveEnrollmentAsync(device, machineDevice, token, ct);
 
+        
+        
+        var issuedCert = await caService.IssueDeviceCertificateAsync(
+            cmd.DeviceSerialNumber,
+            cmd.PublicKeyPem,
+            ct);
+
+        logger.LogInformation(
+            DeviceEnrolled,
+            "Device {DeviceId} with serial {DeviceSerialNumber} successfully enrolled with CertSerial {CertSerial}.",
+            device.DeviceId,
+            cmd.DeviceSerialNumber,
+            issuedCert.SerialNumber);
+        
+        
         logger.LogInformation(
             DeviceEnrolled,
             "Device {DeviceId} with serial {DeviceSerialNumber} successfully enrolled and attached to machine {MachineId}.",
@@ -106,8 +131,8 @@ public sealed class EnrollDeviceHandler(
         return new EnrollDeviceResult.Success(
             DeviceId: device.DeviceId,
             MachineId: cmd.MachineId,
-            CertPem: "DUMMY_CERT_PEM",
-            CertSerialNumber: "DUMMY_CERT_SERIAL"
+            CertPem: issuedCert.CertPem,
+            CertSerialNumber: issuedCert.SerialNumber
         );
     }
 }

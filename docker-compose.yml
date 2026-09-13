@@ -94,7 +94,21 @@ services:
       retries: 10
       start_period: 30s
     restart: unless-stopped
-
+  step-ca:
+    image: smallstep/step-ca:0.28.1
+    container_name: worldpinball-step-ca
+    environment:
+      DOCKER_STEPCA_INIT_NAME: "WorldPinball Internal CA"
+      DOCKER_STEPCA_INIT_DNS_NAMES: "localhost,step-ca"
+      DOCKER_STEPCA_INIT_REMOTE_MANAGEMENT: "true"
+      DOCKER_STEPCA_INIT_PROVISIONER_NAME: "admin"
+      DOCKER_STEPCA_INIT_PASSWORD: ${STEP_CA_PASSWORD:-WorldPinballSecretPass123!}
+      DOCKER_STEPCA_INIT_SSH: "false"
+    ports:
+      - "9002:9000"
+    volumes:
+      - worldpinball_stepcadata:/home/step
+    restart: unless-stopped
   keycloak-db:
     image: postgres:16.15-alpine
     container_name: worldpinball-keycloak-db
@@ -148,3 +162,4 @@ volumes:
   worldpinball_rabbitmqdata:
   worldpinball_kafkadata:
   worldpinball_keycloak_pgdata:
+  worldpinball_stepcadata:

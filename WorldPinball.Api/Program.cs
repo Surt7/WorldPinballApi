@@ -11,10 +11,11 @@ using WorldPinball.Infrastructure.Persistence.Repositories;
 using FluentValidation;
 using WorldPinball.Api.Contracts.Machine;
 using WorldPinball.Api.Middleware;
-using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Api.Validation.Admin;
-using WorldPinball.Domain.Entities;
-using AutoMapper;
+using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
+using WorldPinball.Application.Features.Machines.Admin.Provision;
+using WorldPinball.Application.Features.Machines.Public;
+using WorldPinball.Application.Features.Machines.Public.Enroll;
 using WorldPinball.Application.Features.Machines.Public.Enroll.Profile;
 
 
@@ -34,7 +35,10 @@ try
                            ?? throw new InvalidOperationException("Keycloak:Audience is missing.");
 
 
-    builder.Services.AddAutoMapper(cfg => { }, typeof(EnrollmentMappingProfile));
+    builder.Services.AddAutoMapper(cfg =>
+    {
+        cfg.AddMaps(typeof(EnrollmentMappingProfile).Assembly);
+    });
 
 // -------------------- Services --------------------
     builder.Services.AddInfrastructure(builder.Configuration);
@@ -47,19 +51,16 @@ try
     builder.AddObservability();
 // ----------------------------------------
 
+    //Handlers
+    builder.Services.AddScoped<IEnrollDeviceHandler, EnrollDeviceHandler>();
+    builder.Services.AddScoped<IProvisionMachineHandler, ProvisionMachineHandler>();
+    
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();
     builder.Services.AddScoped<ICanonicalBuilder, CanonicalBuilder>();
     builder.Services.AddSingleton<ISignatureVerifier, EcdsaP256SignatureVerifier>();
-    
-    builder.Services.AddScoped<IGameModeRepository, GameModeRepository>();
-    builder.Services.AddScoped<IIpLicenseReadRepository, IpLicenseReadRepository>();
-
-    builder.Services.AddScoped<IDeviceEnrollmentReadRepository, DeviceEnrollmentReadRepository>();
-    builder.Services.AddScoped<IDeviceEnrollmentWriteRepository, DeviceEnrollmentWriteRepository>();
-
-    builder.Services.AddScoped<IMachineReadRepository, MachineReadRepository>();
-    builder.Services.AddScoped<IMachineWriteRepository, MachineWriteRepository>();
-
+    builder.Services.AddScoped<GetLeaderboardHandler>();
+ 
+  //Validators  
     builder.Services.AddScoped<IValidator<ProvisionMachineRequest>,
         ProvisionMachineRequestValidator>();
 

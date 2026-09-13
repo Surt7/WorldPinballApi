@@ -39,7 +39,7 @@ public sealed class ProvisionMachineHandler(
             cmd.IpSlug,
             ct);
 
-        if (ipLicense is null)
+        if (string.IsNullOrWhiteSpace(ipLicense?.Name))
         {
             logger.LogWarning(
                 MachineProvisioningUnknownIp,

@@ -336,7 +336,7 @@ namespace WorldPinball.Infrastructure.Migrations
 
                     b.Property<DateTime?>("ConsumedAtUtc")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("consumed_at_utc");
+                        .HasColumnName("consumed_at");
 
                     b.Property<Guid?>("ConsumedByDeviceId")
                         .HasColumnType("uuid")
@@ -356,7 +356,8 @@ namespace WorldPinball.Infrastructure.Migrations
 
                     b.Property<string>("IssuedByUserId")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)")
                         .HasColumnName("issued_by_user_id");
 
                     b.Property<Guid?>("MachineId")
@@ -368,7 +369,8 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnName("max_uses");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("text")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
                         .HasColumnName("notes");
 
                     b.Property<DateTime?>("RevokedAt")
@@ -377,11 +379,14 @@ namespace WorldPinball.Infrastructure.Migrations
 
                     b.Property<string>("TokenHash")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
                         .HasColumnName("token_hash");
 
-                    b.Property<int>("TokenType")
-                        .HasColumnType("integer")
+                    b.Property<string>("TokenType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("token_type");
 
                     b.Property<int>("UsesCount")
@@ -467,7 +472,9 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnName("session_id");
 
                     b.Property<string>("ClientVersion")
-                        .HasColumnType("text")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("client_version");
 
                     b.Property<Guid>("DeviceId")
@@ -488,7 +495,8 @@ namespace WorldPinball.Infrastructure.Migrations
 
                     b.Property<string>("Nonce")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
                         .HasColumnName("nonce");
 
                     b.Property<DateTime>("StartedAtUtc")
@@ -502,7 +510,9 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnName("state");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("text")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)")
                         .HasColumnName("user_id");
 
                     b.HasKey("SessionId")
@@ -615,7 +625,6 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnName("frequency_hz");
 
                     b.Property<Guid>("IdempotencyKey")
-                        .HasMaxLength(32)
                         .HasColumnType("uuid")
                         .HasColumnName("idempotency_key");
 

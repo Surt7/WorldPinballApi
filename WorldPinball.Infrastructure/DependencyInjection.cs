@@ -3,16 +3,18 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
-using WorldPinball.Application.Features.Machines.Admin;
+
 using WorldPinball.Application.Security;
 using WorldPinball.Infrastructure.Persistence;
 using WorldPinball.Infrastructure.Persistence.Repositories;
 using WorldPinball.Infrastructure.Persistence.Seed;
 using WorldPinball.Infrastructure.Security;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Hosting;
+
 using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
+using WorldPinball.Application.Security.CA;
+using WorldPinball.Infrastructure.Persistence.Interceptors;
+using WorldPinball.Infrastructure.Security.CA;
 
 namespace WorldPinball.Infrastructure;
 
@@ -30,13 +32,19 @@ public static class DependencyInjection
                  ?? throw new InvalidOperationException(
                      "Connection string 'DefaultConnection' is missing.");
 
-        // -------------------- Database --------------------
-
-        services.AddDbContext<AppDbContext>(options =>
+        // -------------------- Database + Interceptors--------------------
+        services.AddSingleton<PublishDomainEventsInterceptor>();
+        services.AddDbContext<AppDbContext>((sp,options) =>
             options
                 .UseNpgsql(cs)
-                .UseSnakeCaseNamingConvention());
+                .UseSnakeCaseNamingConvention()
+                .AddInterceptors(
+                    sp.GetRequiredService<PublishDomainEventsInterceptor>()
+                    ));
+            
 
+
+    
         // -------------------- Database HealthCheck --------------------
 
         services
@@ -44,17 +52,26 @@ public static class DependencyInjection
             .AddDbContextCheck<AppDbContext>(
                 name: "Database",
                 tags: ["database"]);
+       
+        //Repositories
         services.AddScoped<ISecretService, SecretService>();
         services.AddScoped<IIpLicenseReadRepository, IpLicenseReadRepository>();
         services.AddScoped<ILeaderboardRepository, LeaderboardRepository>();
         services.AddScoped<IMachineReadRepository, MachineReadRepository>();
         services.AddScoped<IMachineWriteRepository, MachineWriteRepository>();
+        services.AddScoped<IGameModeRepository, GameModeRepository>();
+        services.AddScoped<IIpLicenseReadRepository, IpLicenseReadRepository>();
 
-        services.AddScoped<GetLeaderboardHandler>();
-        services.AddScoped<
-            IProvisionMachineHandler,
-            ProvisionMachineHandler>();
+        services.AddScoped<IDeviceEnrollmentReadRepository, DeviceEnrollmentReadRepository>();
+        services.AddScoped<IDeviceEnrollmentWriteRepository, DeviceEnrollmentWriteRepository>();
 
+        services.AddScoped<IMachineReadRepository, MachineReadRepository>();
+        services.AddScoped<IMachineWriteRepository, MachineWriteRepository>();
+
+        services.AddScoped<IGameSessionReadRepository, GameSessionReadRepository>();
+        services.AddScoped<IGameSessionWriteRepository, GameSessionWriteRepository>();
+        services.AddScoped<ICertificateAuthorityService, StepCaCertificateAuthorityService>();
+        
         return services;
     }
 

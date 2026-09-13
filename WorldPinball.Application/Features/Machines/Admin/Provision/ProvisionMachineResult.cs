@@ -16,10 +16,6 @@ public abstract record ProvisionMachineResult
     ):ProvisionMachineResult;
     
     
-    public sealed record NonceExist(
-        string Nonce
-    ):ProvisionMachineResult;
-    
     public sealed record SameIdempotencyKey(
         Guid IdempotentKey
     ):ProvisionMachineResult;

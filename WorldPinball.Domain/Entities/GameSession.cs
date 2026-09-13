@@ -1,8 +1,10 @@
+using WorldPinball.Domain.Common;
 using WorldPinball.Domain.Enums;
+using WorldPinball.Domain.Events;
 
 namespace WorldPinball.Domain.Entities;
 
-public class GameSession
+public class GameSession : Entity
 {
     
     private static class ErrorMessages
@@ -85,8 +87,12 @@ public class GameSession
         StartedAtUtc = startedAtUtc;
         State = GameSessionState.Started;
         
-        
-        
+        AddDomainEvent(new GameSessionStartedDomainEvent(
+            SessionId,
+            MachineId,
+            DeviceId,
+            ModeId,
+            StartedAtUtc));
     }
     
     public void Pause()
@@ -113,6 +119,8 @@ public class GameSession
             throw new ArgumentException(ErrorMessages.Earlier, nameof(endedAtUtc));
         EndedAtUtc = endedAtUtc;
         State = GameSessionState.Ended;
+
+        AddDomainEvent(new GameSessionEndedDomainEvent(SessionId, endedAtUtc));
     }
 
     public void Abandon(DateTime abandonedAtUtc)

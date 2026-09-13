@@ -22,7 +22,6 @@ public sealed class AdminMachinesController(
     IValidator<ProvisionMachineRequest> requestValidator) 
     : ControllerBase
 {
-
     
     [HttpPost("provision")]
     [EndpointSummary("Creates a new machine and generates an enrollment token")]
@@ -91,7 +90,7 @@ public sealed class AdminMachinesController(
             ProvisionMachineResult.SameIdempotencyKey key =>
                 NotFound(new
                 {
-                    message = $"Unknow or inactive Ip slug: {key.IdempotentKey}"
+                    message = $"A machine was already provisioned with idempotency key: {key.IdempotentKey}"
                 }),
             ProvisionMachineResult.DuplicateSerial duplicateSerial =>
                 Conflict(new
