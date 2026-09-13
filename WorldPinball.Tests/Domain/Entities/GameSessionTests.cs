@@ -57,6 +57,24 @@ public class GameSessionTests
     }
 
     [Fact]
+    public void Constructor_WhenMachineIdIsEmpty_ThrowsArgumentException()
+    {
+        // Act
+        Action act = () => new GameSession(
+            Guid.Empty,
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "player-42",
+            "1.0.0",
+            "nonce-xyz",
+            DateTime.UtcNow
+        );
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
     public void Constructor_WhenDeviceIdIsEmpty_ThrowsArgumentException()
     {
         // Act
@@ -64,6 +82,24 @@ public class GameSessionTests
             Guid.NewGuid(),
             Guid.Empty,
             Guid.NewGuid(),
+            "player-42",
+            "1.0.0",
+            "nonce-xyz",
+            DateTime.UtcNow
+        );
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Constructor_WhenModeIdIsEmpty_ThrowsArgumentException()
+    {
+        // Act
+        Action act = () => new GameSession(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.Empty,
             "player-42",
             "1.0.0",
             "nonce-xyz",
@@ -95,6 +131,66 @@ public class GameSessionTests
         act.Should().Throw<ArgumentException>();
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Constructor_WhenClientVersionIsInvalid_ThrowsArgumentException(string? invalidClientVersion)
+    {
+        // Act
+        Action act = () => new GameSession(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "player-42",
+            invalidClientVersion!,
+            "nonce-xyz",
+            DateTime.UtcNow
+        );
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Constructor_WhenNonceIsInvalid_ThrowsArgumentException(string? invalidNonce)
+    {
+        // Act
+        Action act = () => new GameSession(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "player-42",
+            "1.0.0",
+            invalidNonce!,
+            DateTime.UtcNow
+        );
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Constructor_WhenStartedAtUtcIsDefault_ThrowsArgumentException()
+    {
+        // Act
+        Action act = () => new GameSession(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "player-42",
+            "1.0.0",
+            "nonce-xyz",
+            default
+        );
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
     [Fact]
     public void End_WhenSessionIsStarted_ShouldSetEndedAtAndTransitionToEndedState()
     {
@@ -112,6 +208,56 @@ public class GameSessionTests
     }
 
     [Fact]
+    public void End_WhenSessionIsResumed_ShouldTransitionToEndedState()
+    {
+        // Arrange
+        var startedAt = DateTime.UtcNow;
+        var session = CreateValidSession(startedAt);
+        session.Pause();
+        session.Resume();
+        var endedAt = startedAt.AddMinutes(15);
+
+        // Act
+        session.End(endedAt);
+
+        // Assert
+        session.EndedAtUtc.Should().Be(endedAt);
+        session.State.Should().Be(GameSessionState.Ended);
+    }
+
+    [Fact]
+    public void End_WhenSessionIsPaused_ShouldTransitionToEndedState()
+    {
+        // Arrange
+        var startedAt = DateTime.UtcNow;
+        var session = CreateValidSession(startedAt);
+        session.Pause();
+        var endedAt = startedAt.AddMinutes(10);
+
+        // Act
+        session.End(endedAt);
+
+        // Assert
+        session.EndedAtUtc.Should().Be(endedAt);
+        session.State.Should().Be(GameSessionState.Ended);
+    }
+
+    [Fact]
+    public void End_WhenEndedAtEqualsStartedAt_ShouldSucceed()
+    {
+        // Arrange
+        var startedAt = DateTime.UtcNow;
+        var session = CreateValidSession(startedAt);
+
+        // Act
+        session.End(startedAt);
+
+        // Assert
+        session.EndedAtUtc.Should().Be(startedAt);
+        session.State.Should().Be(GameSessionState.Ended);
+    }
+
+    [Fact]
     public void End_WhenSessionIsNotInActiveState_ThrowsInvalidOperationException()
     {
         // Arrange
@@ -119,7 +265,7 @@ public class GameSessionTests
         var session = CreateValidSession(startedAt);
         session.End(startedAt.AddMinutes(5));
 
-        // Act : Tentative de clôturer une session déjà terminée
+        // Act : attempt to close an already ended session
         Action act = () => session.End(startedAt.AddMinutes(10));
 
         // Assert
@@ -133,7 +279,7 @@ public class GameSessionTests
         var startedAt = DateTime.UtcNow;
         var session = CreateValidSession(startedAt);
 
-        // Act : Date de fin antérieure au début
+        // Act 
         Action act = () => session.End(startedAt.AddMinutes(-5));
 
         // Assert
@@ -154,6 +300,35 @@ public class GameSessionTests
     }
 
     [Fact]
+    public void Pause_WhenSessionIsResumed_ShouldTransitionToPausedState()
+    {
+        // Arrange
+        var session = CreateValidSession();
+        session.Pause();
+        session.Resume();
+
+        // Act
+        session.Pause();
+
+        // Assert
+        session.State.Should().Be(GameSessionState.Paused);
+    }
+
+    [Fact]
+    public void Pause_WhenSessionIsNotActive_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var session = CreateValidSession();
+        session.Pause(); // already pause
+
+        // Act : attemp to pause again
+        Action act = () => session.Pause();
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
     public void Resume_WhenSessionIsPaused_ShouldTransitionToResumedState()
     {
         // Arrange
@@ -171,9 +346,9 @@ public class GameSessionTests
     public void Resume_WhenSessionIsNotPaused_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateValidSession(); // État Started
+        var session = CreateValidSession(); // Started
 
-        // Act : Tenter de resume sans pause préalable
+        // Act : try out to resume without pause before.
         Action act = () => session.Resume();
 
         // Assert
@@ -197,6 +372,35 @@ public class GameSessionTests
     }
 
     [Fact]
+    public void Abandon_WhenSessionIsAlreadyClosed_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var startedAt = DateTime.UtcNow;
+        var session = CreateValidSession(startedAt);
+        session.Abandon(startedAt.AddMinutes(5));
+
+        // Act : Tenter d'abandonner une session déjà abandonnée
+        Action act = () => session.Abandon(startedAt.AddMinutes(10));
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void Abandon_WhenAbandonedAtIsEarlierThanStartedAt_ThrowsArgumentException()
+    {
+        // Arrange
+        var startedAt = DateTime.UtcNow;
+        var session = CreateValidSession(startedAt);
+
+        // Act
+        Action act = () => session.Abandon(startedAt.AddMinutes(-5));
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
     public void Abort_WhenSessionIsActive_ShouldTransitionToAbortedState()
     {
         // Arrange
@@ -210,5 +414,34 @@ public class GameSessionTests
         // Assert
         session.EndedAtUtc.Should().Be(abortedAt);
         session.State.Should().Be(GameSessionState.Aborted);
+    }
+
+    [Fact]
+    public void Abort_WhenSessionIsAlreadyClosed_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var startedAt = DateTime.UtcNow;
+        var session = CreateValidSession(startedAt);
+        session.Abort(startedAt.AddMinutes(5));
+
+        // Act : Tenter d'avorter une session déjà avortée
+        Action act = () => session.Abort(startedAt.AddMinutes(10));
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void Abort_WhenAbortedAtIsEarlierThanStartedAt_ThrowsArgumentException()
+    {
+        // Arrange
+        var startedAt = DateTime.UtcNow;
+        var session = CreateValidSession(startedAt);
+
+        // Act
+        Action act = () => session.Abort(startedAt.AddMinutes(-5));
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
     }
 }

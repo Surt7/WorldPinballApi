@@ -1,10 +1,15 @@
 ﻿using WorldPinball.Domain.Enums;
 
-namespace WorldPinball.Application.Features.Machines.Public.Dto;
+namespace WorldPinball.Application.Features.Machines.Public.Enroll.Dto;
 
 public sealed record EnrollmentTokenDto(
-    string TokenHash,
+    Guid TokenId,
     EnrollmentTokenType TokenType,
-    Guid? MachineId,
-    Guid? DeviceId 
-    );
+    string IssuedByUserId,
+    DateTime IssuedAtUtc,
+    DateTime ExpiresAtUtc,
+    DateTime? ConsumedAtUtc,
+    Guid? ConsumedByDeviceId,
+    int UsesCount,
+    int MaxUses
+);

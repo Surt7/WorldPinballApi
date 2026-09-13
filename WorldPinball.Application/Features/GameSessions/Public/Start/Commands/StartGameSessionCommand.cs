@@ -1,4 +1,4 @@
-﻿namespace WorldPinball.Application.Features.GameSesions.Public.Start.Commands;
+﻿namespace WorldPinball.Application.Features.GameSessions.Public.Start.Commands;
 
 public sealed record StartGameSessionCommand(
     Guid DeviceId,

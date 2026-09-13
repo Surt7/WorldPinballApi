@@ -28,7 +28,7 @@ public sealed class ProvisionMachineHandler(
         new(2002, nameof(MachineProvisioningDuplicateSerial));
     
     private static readonly EventId MachineProvisioningSameIdempotencyKey = 
-        new(2002, nameof(MachineProvisioningSameIdempotencyKey));
+        new(2003, nameof(MachineProvisioningSameIdempotencyKey));
     
     public async Task<ProvisionMachineResult> HandleAsync(
         ProvisionMachineCommand cmd,
@@ -53,14 +53,14 @@ public sealed class ProvisionMachineHandler(
         if (sameIdempotencyKey)
         {
             logger.LogWarning(
-                MachineProvisioningUnknownIp,
-                "Same Idempotencykey {IdempotencyKey} already exists.",
+                MachineProvisioningSameIdempotencyKey,
+                "Same Idempotency key {IdempotencyKey} already exists.",
                 cmd.IdempotencyKey);
             return new ProvisionMachineResult.SameIdempotencyKey(cmd.IdempotencyKey);
         }
         
         
-        // check if WorldPinballSerialNumber exist  ( it's a internal serial number to worldPinball)
+        // check if WorldPinballSerialNumber exist  ( it's an internal serial number to worldPinball)
         bool serialExists = await machineWriteRepository.SerialExistsAsync(
             cmd.WorldPinballSerialNumber,
             ct);
@@ -77,7 +77,7 @@ public sealed class ProvisionMachineHandler(
         
         var enrollmentSecret = secretService.Generate();
         var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
-        var idempotencyKey = Guid.NewGuid();
+        var idempotencyKey = cmd.IdempotencyKey;
         var bytes = RandomNumberGenerator.GetBytes(32);
         var nonce = WebEncoders.Base64UrlEncode(bytes);
         

@@ -1,4 +1,4 @@
-namespace WorldPinball.Application.Features.Leaderboard.Public.Queries.GetLeaderboard;
+namespace WorldPinball.Application.Features.Leaderboard.Public.Queries;
 
 public sealed record GetLeaderboardQuery(
     string? IpSlug,

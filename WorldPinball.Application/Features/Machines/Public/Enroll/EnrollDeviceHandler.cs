@@ -1,11 +1,11 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Logging;
-using WorldPinball.Application.Features.Machines.Public.Commands;
+using WorldPinball.Application.Features.Machines.Public.Enroll.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Domain.Entities;
 
-namespace WorldPinball.Application.Features.Machines.Public;
+namespace WorldPinball.Application.Features.Machines.Public.Enroll;
 
 public sealed class EnrollDeviceHandler(
     IDeviceEnrollmentWriteRepository deviceEnrollmentWriteRepository,
@@ -17,8 +17,14 @@ public sealed class EnrollDeviceHandler(
     private static readonly EventId DeviceEnrolled =
         new(2100, nameof(DeviceEnrolled));
 
-    private static readonly EventId DeviceEnrollmentRejected =
-        new(2101, nameof(DeviceEnrollmentRejected));
+    private static readonly EventId EnrollmentTokenNotFound =
+        new(2101, nameof(EnrollmentTokenNotFound));
+
+    private static readonly EventId DeviceAlreadyEnrolled =
+        new(2102, nameof(DeviceAlreadyEnrolled));
+
+    private static readonly EventId EnrollmentTokenConsumptionFailed =
+        new(2103, nameof(EnrollmentTokenConsumptionFailed));
 
     public async Task<EnrollDeviceResult> HandleAsync(
         EnrollDeviceCommand cmd,
@@ -40,12 +46,23 @@ public sealed class EnrollDeviceHandler(
 
         EnrollmentToken? token = await deviceEnrollmentReadRepository.GetTokenByHashAsync(tokenHash, ct);
 
-        if (token == null)
+        if (token is null)
+        {
+            logger.LogWarning(
+                EnrollmentTokenNotFound,
+                "Device enrollment rejected for serial {DeviceSerialNumber}: Token not found.",
+                cmd.DeviceSerialNumber);
             return new EnrollDeviceResult.InvalidToken("Token not found");
+        }
 
         if (await deviceEnrollmentReadRepository.DeviceSerialExistsAsync(cmd.DeviceSerialNumber, ct))
+        {
+            logger.LogWarning(
+                DeviceAlreadyEnrolled,
+                "Device enrollment rejected for serial {DeviceSerialNumber}: Device is already enrolled.",
+                cmd.DeviceSerialNumber);
             return new EnrollDeviceResult.DeviceAlreadyEnrolled(cmd.DeviceSerialNumber);
-
+        }
 
         var device = new Device
         {
@@ -55,7 +72,6 @@ public sealed class EnrollDeviceHandler(
             CreatedAtUtc = now
         };
 
-
         var machineDevice = new MachineDevice
         {
             MachineId = cmd.MachineId,
@@ -64,16 +80,28 @@ public sealed class EnrollDeviceHandler(
             IsActive = true
         };
         
-        
         try
         {
             token.Consume(device.DeviceId, now);
         }
         catch (InvalidOperationException ex)
         {
+            logger.LogWarning(
+                EnrollmentTokenConsumptionFailed,
+                "Device enrollment rejected for serial {DeviceSerialNumber}: Token consumption failed ({Reason}).",
+                cmd.DeviceSerialNumber,
+                ex.Message);
             return new EnrollDeviceResult.InvalidToken(ex.Message);
         }
+
         await deviceEnrollmentWriteRepository.SaveEnrollmentAsync(device, machineDevice, token, ct);
+
+        logger.LogInformation(
+            DeviceEnrolled,
+            "Device {DeviceId} with serial {DeviceSerialNumber} successfully enrolled and attached to machine {MachineId}.",
+            device.DeviceId,
+            cmd.DeviceSerialNumber,
+            cmd.MachineId);
 
         return new EnrollDeviceResult.Success(
             DeviceId: device.DeviceId,

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Application.Features.Leaderboard.Public.Dtos;
 using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
-using WorldPinball.Application.Features.Leaderboard.Public.Queries.GetLeaderboard;
+using WorldPinball.Application.Features.Leaderboard.Public.Queries;
 
 namespace WorldPinball.Api.Controllers.Public;
 

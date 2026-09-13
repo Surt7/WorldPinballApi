@@ -1,4 +1,4 @@
-namespace WorldPinball.Application.Features.GameSesions.Public.Start;
+namespace WorldPinball.Application.Features.GameSessions.Public.Start;
 
 public abstract record StartGameSessionResult
 {

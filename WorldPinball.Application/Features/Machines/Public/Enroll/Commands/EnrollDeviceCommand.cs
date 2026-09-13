@@ -1,4 +1,4 @@
-namespace WorldPinball.Application.Features.Machines.Public.Commands;
+namespace WorldPinball.Application.Features.Machines.Public.Enroll.Commands;
 
 public sealed record EnrollDeviceCommand(
     Guid MachineId,

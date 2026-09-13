@@ -1,6 +1,6 @@
-using WorldPinball.Application.Features.GameSesions.Public.Start.Commands;
+using WorldPinball.Application.Features.GameSessions.Public.Start.Commands;
 
-namespace WorldPinball.Application.Features.GameSesions.Public.Start;
+namespace WorldPinball.Application.Features.GameSessions.Public.Start;
 
 public interface IStartGameSessionHandler
 {

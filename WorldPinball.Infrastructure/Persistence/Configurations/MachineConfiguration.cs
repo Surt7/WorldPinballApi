@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using WorldPinball.Domain.Entities;
@@ -46,7 +46,6 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
                 .IsRequired();
             
             e.Property(x => x.IdempotencyKey)
-                .HasMaxLength(32)
                 .IsRequired();
             
             e.Property(x => x.MachineNotes)

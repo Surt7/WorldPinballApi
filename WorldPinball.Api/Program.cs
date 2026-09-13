@@ -15,27 +15,25 @@ using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Api.Validation.Admin;
 using WorldPinball.Domain.Entities;
 using AutoMapper;
-using WorldPinball.Application.Features.Machines.Public.Profile;
+using WorldPinball.Application.Features.Machines.Public.Enroll.Profile;
 
 
 // -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
 
 try
 {
-
-
     var builder = WebApplication.CreateBuilder(args);
-    
+
     builder.Services.AddProblemDetails();
-    
+
     builder.AddWorldPinballLogging();
 
     var keycloakAuthority = builder.Configuration["Keycloak:Authority"]
                             ?? throw new InvalidOperationException("Keycloak:Authority is missing.");
     var keycloakAudience = builder.Configuration["Keycloak:Audience"]
                            ?? throw new InvalidOperationException("Keycloak:Audience is missing.");
-    
-    
+
+
     builder.Services.AddAutoMapper(cfg => { }, typeof(EnrollmentMappingProfile));
 
 // -------------------- Services --------------------
@@ -48,19 +46,20 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.AddObservability();
 // ----------------------------------------
+
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();
     builder.Services.AddScoped<ICanonicalBuilder, CanonicalBuilder>();
     builder.Services.AddSingleton<ISignatureVerifier, EcdsaP256SignatureVerifier>();
     
     builder.Services.AddScoped<IGameModeRepository, GameModeRepository>();
     builder.Services.AddScoped<IIpLicenseReadRepository, IpLicenseReadRepository>();
-    
+
     builder.Services.AddScoped<IDeviceEnrollmentReadRepository, DeviceEnrollmentReadRepository>();
     builder.Services.AddScoped<IDeviceEnrollmentWriteRepository, DeviceEnrollmentWriteRepository>();
-    
+
     builder.Services.AddScoped<IMachineReadRepository, MachineReadRepository>();
     builder.Services.AddScoped<IMachineWriteRepository, MachineWriteRepository>();
-    
+
     builder.Services.AddScoped<IValidator<ProvisionMachineRequest>,
         ProvisionMachineRequestValidator>();
 
@@ -74,7 +73,7 @@ try
         .SetApplicationName("WorldPinball")
         .PersistKeysToFileSystem(keysDir);
 // -------------------- AuthN & Z --------------------
-    
+
     builder.Services
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
@@ -128,19 +127,17 @@ try
             options.OAuthUsePkce();
         });
     }
-    
+
 // -------------------- Healthcheck --------------------
     app.MapApiHealthChecks();
-    
-    
-    
-    
+
+
 // -------------------- USE -------------------- USE -------------------- USE --------------------//
 
 // -------- Middleware pipeline --------
     app.UseMiddleware<RequireHttpsMiddleware>();
-    
-    
+
+
     app.UseRequestLocalization();
     app.UseRouting();
 
@@ -148,15 +145,16 @@ try
     app.UseAuthorization();
 
     app.MapControllers();
-  
+
 
     app.Run();
 }
-catch(Exception ex)
+catch (Exception ex)
 {
     Log.Fatal(ex, "Application start-up failed");
     throw;
 }
+
 public partial class Program
 {
 }

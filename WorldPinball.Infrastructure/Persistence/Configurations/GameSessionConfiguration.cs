@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using WorldPinball.Domain.Entities;
 
@@ -29,8 +29,16 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
              .HasMaxLength(20)
              .IsRequired();
 
-            e.Property(x => x.Nonce).IsRequired();
-            e.Property(x => x.ClientVersion);
+            e.Property(x => x.UserId)
+             .IsRequired()
+             .HasMaxLength(450);
+
+            e.Property(x => x.Nonce)
+             .IsRequired()
+             .HasMaxLength(64);
+
+            e.Property(x => x.ClientVersion)
+             .HasMaxLength(50);
 
             e.HasIndex(x => x.Nonce).IsUnique();
 
