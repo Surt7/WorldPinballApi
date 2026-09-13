@@ -265,7 +265,7 @@ public class GameSessionTests
         var session = CreateValidSession(startedAt);
         session.End(startedAt.AddMinutes(5));
 
-        // Act : attempt to close an already ended session
+        // Act: Attempt to close an already ended session
         Action act = () => session.End(startedAt.AddMinutes(10));
 
         // Assert
@@ -279,7 +279,7 @@ public class GameSessionTests
         var startedAt = DateTime.UtcNow;
         var session = CreateValidSession(startedAt);
 
-        // Act 
+        // Act: End date earlier than start date
         Action act = () => session.End(startedAt.AddMinutes(-5));
 
         // Assert
@@ -319,9 +319,9 @@ public class GameSessionTests
     {
         // Arrange
         var session = CreateValidSession();
-        session.Pause(); // already pause
+        session.Pause(); // Already paused
 
-        // Act : attemp to pause again
+        // Act: Attempt to pause again
         Action act = () => session.Pause();
 
         // Assert
@@ -346,9 +346,9 @@ public class GameSessionTests
     public void Resume_WhenSessionIsNotPaused_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateValidSession(); // Started
+        var session = CreateValidSession(); // Started state
 
-        // Act : try out to resume without pause before.
+        // Act: Attempt to resume without pausing first
         Action act = () => session.Resume();
 
         // Assert
@@ -379,7 +379,7 @@ public class GameSessionTests
         var session = CreateValidSession(startedAt);
         session.Abandon(startedAt.AddMinutes(5));
 
-        // Act : Tenter d'abandonner une session déjà abandonnée
+        // Act: Attempt to abandon an already closed session
         Action act = () => session.Abandon(startedAt.AddMinutes(10));
 
         // Assert
@@ -393,7 +393,7 @@ public class GameSessionTests
         var startedAt = DateTime.UtcNow;
         var session = CreateValidSession(startedAt);
 
-        // Act
+        // Act: Abandon date earlier than start date
         Action act = () => session.Abandon(startedAt.AddMinutes(-5));
 
         // Assert
@@ -424,7 +424,7 @@ public class GameSessionTests
         var session = CreateValidSession(startedAt);
         session.Abort(startedAt.AddMinutes(5));
 
-        // Act : Tenter d'avorter une session déjà avortée
+        // Act: Attempt to abort an already closed session
         Action act = () => session.Abort(startedAt.AddMinutes(10));
 
         // Assert
@@ -438,7 +438,7 @@ public class GameSessionTests
         var startedAt = DateTime.UtcNow;
         var session = CreateValidSession(startedAt);
 
-        // Act
+        // Act: Abort date earlier than start date
         Action act = () => session.Abort(startedAt.AddMinutes(-5));
 
         // Assert

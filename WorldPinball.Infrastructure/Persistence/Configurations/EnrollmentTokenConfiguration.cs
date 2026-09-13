@@ -34,7 +34,7 @@ public sealed class EnrollmentTokenConfiguration : IEntityTypeConfiguration<Enro
         b.HasIndex(x => x.IssuedByUserId);
         b.HasIndex(x => x.ConsumedByDeviceId);
 
-        // ---- relations (verrouillées) ----
+        // ---- relationships (restricted) ----
 
         b.HasOne(x => x.Machine)
             .WithMany(x => x.EnrollmentTokens)

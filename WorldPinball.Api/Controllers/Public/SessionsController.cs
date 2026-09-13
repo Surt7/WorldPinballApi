@@ -30,7 +30,7 @@
 //         Request.Body.Position = 0;
 //
 //         if (string.IsNullOrWhiteSpace(rawBody))
-//             return BadRequest(new { message = "Body vide" });
+//             return BadRequest(new { message = "Empty body" });
 //
 //         StartSessionRequest? req;
 //         try
@@ -39,11 +39,11 @@
 //         }
 //         catch
 //         {
-//             return BadRequest(new { message = "JSON invalide" });
+//             return BadRequest(new { message = "Invalid JSON" });
 //         }
 //
 //         if (req is null)
-//             return BadRequest(new { message = "Body invalide" });
+//             return BadRequest(new { message = "Invalid body" });
 //
 //         MachineAuthResult auth1;
 //         try
@@ -61,7 +61,7 @@
 //             .FirstOrDefaultAsync(ct);
 //
 //         if (mode is null)
-//             return NotFound(new { message = "modeCode inconnu" });
+//             return NotFound(new { message = "Unknown modeCode" });
 //
 //         var session = new GameSession
 //         {
@@ -91,21 +91,21 @@
 //         Request.Body.Position = 0;
 //
 //         if (string.IsNullOrWhiteSpace(rawBody))
-//             return BadRequest(new { message = "Body vide" });
+//             return BadRequest(new { message = "Empty body" });
 //
 //         SubmitScoreRequest? req;
 //         try
 //         {
 //             req = System.Text.Json.JsonSerializer.Deserialize<SubmitScoreRequest>(rawBody, JsonOpts);
-//             Console.WriteLine($"ModeCode reçu = '{req}'");
+//             Console.WriteLine($"ModeCode received = '{req}'");
 //         }
 //         catch
 //         {
-//             return BadRequest(new { message = "JSON invalide" });
+//             return BadRequest(new { message = "Invalid JSON" });
 //         }
 //
 //         if (req is null)
-//             return BadRequest(new { message = "Body invalide" });
+//             return BadRequest(new { message = "Invalid body" });
 //
 //         MachineAuthResult auth1;
 //         try
@@ -118,15 +118,15 @@
 //         }
 //
 //         if (req.Score < 0 || req.Score > 2_000_000_000)
-//             return BadRequest(new { message = "score hors bornes" });
+//             return BadRequest(new { message = "Score out of bounds" });
 //
 //         var session = await db.GameSessions
 //             .Include(s => s.Machine)
 //             .FirstOrDefaultAsync(s => s.SessionId == sessionId, ct);
 //
-//         if (session is null) return NotFound(new { message = "session introuvable" });
+//         if (session is null) return NotFound(new { message = "Session not found" });
 //         if (session.MachineId != auth1.MachineId) return Forbid();
-//         if (session.State != GameSessionState.Started) return Conflict(new { message = "session déjà clôturée" });
+//         if (session.State != GameSessionState.Started) return Conflict(new { message = "Session already ended" });
 //
 //         using var tx = await db.Database.BeginTransactionAsync(ct);
 //
