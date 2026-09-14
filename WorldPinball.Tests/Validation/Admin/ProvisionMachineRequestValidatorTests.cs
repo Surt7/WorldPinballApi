@@ -14,6 +14,7 @@ public sealed class ProvisionMachineRequestValidatorTests
         "resident-evil",
         Guid.NewGuid(),
         "Resident Evil",
+        null,
         null);
 
     [Fact]

@@ -23,6 +23,8 @@ public class AdminMachinesControllerTests
         const string expectedEnrollmentToken = "enrollment-token";
         var idempotencyKey = Guid.NewGuid();
                var validator = Substitute.For<IValidator<ProvisionMachineRequest>>();
+
+               int? validityHour = 1;
         validator
             .ValidateAsync(
                 Arg.Any<ProvisionMachineRequest>(),
@@ -44,7 +46,8 @@ public class AdminMachinesControllerTests
             "resident-evil",
             idempotencyKey,
             "Resident Evil",
-            null);
+            null,
+            validityHour);
         
         // create controller
         var controller = new AdminMachinesController(handler,validator);

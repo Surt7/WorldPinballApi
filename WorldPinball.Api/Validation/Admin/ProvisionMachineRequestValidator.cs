@@ -38,5 +38,12 @@ public sealed class ProvisionMachineRequestValidator
         RuleFor(request => request.IdempotencyKey)
             .NotEmpty()
             .WithMessage("The Idempotency Key is required and must be a valid GUID.");
+        
+        When(x => x.ValidityHours.HasValue, () =>
+        {
+            RuleFor(x => x.ValidityHours!.Value)
+                .InclusiveBetween(1, 168) // Min 1 heure, Max 7 jours (168h)
+                .WithMessage("Validity hours must be between 1 and 168 hours (7 days).");
+        });
     }
 }

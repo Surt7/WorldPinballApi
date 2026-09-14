@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Application.Features.Machines.Admin;
 using FluentValidation;
@@ -85,10 +84,10 @@ public sealed class AdminMachinesController(
             ProvisionMachineResult.UnknownIp unknownIp =>
                 NotFound(new
                 {
-                    message = $"Unknow or inactive Ip slug: {unknownIp.IpSlug}"
+                    message = $"Unknown or inactive Ip slug: {unknownIp.IpSlug}"
                 }),
             ProvisionMachineResult.SameIdempotencyKey key =>
-                NotFound(new
+                Conflict(new
                 {
                     message = $"A machine was already provisioned with idempotency key: {key.IdempotentKey}"
                 }),
@@ -102,7 +101,4 @@ public sealed class AdminMachinesController(
                 $"Unsupported provisioning result: {resultProvisioning.GetType().Name}")
         };
     }
-    
-    
-    
 }

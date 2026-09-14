@@ -2,18 +2,15 @@
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 
-
 namespace WorldPinball.Tests.Domain.Entities;
 
 public class EnrollmentTokenTests
 {
     private static readonly DateTime NowUtc = new(2026, 9, 10, 12, 0, 0, DateTimeKind.Utc);
     
-    
     [Fact]
     public void Constructor_WithValidArguments_ShouldInitializeProperties()
     {
-
         // Arrange
         var tokenHash = "dummy_hash_sha256_value";
         var tokenType = EnrollmentTokenType.DeviceEnroll;
@@ -48,6 +45,7 @@ public class EnrollmentTokenTests
         token.DeviceId.Should().Be(deviceId);
         token.MaxUses.Should().Be(maxUses);
         token.Notes.Should().Be(notes);
+        token.ValidityHours.Should().Be(EnrollmentToken.DefaultValidityHours);
         token.UsesCount.Should().Be(0);
         token.ConsumedAtUtc.Should().BeNull();
         token.ConsumedByDeviceId.Should().BeNull();
@@ -67,7 +65,6 @@ public class EnrollmentTokenTests
         var maxUses = 3;
         var notes = "Test token notes";
 
-
         Action act = () =>
         {
             var enrollmentToken = new EnrollmentToken(
@@ -82,11 +79,56 @@ public class EnrollmentTokenTests
                 notes);
         };
 
-
         act.Should().Throw<ArgumentNullException>()
             .WithParameterName("tokenHash");
     }
 
+    [Fact]
+    public void Constructor_WhenValidityHoursIsCustom_ShouldSetValidityHours()
+    {
+        // Arrange & Act
+        var token = new EnrollmentToken(
+            "dummy_hash_sha256_value",
+            EnrollmentTokenType.DeviceEnroll,
+            "admin-user-id",
+            NowUtc,
+            NowUtc.AddHours(48),
+            validityHours: 48);
+
+        // Assert
+        token.ValidityHours.Should().Be(48);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public void Constructor_WhenValidityHoursIsZeroOrNegative_ShouldThrowArgumentOutOfRangeException(int invalidHours)
+    {
+        Action act = () => new EnrollmentToken(
+            "dummy_hash_sha256_value",
+            EnrollmentTokenType.DeviceEnroll,
+            "admin-user-id",
+            NowUtc,
+            NowUtc.AddHours(24),
+            validityHours: invalidHours);
+
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithParameterName("validityHours");
+    }
+
+    [Fact]
+    public void Constructor_WhenExpiresAtIsBeforeOrEqualIssuedAt_ShouldThrowArgumentException()
+    {
+        Action act = () => new EnrollmentToken(
+            "dummy_hash_sha256_value",
+            EnrollmentTokenType.DeviceEnroll,
+            "admin-user-id",
+            NowUtc,
+            NowUtc.AddMinutes(-10));
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("expiresAt");
+    }
 
     [Fact]
     public void Consume_WithValidDevice_ShouldSetConsumedAt()
@@ -120,12 +162,40 @@ public class EnrollmentTokenTests
         token.UsesCount.Should().Be(1);
         token.ConsumedAtUtc.Should().Be(consumeDate);
         token.ConsumedByDeviceId.Should().Be(expectedValidDeviceId);
-
-
     } 
-      
-    
-    
+
+    [Fact]
+    public void Consume_WhenDeviceIdIsEmpty_ShouldThrowArgumentException()
+    {
+        var token = new EnrollmentToken(
+            "dummy_hash_sha256_value",
+            EnrollmentTokenType.DeviceEnroll,
+            "admin-user-id",
+            NowUtc,
+            NowUtc.AddDays(7));
+
+        Action act = () => token.Consume(Guid.Empty, NowUtc.AddHours(1));
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("deviceId");
+    }
+
+    [Fact]
+    public void Consume_WhenNowIsDefault_ShouldThrowArgumentException()
+    {
+        var token = new EnrollmentToken(
+            "dummy_hash_sha256_value",
+            EnrollmentTokenType.DeviceEnroll,
+            "admin-user-id",
+            NowUtc,
+            NowUtc.AddDays(7));
+
+        Action act = () => token.Consume(Guid.NewGuid(), default);
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("now");
+    }
+
     [Fact]
     public void Consume_WhenTokenIsExpired_ShouldThrowInvalidOperationException()
     {
@@ -150,17 +220,15 @@ public class EnrollmentTokenTests
             maxUses,
             notes);
 
-
         var expiredDate = NowUtc.AddDays(8);
+
         // Act
         Action act = () => token.Consume(deviceId, expiredDate);
 
         act.Should()
             .Throw<InvalidOperationException>()
             .WithMessage("*Token expired*");
-
     }
-
 
     [Fact]
     public void Consume_WhenTokenIsScopedToDifferentDevice_ShouldThrowInvalidOperationException()
@@ -172,7 +240,6 @@ public class EnrollmentTokenTests
         var issuedAt = NowUtc;
         var expiresAt = NowUtc.AddDays(5);
         var machineId = Guid.NewGuid();
-     
         
         var maxUses = 1;
         var notes = "Test token notes";
@@ -194,18 +261,15 @@ public class EnrollmentTokenTests
         act.Should().Throw<InvalidOperationException>().WithMessage("*device*");
     }
     
-    
     [Fact]
     public void Consume_WhenTokenIsEmptyOrNull_ShouldThrowInvalidOperationException()
     {
-        // Guid? deviceId = null;
         var tokenHash = "dummy_hash_sha256_value";
         var tokenType = EnrollmentTokenType.DeviceEnroll;
         var issuedByUserId = "admin-user-id";
         var issuedAt = NowUtc;
         var expiresAt = NowUtc.AddDays(5);
         var machineId = Guid.NewGuid();
-     
         
         var maxUses = 1;
         var notes = "Test token notes";
@@ -228,6 +292,36 @@ public class EnrollmentTokenTests
         token.UsesCount.Should().Be(1);
         token.ConsumedByDeviceId.Should().Be(anyDeviceId);
     }
-    
-    
+
+    [Fact]
+    public void Revoke_WhenCalled_ShouldSetRevokedAt()
+    {
+        var token = new EnrollmentToken(
+            "dummy_hash_sha256_value",
+            EnrollmentTokenType.DeviceEnroll,
+            "admin-user-id",
+            NowUtc,
+            NowUtc.AddDays(7));
+
+        var revokeDate = NowUtc.AddHours(2);
+        token.Revoke(revokeDate);
+
+        token.RevokedAt.Should().Be(revokeDate);
+    }
+
+    [Fact]
+    public void Revoke_WhenNowIsDefault_ShouldThrowArgumentException()
+    {
+        var token = new EnrollmentToken(
+            "dummy_hash_sha256_value",
+            EnrollmentTokenType.DeviceEnroll,
+            "admin-user-id",
+            NowUtc,
+            NowUtc.AddDays(7));
+
+        Action act = () => token.Revoke(default);
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("now");
+    }
 }

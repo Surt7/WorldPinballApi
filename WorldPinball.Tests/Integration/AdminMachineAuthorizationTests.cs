@@ -91,7 +91,7 @@ public class AdminMachineAuthorizationTests : IClassFixture<WorldPinballApiFacto
         request.Headers.Add(
             TestAuthHandler.RoleHeaderName,
             "Admin");
-
+        int? validityHour = 1;
         // Send a real JSON body so MVC model binding and request validation remain part of the test.
         request.Content = JsonContent.Create(
             new ProvisionMachineRequest(
@@ -99,7 +99,8 @@ public class AdminMachineAuthorizationTests : IClassFixture<WorldPinballApiFacto
                 "resident-evil",
                 idempotencyKey,
                 "Integration machine",
-                null));
+                null,
+                validityHour));
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should()

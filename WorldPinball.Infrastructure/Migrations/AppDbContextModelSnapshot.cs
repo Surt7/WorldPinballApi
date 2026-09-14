@@ -393,6 +393,10 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("uses_count");
 
+                    b.Property<int?>("ValidityHours")
+                        .HasColumnType("integer")
+                        .HasColumnName("validity_hours");
+
                     b.HasKey("TokenId")
                         .HasName("pk_enrollment_tokens");
 

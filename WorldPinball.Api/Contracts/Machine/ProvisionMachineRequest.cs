@@ -3,7 +3,8 @@
 public sealed record ProvisionMachineRequest(
     string WorldPinballSerialNumber,
     string IpSlug,
-    Guid  IdempotencyKey,
+    Guid IdempotencyKey,
     string DisplayName,
-       string? PublicKey
+    string? PublicKey,
+    int? ValidityHours
 );
