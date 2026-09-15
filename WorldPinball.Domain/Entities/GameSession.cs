@@ -6,13 +6,11 @@ namespace WorldPinball.Domain.Entities;
 
 public class GameSession : Entity
 {
-    
     private static class ErrorMessages
     {
         public const string MachineId = "MachineId cannot be empty.";
         public const string DeviceId = "DeviceId cannot be empty";
         public const string ModeId = "ModeId cannot be empty.";
-        public const string UserId = "UserId cannot be empty.";
         public const string Nonce = "Nonce cannot be empty.";
         public const string StartedAtUtc = "StartedAtUtc must be a valid date.";
         public const string ClientVersion = "ClientVersion cannot be empty.";
@@ -21,37 +19,46 @@ public class GameSession : Entity
         public const string PauseSession = "Can only pause an active session.";
         public const string ResumeSession = "Can only resume a paused session.";
         public const string ClosedSession = "Session is already closed.";
+        public const string AddPlayerNotStarted = "Cannot add a player to a session that is not in Started state.";
+        public const string InvalidSlotNumber = "Slot number must be between 1 and 4.";
+        public const string MaxPlayersReached = "A game session cannot have more than 4 players.";
+        public const string SlotAlreadyOccupied = "The specified slot is already occupied.";
+        public const string UserAlreadyRegistered = "This user is already registered in this session.";
+        public const string RegisteredUserRequired = "A registered player (UserId) is required for this game mode or tournament.";
     }
     private GameSession() { }
+
+
+    private readonly List<ScoreEntry> _scoreEntries = [];
+    public IReadOnlyCollection<ScoreEntry>  ScoreEntries => _scoreEntries.AsReadOnly();
     
     public Guid SessionId { get; private set; }
 
-    public Guid MachineId { get; private set; }
-    public Machine Machine { get;private set; }
+    public Guid MachineId { get; private set; } 
+    public Machine Machine { get; private set; } = null!;
 
     public Guid DeviceId { get; private set; }
-    public Device Device { get; private set; }
+    public Device Device { get; private set; } =  null!;
 
-    public string UserId { get;private set; }
+    public Guid ModeId { get; private set; }
+    public GameMode Mode { get; private set; } = null!;
 
-    public Guid ModeId { get;private set; }
-    public GameMode Mode { get; private set; }
-
-    public DateTime StartedAtUtc { get;private set; }
-    public DateTime? EndedAtUtc { get;private set; }
+    public DateTime StartedAtUtc { get; private set; }
+    public DateTime? EndedAtUtc { get; private set; }
 
     public GameSessionState State { get; private set; }
-    public string Nonce { get;private set; }
-    public string ClientVersion { get;private set; }
+    public string Nonce { get; private set; }
+    public string ClientVersion { get; private set; }
 
-    public ScoreEntry? ScoreEntry { get;private set; }
-    
+    public ScoreEntry? ScoreEntry { get; private set; }
+
+    private readonly List<GameSessionPlayer> _players = [];
+    public IReadOnlyCollection<GameSessionPlayer> Players => _players.AsReadOnly();
     
     public GameSession(
         Guid machineId,
         Guid deviceId,
         Guid modeId,
-        string userId,
         string clientVersion,
         string nonce,
         DateTime startedAtUtc)
@@ -64,9 +71,6 @@ public class GameSession : Entity
         
         if (modeId == Guid.Empty)
             throw new ArgumentException(ErrorMessages.ModeId, nameof(modeId));
-        
-        if (string.IsNullOrWhiteSpace(userId))
-            throw new ArgumentException(ErrorMessages.UserId, nameof(userId));
         
         if (string.IsNullOrWhiteSpace(clientVersion))
             throw new ArgumentException(ErrorMessages.ClientVersion, nameof(clientVersion));
@@ -81,7 +85,6 @@ public class GameSession : Entity
         MachineId = machineId;
         DeviceId = deviceId;
         ModeId = modeId;
-        UserId = userId;
         ClientVersion = clientVersion;
         Nonce = nonce;
         StartedAtUtc = startedAtUtc;
@@ -141,5 +144,39 @@ public class GameSession : Entity
             throw new ArgumentException(ErrorMessages.Earlier, nameof(abortedAtUtc));
         EndedAtUtc = abortedAtUtc;
         State = GameSessionState.Aborted;
+    }
+
+    public void AddPlayer(
+        int slotNumber,
+        Guid? userId = null,
+        string? guestInitials = null,
+        bool requiresRegisteredUser = false)
+    {
+        if (requiresRegisteredUser && !userId.HasValue)
+            throw new InvalidOperationException(ErrorMessages.RegisteredUserRequired);
+        
+        if (State is not (GameSessionState.Started or GameSessionState.Resumed))
+            throw new InvalidOperationException(ErrorMessages.AddPlayerNotStarted);
+
+        if (slotNumber is < 1 or > 4)
+            throw new ArgumentOutOfRangeException(nameof(slotNumber), ErrorMessages.InvalidSlotNumber);
+
+        if (_players.Count >= 4)
+            throw new InvalidOperationException(ErrorMessages.MaxPlayersReached);
+
+        if (_players.Any(p => p.SlotNumber == slotNumber))
+            throw new InvalidOperationException(ErrorMessages.SlotAlreadyOccupied);
+
+        if (userId.HasValue && _players.Any(p => p.UserId == userId.Value))
+            throw new InvalidOperationException(ErrorMessages.UserAlreadyRegistered);
+
+        _players.Add(new GameSessionPlayer
+        {
+            SessionId = SessionId,
+            SlotNumber = slotNumber,
+            UserId = userId,
+            GuestInitials = guestInitials,
+            JoinedAtUtc = DateTime.UtcNow
+        });
     }
 }

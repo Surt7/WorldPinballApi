@@ -16,7 +16,7 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
 
             e.ToTable("score_entries");
             e.HasKey(x => x.ScoreEntryId);
-
+            e.Property(x => x.SlotNumber).IsRequired();
             e.Property(x => x.SessionId).IsRequired();
             e.Property(x => x.DeviceId).IsRequired();
             e.Property(x => x.MachineId).IsRequired();
@@ -29,8 +29,8 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
             e.Property(x => x.IsValidated).IsRequired();
             e.Property(x => x.ValidationReason);
 
-            // 1 score final par session (UML)
-            e.HasIndex(x => x.SessionId).IsUnique();
+   
+            e.HasIndex(x => x.SessionId);
 
             e.HasIndex(x => new { x.IpId, x.ModeId, x.Score, x.AchievedAtUtc });
             e.HasIndex(x => new { x.DeviceId, x.AchievedAtUtc });
@@ -42,7 +42,7 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
              .HasForeignKey<ScoreEntry>(x => x.SessionId)
              .OnDelete(DeleteBehavior.Cascade);
 
-            // Variante A (avec navigation ScoreEntry.Device)
+         
             e.HasOne(x => x.Device)
              .WithMany()
              .HasForeignKey(x => x.DeviceId)
@@ -62,6 +62,14 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
              .WithMany()
              .HasForeignKey(x => x.ModeId)
              .OnDelete(DeleteBehavior.Restrict);
+
+
+            e.HasIndex(x => new { x.SessionId, x.SlotNumber }).IsUnique();
+
+            e.HasOne(x => x.Session)
+                .WithMany(x => x.ScoreEntries)
+                .HasForeignKey(x => x.SessionId)
+                .OnDelete(DeleteBehavior.Cascade);
 
         }
     }

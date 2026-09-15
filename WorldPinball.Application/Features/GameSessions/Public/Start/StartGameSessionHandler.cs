@@ -23,62 +23,59 @@ public sealed class StartGameSessionHandler(
         CancellationToken cancellationToken = default
     )
     {
-        
         var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
         
-       var device = await readRepository.GetDeviceContextAsync(command.DeviceId, cancellationToken);
+        var device = await readRepository.GetDeviceContextAsync(command.DeviceId, cancellationToken);
 
-       if (device is null)
-       {
-           logger.LogWarning(
-               DeviceNotFound,
-               "Device {DeviceId}  could not be found.",
-               command.DeviceId);
+        if (device is null)
+        {
+            logger.LogWarning(
+                DeviceNotFound,
+                "Device {DeviceId}  could not be found.",
+                command.DeviceId);
             return new StartGameSessionResult.DeviceNotFound(command.DeviceId);
-       }
+        }
 
-       if (device.Status is not DeviceStatus.Active)
-       {
-           logger.LogWarning(
-               DeviceNotActive,
-               "Device {DeviceId} not active.",
-               command.DeviceId);   
-          return new StartGameSessionResult.DeviceNotActive(command.DeviceId);
-       }
+        if (device.Status is not DeviceStatus.Active)
+        {
+            logger.LogWarning(
+                DeviceNotActive,
+                "Device {DeviceId} not active.",
+                command.DeviceId);   
+            return new StartGameSessionResult.DeviceNotActive(command.DeviceId);
+        }
 
-       if (device.ActiveMachineId is null)
-       {
-           logger.LogWarning(
-               MachineNotAttached,
-               "Device {DeviceId} has no active machine attached.",
-               command.DeviceId);
-           return new StartGameSessionResult.MachineNotAttached(command.DeviceId);
-       }
+        if (device.ActiveMachineId is null)
+        {
+            logger.LogWarning(
+                MachineNotAttached,
+                "Device {DeviceId} has no active machine attached.",
+                command.DeviceId);
+            return new StartGameSessionResult.MachineNotAttached(command.DeviceId);
+        }
 
-       var mode = await readRepository.GetActiveModeByCodeAsync(command.ModeCode, cancellationToken);
-       if (mode is null)
-       {
-           logger.LogWarning(
-               ModeNotFound,
-               "Game mode {ModeCode} could not be found or is inactive.",
-               command.ModeCode);
-           return new StartGameSessionResult.ModeNotFound(command.ModeCode);
-       }
+        var mode = await readRepository.GetActiveModeByCodeAsync(command.ModeCode, cancellationToken);
+        if (mode is null)
+        {
+            logger.LogWarning(
+                ModeNotFound,
+                "Game mode {ModeCode} could not be found or is inactive.",
+                command.ModeCode);
+            return new StartGameSessionResult.ModeNotFound(command.ModeCode);
+        }
 
-       var nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
-       var session = new GameSession(
-           device.ActiveMachineId.Value,
-           command.DeviceId,
-           mode.ModeId,
-           command.UserId,
-           command.ClientVersion,
-           nonce,
-           nowUtc
-       );
+        var nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
+        var session = new GameSession(
+            device.ActiveMachineId.Value,
+            command.DeviceId,
+            mode.ModeId,
+            command.ClientVersion,
+            nonce,
+            nowUtc
+        );
 
-       await writeRepository.SaveSessionAsync(session, cancellationToken);
+        await writeRepository.SaveSessionAsync(session, cancellationToken);
 
-       return new StartGameSessionResult.Success(session.SessionId, nonce, nowUtc);
-       
+        return new StartGameSessionResult.Success(session.SessionId, nonce, nowUtc);
     }
 }

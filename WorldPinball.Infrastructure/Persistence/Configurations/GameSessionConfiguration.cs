@@ -2,15 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using WorldPinball.Domain.Entities;
 
-
 namespace WorldPinball.Infrastructure.Persistence.Configurations
 {
     public sealed class GameSessionConfiguration : IEntityTypeConfiguration<GameSession>
     {
-
         public void Configure(EntityTypeBuilder<GameSession> e)
         {
-
             // =========================
             // game_sessions
             // =========================
@@ -23,15 +20,11 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
             e.Property(x => x.StartedAtUtc).IsRequired();
             e.Property(x => x.EndedAtUtc);
 
-            // state varchar (UML)
+         
             e.Property(x => x.State)
              .HasConversion<string>()
              .HasMaxLength(20)
              .IsRequired();
-
-            e.Property(x => x.UserId)
-             .IsRequired()
-             .HasMaxLength(450);
 
             e.Property(x => x.Nonce)
              .IsRequired()
@@ -44,10 +37,9 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
 
             e.HasIndex(x => new { x.DeviceId, x.StartedAtUtc });
             e.HasIndex(x => new { x.MachineId, x.StartedAtUtc });
-            e.HasIndex(x => new { x.UserId, x.StartedAtUtc });
             e.HasIndex(x => new { x.ModeId, x.StartedAtUtc });
 
-            // Variante A (avec navigation GameSession.Device)
+           
             e.HasOne(x => x.Device)
              .WithMany()
              .HasForeignKey(x => x.DeviceId)
@@ -62,8 +54,6 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
              .WithMany()
              .HasForeignKey(x => x.ModeId)
              .OnDelete(DeleteBehavior.Restrict);
-
-
         }
     }
 }

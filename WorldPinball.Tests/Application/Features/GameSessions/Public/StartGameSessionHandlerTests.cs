@@ -19,7 +19,6 @@ public class StartGameSessionHandlerTests
         var timeProvider = TimeProvider.System;
         var deviceId = Guid.NewGuid();
         var modeCode = "CLASSIC";
-        var userId = "player-42";
         var clientVersion = "1.0.0";
         var machineId = Guid.NewGuid();
         var modeId = Guid.NewGuid();
@@ -35,20 +34,18 @@ public class StartGameSessionHandlerTests
         repoGameSessionRead.GetDeviceContextAsync(deviceId, Arg.Any<CancellationToken>())
             .Returns(deviceContext);
 
-        var gameMode = new GameMode
-        {
-            ModeId = modeId,
-            Code = modeCode,
-            Name = "Classic Mode",
-            IsActive = true
-        };
+        var gameMode = new GameMode(
+            code: modeCode,
+            name: "Classic Mode",
+            isActive: true,
+            modeId: modeId
+        );
         repoGameSessionRead.GetActiveModeByCodeAsync(modeCode, Arg.Any<CancellationToken>())
             .Returns(gameMode);
         
         var command = new StartGameSessionCommand(
             DeviceId: deviceId,
             ModeCode: modeCode,
-            UserId: userId,
             ClientVersion: clientVersion
         );
         var sut = new StartGameSessionHandler(
@@ -72,8 +69,7 @@ public class StartGameSessionHandlerTests
             .SaveSessionAsync(Arg.Is<GameSession>(s => 
                 s.DeviceId == deviceId && 
                 s.MachineId == machineId && 
-                s.ModeId == modeId && 
-                s.UserId == userId), 
+                s.ModeId == modeId), 
                 Arg.Any<CancellationToken>());
     }
 
@@ -93,7 +89,6 @@ public class StartGameSessionHandlerTests
         var command = new StartGameSessionCommand(
             DeviceId: deviceId,
             ModeCode: "CLASSIC",
-            UserId: "player-42",
             ClientVersion: "1.0.0"
         );
         var sut = new StartGameSessionHandler(
@@ -137,7 +132,6 @@ public class StartGameSessionHandlerTests
         var command = new StartGameSessionCommand(
             DeviceId: deviceId,
             ModeCode: "CLASSIC",
-            UserId: "player-42",
             ClientVersion: "1.0.0"
         );
         var sut = new StartGameSessionHandler(
@@ -177,7 +171,6 @@ public class StartGameSessionHandlerTests
         var command = new StartGameSessionCommand(
             DeviceId: deviceId,
             ModeCode: "CLASSIC",
-            UserId: "player-42",
             ClientVersion: "1.0.0"
         );
         var sut = new StartGameSessionHandler(
@@ -222,7 +215,6 @@ public class StartGameSessionHandlerTests
         var command = new StartGameSessionCommand(
             DeviceId: deviceId,
             ModeCode: modeCode,
-            UserId: "player-42",
             ClientVersion: "1.0.0"
         );
         var sut = new StartGameSessionHandler(

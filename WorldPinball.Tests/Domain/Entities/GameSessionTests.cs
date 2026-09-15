@@ -12,7 +12,6 @@ public class GameSessionTests
             machineId: Guid.NewGuid(),
             deviceId: Guid.NewGuid(),
             modeId: Guid.NewGuid(),
-            userId: "player-42",
             clientVersion: "1.0.0",
             nonce: "nonce-random-xyz",
             startedAtUtc: startedAt ?? DateTime.UtcNow
@@ -26,7 +25,6 @@ public class GameSessionTests
         var machineId = Guid.NewGuid();
         var deviceId = Guid.NewGuid();
         var modeId = Guid.NewGuid();
-        var userId = "player-42";
         var clientVersion = "1.0.0";
         var nonce = "nonce-random-xyz";
         var startedAtUtc = DateTime.UtcNow;
@@ -36,7 +34,6 @@ public class GameSessionTests
             machineId,
             deviceId,
             modeId,
-            userId,
             clientVersion,
             nonce,
             startedAtUtc
@@ -47,7 +44,6 @@ public class GameSessionTests
         session.MachineId.Should().Be(machineId);
         session.DeviceId.Should().Be(deviceId);
         session.ModeId.Should().Be(modeId);
-        session.UserId.Should().Be(userId);
         session.ClientVersion.Should().Be(clientVersion);
         session.Nonce.Should().Be(nonce);
         session.StartedAtUtc.Should().Be(startedAtUtc);
@@ -64,7 +60,6 @@ public class GameSessionTests
             Guid.Empty,
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "player-42",
             "1.0.0",
             "nonce-xyz",
             DateTime.UtcNow
@@ -82,7 +77,6 @@ public class GameSessionTests
             Guid.NewGuid(),
             Guid.Empty,
             Guid.NewGuid(),
-            "player-42",
             "1.0.0",
             "nonce-xyz",
             DateTime.UtcNow
@@ -100,28 +94,6 @@ public class GameSessionTests
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.Empty,
-            "player-42",
-            "1.0.0",
-            "nonce-xyz",
-            DateTime.UtcNow
-        );
-
-        // Assert
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Constructor_WhenUserIdIsInvalid_ThrowsArgumentException(string? invalidUserId)
-    {
-        // Act
-        Action act = () => new GameSession(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            Guid.NewGuid(),
-            invalidUserId!,
             "1.0.0",
             "nonce-xyz",
             DateTime.UtcNow
@@ -142,7 +114,6 @@ public class GameSessionTests
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "player-42",
             invalidClientVersion!,
             "nonce-xyz",
             DateTime.UtcNow
@@ -163,7 +134,6 @@ public class GameSessionTests
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "player-42",
             "1.0.0",
             invalidNonce!,
             DateTime.UtcNow
@@ -181,7 +151,6 @@ public class GameSessionTests
             Guid.NewGuid(),
             Guid.NewGuid(),
             Guid.NewGuid(),
-            "player-42",
             "1.0.0",
             "nonce-xyz",
             default
@@ -443,5 +412,130 @@ public class GameSessionTests
 
         // Assert
         act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void AddPlayer_WhenPlayerIsValid_ShouldAddToPlayersCollection()
+    {
+        // Arrange
+        var session = CreateValidSession();
+        var userId = Guid.NewGuid();
+
+        // Act
+        session.AddPlayer(slotNumber: 1, userId: userId);
+
+        // Assert
+        session.Players.Should().HaveCount(1);
+        var player = session.Players.First();
+        player.SlotNumber.Should().Be(1);
+        player.UserId.Should().Be(userId);
+        player.GuestInitials.Should().BeNull();
+        player.SessionId.Should().Be(session.SessionId);
+    }
+
+    [Fact]
+    public void AddPlayer_WhenAnonymousGuest_ShouldAddToPlayersCollection()
+    {
+        // Arrange
+        var session = CreateValidSession();
+
+        // Act
+        session.AddPlayer(slotNumber: 2, userId: null, guestInitials: "AAA", requiresRegisteredUser: false);
+
+        // Assert
+        session.Players.Should().HaveCount(1);
+        var player = session.Players.First();
+        player.SlotNumber.Should().Be(2);
+        player.UserId.Should().BeNull();
+        player.GuestInitials.Should().Be("AAA");
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(5)]
+    [InlineData(-1)]
+    public void AddPlayer_WhenSlotNumberIsOutOfRange_ShouldThrowArgumentOutOfRangeException(int invalidSlotNumber)
+    {
+        // Arrange
+        var session = CreateValidSession();
+
+        // Act
+        Action act = () => session.AddPlayer(slotNumber: invalidSlotNumber);
+
+        // Assert
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
+    public void AddPlayer_WhenRegistredUserRequieredAndUserIdIsNull_ShouldThrowInvalidOperationException()
+    {
+        // Arrange
+        var session = CreateValidSession();
+
+        // Act
+        Action act = () => session.AddPlayer(slotNumber: 1, userId: null, requiresRegisteredUser: true);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void AddPlayer_WhenSlotIsAlreadyOccupied_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var session = CreateValidSession();
+        session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
+
+        // Act: Attempt to add another player on slot 1
+        Action act = () => session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void AddPlayer_WhenSessionHas4Players_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var session = CreateValidSession();
+        session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
+        session.AddPlayer(slotNumber: 2, userId: Guid.NewGuid());
+        session.AddPlayer(slotNumber: 3, userId: Guid.NewGuid());
+        session.AddPlayer(slotNumber: 4, userId: Guid.NewGuid());
+
+        // Act: Attempt to add a 5th player
+        Action act = () => session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void AddPlayer_WhenSameUserRegisteredTwice_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var session = CreateValidSession();
+        var userId = Guid.NewGuid();
+        session.AddPlayer(slotNumber: 1, userId: userId);
+
+        // Act: Same user tries to occupy slot 2
+        Action act = () => session.AddPlayer(slotNumber: 2, userId: userId);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void AddPlayer_WhenSessionIsEnded_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var session = CreateValidSession();
+        session.End(DateTime.UtcNow.AddMinutes(5));
+
+        // Act
+        Action act = () => session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>();
     }
 }

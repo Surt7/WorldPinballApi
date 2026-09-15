@@ -196,28 +196,28 @@ public static class DevelopmentDataSeeder
 
     private static List<Publisher> CreatePublishers(DateTime now) =>
         new Faker<Publisher>("fr").UseSeed(Seed + 1)
-            .RuleFor(x => x.PublisherId, f => f.Random.Guid())
-            .RuleFor(x => x.Name, f => $"{f.Company.CompanyName()} {f.IndexFaker + 1}")
-            .RuleFor(x => x.Slug, f => $"publisher-{f.IndexFaker + 1}")
-            .RuleFor(x => x.CreatedAtUtc, _ => now)
+            .CustomInstantiator(f => new Publisher(
+                $"{f.Company.CompanyName()} {f.IndexFaker + 1}",
+                $"publisher-{f.IndexFaker + 1}",
+                now))
             .Generate(5);
 
     private static List<Region> CreateRegions(DateTime now) =>
         new Faker<Region>("fr").UseSeed(Seed + 2)
-            .RuleFor(x => x.RegionId, f => f.Random.Guid())
-            .RuleFor(x => x.Code, f => $"R{f.IndexFaker + 1:00}")
-            .RuleFor(x => x.Name, f => $"{f.Address.Country()} {f.IndexFaker + 1}")
-            .RuleFor(x => x.CreatedAtUtc, _ => now)
+            .CustomInstantiator(f => new Region(
+                $"R{f.IndexFaker + 1:00}",
+                $"{f.Address.Country()} {f.IndexFaker + 1}",
+                now))
             .Generate(6);
 
     private static List<GameMode> CreateGameModes(DateTime now) =>
         new Faker<GameMode>("fr").UseSeed(Seed + 3)
-            .RuleFor(x => x.ModeId, f => f.Random.Guid())
-            .RuleFor(x => x.Code, f => $"mode-{f.IndexFaker + 1}")
-            .RuleFor(x => x.Name, f => $"Mode {f.Hacker.Noun()} {f.IndexFaker + 1}")
-            .RuleFor(x => x.Description, f => f.Lorem.Sentence())
-            .RuleFor(x => x.IsActive, f => f.IndexFaker != 4)
-            .RuleFor(x => x.CreatedAtUtc, _ => now)
+            .CustomInstantiator(f => new GameMode(
+                $"mode-{f.IndexFaker + 1}",
+                $"Mode {f.Hacker.Noun()} {f.IndexFaker + 1}",
+                f.Lorem.Sentence(),
+                f.IndexFaker != 4,
+                now))
             .Generate(5);
 
     private static List<IpLicense> CreateIpLicenses(
@@ -226,16 +226,15 @@ public static class DevelopmentDataSeeder
         DateTime now)
     {
         var licenses = new Faker<IpLicense>("fr").UseSeed(Seed + 4)
-            .RuleFor(x => x.IpId, f => f.Random.Guid())
-            .RuleFor(x => x.Name, f => $"{f.Commerce.ProductName()} {f.IndexFaker + 1}")
-            .RuleFor(x => x.Slug, f => $"ip-license-{f.IndexFaker + 1}")
-            .RuleFor(x => x.PublisherId, f =>
-                publishers[f.Random.Int(0, publishers.Count - 1)].PublisherId)
-            .RuleFor(x => x.IpOwner, f => f.Company.CompanyName())
-            .RuleFor(x => x.ReleaseYear, f => f.Date.Past(40, now).Year)
-            .RuleFor(x => x.IsActive, f => f.IndexFaker != 9)
-            .RuleFor(x => x.Notes, f => f.Lorem.Sentence())
-            .RuleFor(x => x.CreatedAtUtc, _ => now)
+            .CustomInstantiator(f => new IpLicense(
+                $"{f.Commerce.ProductName()} {f.IndexFaker + 1}",
+                $"ip-license-{f.IndexFaker + 1}",
+                publishers[f.Random.Int(0, publishers.Count - 1)].PublisherId,
+                f.Company.CompanyName(),
+                f.Date.Past(40, now).Year,
+                f.Lorem.Sentence(),
+                f.IndexFaker != 9,
+                now))
             .Generate(10);
 
         for (var index = 0; index < licenses.Count; index++)
@@ -403,7 +402,6 @@ public static class DevelopmentDataSeeder
             .RuleFor(x => x.SessionId, f => f.Random.Guid())
             .RuleFor(x => x.MachineId, f => links[f.IndexFaker % links.Count].MachineId)
             .RuleFor(x => x.DeviceId, f => links[f.IndexFaker % links.Count].DeviceId)
-            .RuleFor(x => x.UserId, f => $"development-user-{(f.IndexFaker % 12) + 1:00}")
             .RuleFor(x => x.ModeId, f =>
                 modes[f.Random.Int(0, modes.Count - 1)].ModeId)
             .RuleFor(x => x.StartedAtUtc, f => Utc(f.Date.Recent(90, now)))
@@ -420,23 +418,28 @@ public static class DevelopmentDataSeeder
     {
         var machinesById = machines.ToDictionary(x => x.MachineId);
         return new Faker<ScoreEntry>("fr").UseSeed(Seed + 12)
-            .RuleFor(x => x.ScoreEntryId, f => f.Random.Guid())
-            .RuleFor(x => x.SessionId, f => sessions[f.IndexFaker].SessionId)
-            .RuleFor(x => x.UserId, (_, x) => SessionFor(x).UserId)
-            .RuleFor(x => x.DeviceId, (_, x) => SessionFor(x).DeviceId)
-            .RuleFor(x => x.MachineId, (_, x) => SessionFor(x).MachineId)
-            .RuleFor(x => x.IpId, (_, x) => machinesById[x.MachineId].IpId)
-            .RuleFor(x => x.ModeId, (_, x) => SessionFor(x).ModeId)
-            .RuleFor(x => x.Score, f => f.Random.Int(10_000, 25_000_000))
-            .RuleFor(x => x.AchievedAtUtc, (_, x) => SessionFor(x).EndedAtUtc ?? now)
-            .RuleFor(x => x.IsValidated, f => f.IndexFaker % 12 != 0)
-            .RuleFor(x => x.ValidationReason, (_, x) => x.IsValidated
-                ? null
-                : "Score marked for development review.")
-            .Generate(sessions.Count);
+            .CustomInstantiator(f =>
+            {
+                var session = sessions[f.IndexFaker];
+                var score = new ScoreEntry(
+                    session.SessionId,
+                    1,
+                    session.DeviceId,
+                    session.MachineId,
+                    machinesById[session.MachineId].IpId,
+                    session.ModeId,
+                    f.Random.Int(10_000, 25_000_000),
+                    session.EndedAtUtc ?? now,
+                    $"development-user-{(f.IndexFaker % 12) + 1:00}");
 
-        GameSession SessionFor(ScoreEntry score) =>
-            sessions.First(x => x.SessionId == score.SessionId);
+                if (f.IndexFaker % 12 == 0)
+                {
+                    score.Invalidate("Score marked for development review.");
+                }
+
+                return score;
+            })
+            .Generate(sessions.Count);
     }
 
     private static List<MissionProgress> CreateMissionProgress(
@@ -459,12 +462,11 @@ public static class DevelopmentDataSeeder
 
     private static List<CertificateRevocation> CreateCertificateRevocations(
         IReadOnlyList<DeviceCertificate> certificates,
-        DateTime now)
-    {
-        var revoked = certificates.Where((_, index) => index % 8 == 0).ToList();
-        return new Faker<CertificateRevocation>("fr").UseSeed(Seed + 14)
+        DateTime now) =>
+        new Faker<CertificateRevocation>("fr").UseSeed(Seed + 14)
             .CustomInstantiator(f =>
             {
+                var revoked = certificates.Where((_, index) => index % 8 == 0).ToList();
                 var certificate = revoked[f.IndexFaker];
                 var revokedAt = now.AddDays(-(f.IndexFaker + 1));
                 const string notes = "Development seed revocation";
@@ -476,8 +478,7 @@ public static class DevelopmentDataSeeder
                     DevelopmentUserId,
                     notes);
             })
-            .Generate(revoked.Count);
-    }
+            .Generate(certificates.Count(x => true) / 8);
 
     private static string Sha256(string value) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));

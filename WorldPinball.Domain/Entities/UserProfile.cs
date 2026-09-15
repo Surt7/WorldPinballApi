@@ -1,16 +1,63 @@
-﻿
+﻿namespace WorldPinball.Domain.Entities;
 
-namespace WorldPinball.Domain.Entities
+public class UserProfile
 {
-    public class UserProfile
+    private static class ErrorMessages
     {
-        public Guid UserId { get; set; }
-        public string DisplayName { get; set; } = "No Name";
-        public string AvatarUrl { get; set; } = string.Empty;
-        public string CountryCode { get; set; } = string.Empty;
-        public bool IsProfilePublic { get; set; }
-        public DateTime CreatedAtUtc { get; set; }
-        public DateTime? UpdatedAtUtc { get; set; } = null;
+        public const string InvalidUserId = "UserId cannot be empty.";
+        public const string InvalidDisplayName = "DisplayName cannot be empty.";
+        public const string InvalidDate = "Date cannot be default.";
+    }
 
+    private UserProfile() { }
+
+    public Guid UserId { get; private set; }
+    public string DisplayName { get; private set; } = "No Name";
+    public string AvatarUrl { get; private set; } = string.Empty;
+    public string CountryCode { get; private set; } = string.Empty;
+    public bool IsProfilePublic { get; private set; }
+    public DateTime CreatedAtUtc { get; private set; }
+    public DateTime? UpdatedAtUtc { get; private set; }
+
+    public UserProfile(
+        Guid userId,
+        string displayName,
+        string avatarUrl = "",
+        string countryCode = "",
+        bool isProfilePublic = false,
+        DateTime? createdAtUtc = null)
+    {
+        if (userId == Guid.Empty)
+            throw new ArgumentException(ErrorMessages.InvalidUserId, nameof(userId));
+
+        if (string.IsNullOrWhiteSpace(displayName))
+            throw new ArgumentException(ErrorMessages.InvalidDisplayName, nameof(displayName));
+
+        UserId = userId;
+        DisplayName = displayName.Trim();
+        AvatarUrl = avatarUrl?.Trim() ?? string.Empty;
+        CountryCode = countryCode?.Trim().ToUpperInvariant() ?? string.Empty;
+        IsProfilePublic = isProfilePublic;
+        CreatedAtUtc = createdAtUtc ?? DateTime.UtcNow;
+    }
+
+    public void UpdateProfile(
+        string displayName,
+        string avatarUrl,
+        string countryCode,
+        bool isProfilePublic,
+        DateTime now)
+    {
+        if (string.IsNullOrWhiteSpace(displayName))
+            throw new ArgumentException(ErrorMessages.InvalidDisplayName, nameof(displayName));
+
+        if (now == default)
+            throw new ArgumentException(ErrorMessages.InvalidDate, nameof(now));
+
+        DisplayName = displayName.Trim();
+        AvatarUrl = avatarUrl?.Trim() ?? string.Empty;
+        CountryCode = countryCode?.Trim().ToUpperInvariant() ?? string.Empty;
+        IsProfilePublic = isProfilePublic;
+        UpdatedAtUtc = now;
     }
 }

@@ -82,14 +82,12 @@ public sealed class MachineProvisionningHandlerTests
 
         var secretService = Substitute.For<ISecretService>();
 
-         var idempotencyKey = Guid.NewGuid();
-        var activeIp = new IpLicense
-        {
-            IpId = Guid.NewGuid(),
-            Name = "Resident Evil",
-            Slug = ipSlug,
-            IsActive = true
-        };
+        var idempotencyKey = Guid.NewGuid();
+        var activeIp = new IpLicense(
+            name: "Resident Evil",
+            slug: ipSlug,
+            isActive: true,
+            ipId: Guid.NewGuid());
 
         ipLicenseRepository
             .GetActiveBySlugAsync(
@@ -124,15 +122,19 @@ public sealed class MachineProvisionningHandlerTests
         var duplicateSerial = result.Should()
             .BeOfType<ProvisionMachineResult.DuplicateSerial>()
             .Which;
-        
+
         duplicateSerial.SerialNumber.Should().Be(serialNumber);
+
+        await machineWriteRepository
+            .Received(1)
+            .SerialExistsAsync(
+                serialNumber,
+                Arg.Any<CancellationToken>());
     }
-    
-    
+
     [Fact]
-    public async Task HandleAsync_WhenProvisioningDataIsValid_ShouldReturnSuccess()
+    public async Task HandleAsync_WhenValidCommand_ShouldReturnSuccess()
     {
-        
         //Arrange
         const string serialNumber = "WP-123";
         const string ipSlug = "resident-evil";
@@ -145,13 +147,11 @@ public sealed class MachineProvisionningHandlerTests
         var secretService = Substitute.For<ISecretService>();
         var idempotencyKey = Guid.NewGuid();
         
-        var activeIp = new IpLicense
-        {
-            IpId = Guid.NewGuid(),
-            Name = "Resident Evil",
-            Slug = ipSlug,
-            IsActive = true
-        };
+        var activeIp = new IpLicense(
+            name: "Resident Evil",
+            slug: ipSlug,
+            isActive: true,
+            ipId: Guid.NewGuid());
         
         ipLicenseReadRepository
             .GetActiveBySlugAsync(
@@ -223,13 +223,11 @@ public sealed class MachineProvisionningHandlerTests
         var idempotencyKey = Guid.NewGuid();
         
         
-        var activeIp = new IpLicense
-        {
-            IpId = Guid.NewGuid(),
-            Name = "Resident Evil",
-            Slug = ipSlug,
-            IsActive = true
-        };
+        var activeIp = new IpLicense(
+            name: "Resident Evil",
+            slug: ipSlug,
+            isActive: true,
+            ipId: Guid.NewGuid());
         
         ipLicenseReadRepository
             .GetActiveBySlugAsync(
@@ -276,6 +274,4 @@ public sealed class MachineProvisionningHandlerTests
         await machineWriteRepository.DidNotReceive().AddProvisioningAsync(Arg.Any<Machine>(),Arg.Any<EnrollmentToken>(),Arg.Any<CancellationToken>());
 
     }
-    
-    
 }
