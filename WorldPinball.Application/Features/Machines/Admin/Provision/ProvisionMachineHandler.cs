@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
-using WorldPinball.Application.Security;
+using WorldPinball.Application.Security.Secrets;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 

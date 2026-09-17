@@ -19,12 +19,19 @@ public class GameSession : Entity
         public const string PauseSession = "Can only pause an active session.";
         public const string ResumeSession = "Can only resume a paused session.";
         public const string ClosedSession = "Session is already closed.";
-        public const string AddPlayerNotStarted = "Cannot add a player to a session that is not in Started state.";
+        public const string AddPlayerNotStarted = "Cannot add a player to a session that is not in a joinable state.";
         public const string InvalidSlotNumber = "Slot number must be between 1 and 4.";
         public const string MaxPlayersReached = "A game session cannot have more than 4 players.";
         public const string SlotAlreadyOccupied = "The specified slot is already occupied.";
         public const string UserAlreadyRegistered = "This user is already registered in this session.";
         public const string RegisteredUserRequired = "A registered player (UserId) is required for this game mode or tournament.";
+        public const string CannotSearchPlayers = "Can only search for players from a created, pending, or match-found session.";
+        public const string MatchFoundNotSearching = "Cannot mark match as found unless currently searching for players.";
+        public const string NotEnoughPlayersForMatch = "Cannot mark match as found without enough players.";
+        public const string CannotRemovePlayerActiveSession = "Cannot remove a player once the session has started or ended.";
+        public const string PlayerNotFound = "Player not found in the specified slot.";
+        public const string CannotStartSession = "Can only start a session that is in Created or MatchFound state.";
+        public const string CannotCancelSession = "Cannot cancel a session that is already active or closed.";
     }
     private GameSession() { }
 
@@ -87,15 +94,33 @@ public class GameSession : Entity
         ModeId = modeId;
         ClientVersion = clientVersion;
         Nonce = nonce;
+        // StartedAtUtc is initially set to the creation time, can be updated on Start
+        StartedAtUtc = startedAtUtc;
+        State = GameSessionState.Created;
+    }
+
+    public void Start(DateTime startedAtUtc)
+    {
+        if (State is not (GameSessionState.Created or GameSessionState.MatchFound))
+            throw new InvalidOperationException(ErrorMessages.CannotCancelSession);
+
         StartedAtUtc = startedAtUtc;
         State = GameSessionState.Started;
-        
+
         AddDomainEvent(new GameSessionStartedDomainEvent(
             SessionId,
             MachineId,
             DeviceId,
             ModeId,
             StartedAtUtc));
+    }
+
+    public void SearchPlayers()
+    {
+        if (State is not (GameSessionState.Created or GameSessionState.Pending or GameSessionState.MatchFound))
+            throw new InvalidOperationException(ErrorMessages.CannotSearchPlayers);
+
+        State = GameSessionState.SearchingPlayer;
     }
     
     public void Pause()
@@ -113,7 +138,38 @@ public class GameSession : Entity
 
         State = GameSessionState.Resumed;
     }
+    
+    public void SetMatchFound()
+    {
+        if (State is not GameSessionState.SearchingPlayer)
+            throw new InvalidOperationException(ErrorMessages.MatchFoundNotSearching);
+        if (_players.Count < 2)
+            throw new InvalidOperationException(ErrorMessages.NotEnoughPlayersForMatch);
 
+        State = GameSessionState.MatchFound;
+    }
+
+    public void RemovePlayer(int slotNumber)
+    {
+        if (State is not (GameSessionState.Created 
+            or GameSessionState.Pending 
+            or GameSessionState.SearchingPlayer 
+            or GameSessionState.MatchFound))
+        {
+            throw new InvalidOperationException(ErrorMessages.CannotRemovePlayerActiveSession);
+        }
+
+        var player = _players.FirstOrDefault(p => p.SlotNumber == slotNumber);
+        if (player is null)
+            throw new InvalidOperationException(ErrorMessages.PlayerNotFound);
+                
+        _players.Remove(player);
+        if (State is GameSessionState.MatchFound)
+        {
+            State = GameSessionState.Pending; 
+        }
+    }
+    
     public void End(DateTime endedAtUtc)
     {
         if (State is not (GameSessionState.Started or GameSessionState.Resumed or GameSessionState.Paused))
@@ -155,7 +211,7 @@ public class GameSession : Entity
         if (requiresRegisteredUser && !userId.HasValue)
             throw new InvalidOperationException(ErrorMessages.RegisteredUserRequired);
         
-        if (State is not (GameSessionState.Started or GameSessionState.Resumed))
+        if (State is not (GameSessionState.Created or GameSessionState.Pending or GameSessionState.SearchingPlayer or GameSessionState.Started or GameSessionState.Resumed))
             throw new InvalidOperationException(ErrorMessages.AddPlayerNotStarted);
 
         if (slotNumber is < 1 or > 4)

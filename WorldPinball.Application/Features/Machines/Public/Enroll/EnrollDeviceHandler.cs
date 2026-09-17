@@ -5,6 +5,7 @@ using WorldPinball.Application.Features.Machines.Public.Enroll.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Security.CA;
 using WorldPinball.Domain.Entities;
+using WorldPinball.Application.Security.Secrets;
 
 namespace WorldPinball.Application.Features.Machines.Public;
 
@@ -12,6 +13,7 @@ public sealed class EnrollDeviceHandler(
     IDeviceEnrollmentWriteRepository deviceEnrollmentWriteRepository,
     IDeviceEnrollmentReadRepository deviceEnrollmentReadRepository,
     ICertificateAuthorityService caService,
+    ISecretService secretService,
     ILogger<EnrollDeviceHandler> logger,
     TimeProvider timeProvider
 ) : IEnrollDeviceHandler
@@ -27,13 +29,15 @@ public sealed class EnrollDeviceHandler(
 
     private static readonly EventId EnrollmentTokenConsumptionFailed =
         new(2103, nameof(EnrollmentTokenConsumptionFailed));
+    
+    private static readonly EventId EnrollmentTokenIsInvalid =
+        new(2104, nameof(EnrollmentTokenIsInvalid));
 
     public async Task<EnrollDeviceResult> HandleAsync(
         EnrollDeviceCommand cmd,
         CancellationToken ct = default)
     {
         var now = timeProvider.GetUtcNow().UtcDateTime;
-
 
         string plainTextEnrollementToken = cmd.PlainEnrollmentToken;
 
@@ -43,16 +47,14 @@ public sealed class EnrollDeviceHandler(
                 $"{nameof(cmd.PlainEnrollmentToken)}" +
                 $" cannot be null or empty");
         
-        Span<byte> secretBytes = stackalloc byte[32];
-        if (!Convert.TryFromBase64String(plainTextEnrollementToken, secretBytes, out _))
+        if (!secretService.TryHash(plainTextEnrollementToken, out var tokenHash))
         {
+            logger.LogWarning(
+                EnrollmentTokenIsInvalid,
+                "Device enrollment rejected for serial {DeviceSerialNumber}: Invalid token format.",
+                cmd.DeviceSerialNumber);
             return new EnrollDeviceResult.InvalidToken("Invalid token format");
         }
-        
-        Span<byte> hashBytes = stackalloc byte[SHA256.HashSizeInBytes];
-        SHA256.HashData(secretBytes, hashBytes);
-        
-        string tokenHash = Convert.ToHexString(hashBytes).ToLowerInvariant();
 
         EnrollmentToken? token = await deviceEnrollmentReadRepository.GetTokenByHashAsync(tokenHash, ct);
 

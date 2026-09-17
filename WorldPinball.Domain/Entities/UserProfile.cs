@@ -2,10 +2,21 @@
 
 public class UserProfile
 {
+    private static readonly HashSet<string> ReservedDisplayNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Admin",
+        "Administrator",
+        "System",
+        "WorldPinball",
+        "No Name",
+        "Anonymous"
+    };
+
     private static class ErrorMessages
     {
         public const string InvalidUserId = "UserId cannot be empty.";
         public const string InvalidDisplayName = "DisplayName cannot be empty.";
+        public const string ReservedDisplayName = "DisplayName is reserved and cannot be used.";
         public const string InvalidDate = "Date cannot be default.";
     }
 
@@ -33,8 +44,12 @@ public class UserProfile
         if (string.IsNullOrWhiteSpace(displayName))
             throw new ArgumentException(ErrorMessages.InvalidDisplayName, nameof(displayName));
 
+        var trimmedName = displayName.Trim();
+        if (ReservedDisplayNames.Contains(trimmedName))
+            throw new ArgumentException(ErrorMessages.ReservedDisplayName, nameof(displayName));
+
         UserId = userId;
-        DisplayName = displayName.Trim();
+        DisplayName = trimmedName;
         AvatarUrl = avatarUrl?.Trim() ?? string.Empty;
         CountryCode = countryCode?.Trim().ToUpperInvariant() ?? string.Empty;
         IsProfilePublic = isProfilePublic;
@@ -51,10 +66,14 @@ public class UserProfile
         if (string.IsNullOrWhiteSpace(displayName))
             throw new ArgumentException(ErrorMessages.InvalidDisplayName, nameof(displayName));
 
+        var trimmedName = displayName.Trim();
+        if (ReservedDisplayNames.Contains(trimmedName))
+            throw new ArgumentException(ErrorMessages.ReservedDisplayName, nameof(displayName));
+
         if (now == default)
             throw new ArgumentException(ErrorMessages.InvalidDate, nameof(now));
 
-        DisplayName = displayName.Trim();
+        DisplayName = trimmedName;
         AvatarUrl = avatarUrl?.Trim() ?? string.Empty;
         CountryCode = countryCode?.Trim().ToUpperInvariant() ?? string.Empty;
         IsProfilePublic = isProfilePublic;

@@ -304,12 +304,20 @@ public static class DevelopmentDataSeeder
         IReadOnlyList<Device> devices,
         DateTime now) =>
         Enumerable.Range(0, Math.Min(machines.Count, devices.Count))
-            .Select(index => new MachineDevice
+            .Select(index => 
             {
-                MachineId = machines[index].MachineId,
-                DeviceId = devices[index].DeviceId,
-                AttachedAtUtc = now.AddDays(-(index + 1)),
-                IsActive = devices[index].Status == DeviceStatus.Active
+                var md = new MachineDevice(
+                    machines[index].MachineId,
+                    devices[index].DeviceId,
+                    now.AddDays(-(index + 1))
+                );
+
+                if (devices[index].Status != DeviceStatus.Active)
+                {
+                    md.Detach(now);
+                }
+
+                return md;
             })
             .ToList();
 

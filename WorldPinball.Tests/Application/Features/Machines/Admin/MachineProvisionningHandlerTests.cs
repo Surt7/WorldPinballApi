@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
+using WorldPinball.Application.Security.Secrets;
 
 namespace WorldPinball.Tests.Application.Features.Machines.Admin;
 

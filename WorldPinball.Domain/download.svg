@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1079.8 1676.6" width="1079.8" height="1676.6" style="--bg:#1F1F1F;--fg:#CCCCCC;--line:#CCCCCC;--accent:#0078D4;--muted:#CCCCCCCC;--surface:#181818;--border:#CCCCCC;background:var(--bg)">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&amp;display=swap');
+  text { font-family: 'Inter', system-ui, sans-serif; }
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace; }
+  svg {
+    /* Derived from --bg and --fg (overridable via --line, --accent, etc.) */
+    --_text:          var(--fg);
+    --_text-sec:      var(--muted, color-mix(in srgb, var(--fg) 60%, var(--bg)));
+    --_text-muted:    var(--muted, color-mix(in srgb, var(--fg) 40%, var(--bg)));
+    --_text-faint:    color-mix(in srgb, var(--fg) 25%, var(--bg));
+    --_line:          var(--line, color-mix(in srgb, var(--fg) 50%, var(--bg)));
+    --_arrow:         var(--accent, color-mix(in srgb, var(--fg) 85%, var(--bg)));
+    --_node-fill:     var(--surface, color-mix(in srgb, var(--fg) 3%, var(--bg)));
+    --_node-stroke:   var(--border, color-mix(in srgb, var(--fg) 20%, var(--bg)));
+    --_group-fill:    var(--bg);
+    --_group-hdr:     color-mix(in srgb, var(--fg) 5%, var(--bg));
+    --_inner-stroke:  color-mix(in srgb, var(--fg) 12%, var(--bg));
+    --_key-badge:     color-mix(in srgb, var(--fg) 10%, var(--bg));
+  }
+</style>
+<defs>
+  <marker id="cls-inherit" markerWidth="12" markerHeight="10" refX="12" refY="5" orient="auto-start-reverse">
+    <polygon points="0 0, 12 5, 0 10" fill="var(--bg)" stroke="var(--_arrow)" stroke-width="1.5" />
+  </marker>
+  <marker id="cls-composition" markerWidth="12" markerHeight="10" refX="0" refY="5" orient="auto-start-reverse">
+    <polygon points="6 0, 12 5, 6 10, 0 5" fill="var(--_arrow)" stroke="var(--_arrow)" stroke-width="1" />
+  </marker>
+  <marker id="cls-aggregation" markerWidth="12" markerHeight="10" refX="0" refY="5" orient="auto-start-reverse">
+    <polygon points="6 0, 12 5, 6 10, 0 5" fill="var(--bg)" stroke="var(--_arrow)" stroke-width="1.5" />
+  </marker>
+  <marker id="cls-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto-start-reverse">
+    <polyline points="0 0, 8 3, 0 6" fill="none" stroke="var(--_arrow)" stroke-width="1.5" />
+  </marker>
+</defs>
+<polyline class="class-relationship" data-from="Entity" data-to="GameSession" data-type="inheritance" data-marker-at="from" points="525.958,552 525.958,562 421.29999999999995,562 421.29999999999995,612" fill="none" stroke="var(--_line)" stroke-width="1" marker-start="url(#cls-inherit)" />
+<polyline class="class-relationship" data-from="Entity" data-to="Machine" data-type="inheritance" data-marker-at="from" points="692.358,552 692.358,562 890.5333333333333,562 890.5333333333333,1050.3 959.6666666666665,1050.3 959.6666666666665,1100.3" fill="none" stroke="var(--_line)" stroke-width="1" marker-start="url(#cls-inherit)" />
+<polyline class="class-relationship" data-from="Entity" data-to="Device" data-type="inheritance" data-marker-at="from" points="609.158,552 609.1579999999999,1050.3 462.58666666666664,1050.3 462.58666666666664,1100.3" fill="none" stroke="var(--_line)" stroke-width="1" marker-start="url(#cls-inherit)" />
+<polyline class="class-relationship" data-from="GameSession" data-to="GameSessionPlayer" data-type="composition" data-marker-at="from" data-label="contains" data-from-cardinality="1" data-to-cardinality="1..4" points="373.36,960 373.36,980 672.2,980 672.2,1120.3" fill="none" stroke="var(--_line)" stroke-width="1" marker-start="url(#cls-composition)" />
+<polyline class="class-relationship" data-from="GameSession" data-to="ScoreEntry" data-type="aggregation" data-marker-at="from" data-label="generates" data-from-cardinality="1" data-to-cardinality="*" points="341.4,612 341.4,348" fill="none" stroke="var(--_line)" stroke-width="1" marker-start="url(#cls-aggregation)" />
+<polyline class="class-relationship" data-from="ScoreEntry" data-to="GameSession" data-type="association" data-marker-at="to" data-label="belongs to" data-from-cardinality="*" data-to-cardinality="1" points="276.66666666666663,348 276.66666666666663,562 261.5,562 261.5,612" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#cls-arrow)" />
+<polyline class="class-relationship" data-from="GameSessionPlayer" data-to="UserProfile" data-type="association" data-marker-at="to" data-label="links to" data-from-cardinality="*" data-to-cardinality="0..1" points="672.2,1268.3 672.2,1428.6" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#cls-arrow)" />
+<polyline class="class-relationship" data-from="GameSession" data-to="Machine" data-type="association" data-marker-at="to" data-label="played on" data-from-cardinality="*" data-to-cardinality="1" points="437.28,960 437.28,970 879.5333333333333,970 879.5333333333332,1100.3" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#cls-arrow)" />
+<polyline class="class-relationship" data-from="GameSession" data-to="Device" data-type="association" data-marker-at="to" data-label="controlled by" data-from-cardinality="*" data-to-cardinality="1" points="309.44,960 309.44,990 404.4533333333333,990 404.4533333333333,1100.3" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#cls-arrow)" />
+<polyline class="class-relationship" data-from="GameSession" data-to="GameMode" data-type="association" data-marker-at="to" data-label="mode" data-from-cardinality="*" data-to-cardinality="1" points="245.51999999999998,960 245.51999999999998,1100.3" fill="none" stroke="var(--_line)" stroke-width="1" marker-end="url(#cls-arrow)" />
+<g class="class-node" data-id="Entity" data-label="Entity" data-annotation="abstract">
+  <rect x="442.758" y="408" width="332.8" height="144" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="442.758" y="408" width="332.8" height="48" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="609.158" y="420" text-anchor="middle" dy="0.35em" font-size="10" font-weight="500" font-style="italic" fill="var(--_text-muted)">&lt;&lt;abstract&gt;&gt;</text>
+  <text x="609.158" y="438" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">Entity</text>
+  <line x1="442.758" y1="456" x2="775.558" y2="456" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="450.758" y="470" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">- </tspan><tspan fill="var(--_text-sec)">_domainEvents</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">List~DomainEvent~</tspan></text>
+  <text x="450.758" y="490" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">DomainEvents</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">IReadOnlyCollection~DomainEvent~</tspan></text>
+  <line x1="442.758" y1="504" x2="775.558" y2="504" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="450.758" y="518" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">AddDomainEvent(event)</tspan></text>
+  <text x="450.758" y="538" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ClearDomainEvents()</tspan></text>
+</g>
+<g class="class-node" data-id="Machine" data-label="Machine">
+  <rect x="799.3999999999999" y="1100.3" width="240.4" height="188" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="799.3999999999999" y="1100.3" width="240.4" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="919.5999999999999" y="1116.3" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">Machine</text>
+  <line x1="799.3999999999999" y1="1132.3" x2="1039.8" y2="1132.3" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="807.3999999999999" y="1146.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">MachineId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="807.3999999999999" y="1166.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">IpId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="807.3999999999999" y="1186.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">WorldPinballSerialNumber</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="807.3999999999999" y="1206.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Manufacturer</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="807.3999999999999" y="1226.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Status</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="807.3999999999999" y="1246.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">RegisteredAtUtc</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">DateTime</tspan></text>
+  <line x1="799.3999999999999" y1="1260.3" x2="1039.8" y2="1260.3" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="807.3999999999999" y="1274.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">UpdateStatus()</tspan></text>
+</g>
+<g class="class-node" data-id="Device" data-label="Device">
+  <rect x="346.32" y="1100.3" width="174.4" height="148" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="346.32" y="1100.3" width="174.4" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="433.52" y="1116.3" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">Device</text>
+  <line x1="346.32" y1="1132.3" x2="520.72" y2="1132.3" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="354.32" y="1146.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">DeviceId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="354.32" y="1166.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">SerialPhysical</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="354.32" y="1186.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Status</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="354.32" y="1206.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">PublicKey</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="354.32" y="1226.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">CreatedAtUtc</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">DateTime</tspan></text>
+  <line x1="346.32" y1="1240.3" x2="520.72" y2="1240.3" stroke="var(--_node-stroke)" stroke-width="0.75" />
+</g>
+<g class="class-node" data-id="GameMode" data-label="GameMode">
+  <rect x="184.72" y="1100.3" width="121.6" height="128" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="184.72" y="1100.3" width="121.6" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="245.51999999999998" y="1116.3" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">GameMode</text>
+  <line x1="184.72" y1="1132.3" x2="306.32" y2="1132.3" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="192.72" y="1146.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ModeId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="192.72" y="1166.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Code</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="192.72" y="1186.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Name</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="192.72" y="1206.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">IsActive</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">bool</tspan></text>
+  <line x1="184.72" y1="1220.3" x2="306.32" y2="1220.3" stroke="var(--_node-stroke)" stroke-width="0.75" />
+</g>
+<g class="class-node" data-id="IpLicense" data-label="IpLicense">
+  <rect x="40" y="40" width="121.6" height="128" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="40" y="40" width="121.6" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="100.8" y="56" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">IpLicense</text>
+  <line x1="40" y1="72" x2="161.6" y2="72" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="48" y="86" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">IpId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="48" y="106" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Name</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="48" y="126" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Slug</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="48" y="146" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">IsActive</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">bool</tspan></text>
+  <line x1="40" y1="160" x2="161.6" y2="160" stroke="var(--_node-stroke)" stroke-width="0.75" />
+</g>
+<g class="class-node" data-id="UserProfile" data-label="UserProfile">
+  <rect x="585" y="1428.6" width="174.4" height="208" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="585" y="1428.6" width="174.4" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="672.2" y="1444.6" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">UserProfile</text>
+  <line x1="585" y1="1460.6" x2="759.4" y2="1460.6" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="593" y="1474.6" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">UserId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="593" y="1494.6" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">DisplayName</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="593" y="1514.6" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">AvatarUrl</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="593" y="1534.6" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">CountryCode</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="593" y="1554.6" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">IsProfilePublic</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">bool</tspan></text>
+  <text x="593" y="1574.6" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">CreatedAtUtc</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">DateTime</tspan></text>
+  <text x="593" y="1594.6" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">UpdatedAtUtc</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">DateTime</tspan></text>
+  <line x1="585" y1="1608.6" x2="759.4" y2="1608.6" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="593" y="1622.6" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">UpdateProfile()</tspan></text>
+</g>
+<g class="class-node" data-id="GameSession" data-label="GameSession">
+  <rect x="181.6" y="612" width="319.59999999999997" height="348" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="181.6" y="612" width="319.59999999999997" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="341.4" y="628" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">GameSession</text>
+  <line x1="181.6" y1="644" x2="501.19999999999993" y2="644" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="189.6" y="658" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">SessionId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="189.6" y="678" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">MachineId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="189.6" y="698" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">DeviceId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="189.6" y="718" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ModeId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="189.6" y="738" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">StartedAtUtc</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">DateTime</tspan></text>
+  <text x="189.6" y="758" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">EndedAtUtc</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">DateTime</tspan></text>
+  <text x="189.6" y="778" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">State</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">GameSessionState</tspan></text>
+  <text x="189.6" y="798" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Nonce</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <text x="189.6" y="818" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ClientVersion</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string</tspan></text>
+  <line x1="181.6" y1="832" x2="501.19999999999993" y2="832" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="189.6" y="846" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Pause()</tspan></text>
+  <text x="189.6" y="866" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Resume()</tspan></text>
+  <text x="189.6" y="886" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">End()</tspan></text>
+  <text x="189.6" y="906" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Abandon()</tspan></text>
+  <text x="189.6" y="926" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Abort()</tspan></text>
+  <text x="189.6" y="946" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">AddPlayer(slotNumber, userId, guestInitials)</tspan></text>
+</g>
+<g class="class-node" data-id="GameSessionPlayer" data-label="GameSessionPlayer">
+  <rect x="585" y="1120.3" width="174.4" height="148" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="585" y="1120.3" width="174.4" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="672.2" y="1136.3" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">GameSessionPlayer</text>
+  <line x1="585" y1="1152.3" x2="759.4" y2="1152.3" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="593" y="1166.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">SessionId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="593" y="1186.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">SlotNumber</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">int</tspan></text>
+  <text x="593" y="1206.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">UserId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid?</tspan></text>
+  <text x="593" y="1226.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">GuestInitials</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string?</tspan></text>
+  <text x="593" y="1246.3" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">JoinedAtUtc</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">DateTime</tspan></text>
+  <line x1="585" y1="1260.3" x2="759.4" y2="1260.3" stroke="var(--_node-stroke)" stroke-width="0.75" />
+</g>
+<g class="class-node" data-id="ScoreEntry" data-label="ScoreEntry">
+  <rect x="211.93333333333334" y="40" width="194.2" height="308" rx="0" ry="0" fill="var(--_node-fill)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <rect x="211.93333333333334" y="40" width="194.2" height="32" rx="0" ry="0" fill="var(--_group-hdr)" stroke="var(--_node-stroke)" stroke-width="1" />
+  <text x="309.0333333333333" y="56" text-anchor="middle" font-size="13" font-weight="700" fill="var(--_text)" dy="4.55">ScoreEntry</text>
+  <line x1="211.93333333333334" y1="72" x2="406.1333333333333" y2="72" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="219.93333333333334" y="86" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ScoreEntryId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="219.93333333333334" y="106" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">SessionId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="219.93333333333334" y="126" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">SlotNumber</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">int</tspan></text>
+  <text x="219.93333333333334" y="146" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">DeviceId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="219.93333333333334" y="166" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">MachineId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="219.93333333333334" y="186" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">IpId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="219.93333333333334" y="206" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ModeId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">Guid</tspan></text>
+  <text x="219.93333333333334" y="226" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Score</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">int</tspan></text>
+  <text x="219.93333333333334" y="246" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">AchievedAtUtc</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">DateTime</tspan></text>
+  <text x="219.93333333333334" y="266" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">UserId</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string?</tspan></text>
+  <text x="219.93333333333334" y="286" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">IsValidated</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">bool</tspan></text>
+  <text x="219.93333333333334" y="306" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">ValidationReason</tspan><tspan fill="var(--_text-faint)">: </tspan><tspan fill="var(--_text-muted)">string?</tspan></text>
+  <line x1="211.93333333333334" y1="320" x2="406.1333333333333" y2="320" stroke="var(--_node-stroke)" stroke-width="0.75" />
+  <text x="219.93333333333334" y="334" class="mono" dy="0.35em" font-size="11" font-weight="400"><tspan fill="var(--_text-faint)">+ </tspan><tspan fill="var(--_text-sec)">Invalidate(reason)</tspan></text>
+</g>
+
+
+
+<text x="645.1789999999999" y="1022.1500000000001" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">contains</text>
+<text x="359.36" y="974" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">1</text>
+<text x="658.2" y="1106.3" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">1..4</text>
+<text x="373.57899999999995" y="472" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">generates</text>
+<text x="327.4" y="598" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">1</text>
+<text x="327.4" y="362" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">*</text>
+<text x="245.78466666666665" y="472" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">belongs to</text>
+<text x="262.66666666666663" y="362" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">*</text>
+<text x="247.5" y="598" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">1</text>
+<text x="649.0399999999998" y="1350.45" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">links to</text>
+<text x="658.2" y="1282.3" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">*</text>
+<text x="658.2" y="1414.6" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">0..1</text>
+<text x="849.8393333333331" y="1022.1500000000001" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">played on</text>
+<text x="423.28" y="974" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">*</text>
+<text x="865.5333333333332" y="1086.3" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">1</text>
+<text x="367.0373333333333" y="1022.1500000000001" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">controlled by</text>
+<text x="295.44" y="974" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">*</text>
+<text x="390.4533333333333" y="1086.3" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">1</text>
+<text x="226.221" y="1022.1500000000001" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">mode</text>
+<text x="231.51999999999998" y="974" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">*</text>
+<text x="231.51999999999998" y="1086.3" font-size="11" text-anchor="middle" font-weight="400" fill="var(--_text-muted)" dy="3.8499999999999996">1</text>
+</svg>

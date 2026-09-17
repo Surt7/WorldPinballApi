@@ -242,7 +242,6 @@ Table public.game_sessions {
   session_id uuid [pk]
   machine_id uuid [not null]
   device_id uuid [not null]
-  user_id text [note: 'External Keycloak subject (sub); nullable for anonymous sessions.']
   mode_id uuid [not null]
   started_at_utc timestamptz [not null]
   ended_at_utc timestamptz
@@ -255,7 +254,6 @@ Table public.game_sessions {
     (machine_id, started_at_utc) [name: 'ix_game_sessions_machine_id_started_at_utc']
     (mode_id, started_at_utc) [name: 'ix_game_sessions_mode_id_started_at_utc']
     nonce [unique, name: 'ix_game_sessions_nonce']
-    (user_id, started_at_utc) [name: 'ix_game_sessions_user_id_started_at_utc']
   }
 }
 
@@ -293,6 +291,7 @@ Table public.mission_progress {
 Table public.score_entries {
   score_entry_id uuid [pk]
   session_id uuid [not null]
+  slot_number integer [not null]
   user_id text [note: 'External Keycloak subject (sub); nullable for anonymous scores.']
   device_id uuid [not null]
   machine_id uuid [not null]
@@ -308,7 +307,7 @@ Table public.score_entries {
     (ip_id, mode_id, score, achieved_at_utc) [name: 'ix_score_entries_ip_id_mode_id_score_achieved_at_utc']
     (machine_id, achieved_at_utc) [name: 'ix_score_entries_machine_id_achieved_at_utc']
     mode_id [name: 'ix_score_entries_mode_id']
-    session_id [unique, name: 'ix_score_entries_session_id']
+    (session_id, slot_number) [name: 'ix_score_entries_session_id_slot_number']
     (user_id, achieved_at_utc) [name: 'ix_score_entries_user_id_achieved_at_utc']
   }
 }
@@ -346,3 +345,30 @@ Ref: public.score_entries.device_id > public.devices.device_id [delete: restrict
 Ref: public.score_entries.machine_id > public.machines.machine_id [delete: restrict]
 Ref: public.score_entries.ip_id > public.ip_licenses.ip_id [delete: restrict]
 Ref: public.score_entries.mode_id > public.game_modes.mode_id [delete: restrict]
+
+Table public.user_profiles {
+  user_id uuid [pk, note: 'Mapped from Keycloak subject GUID']
+  display_name text [not null]
+  avatar_url text
+  country_code varchar(2)
+  is_profile_public boolean [not null]
+  created_at_utc timestamptz [not null]
+  updated_at_utc timestamptz
+}
+
+Table public.game_session_players {
+  session_id uuid [not null]
+  slot_number integer [not null]
+  user_id uuid
+  guest_initials varchar(10)
+  joined_at_utc timestamptz [not null]
+
+  indexes {
+    (session_id, slot_number) [pk, name: 'pk_game_session_players']
+    user_id [name: 'ix_game_session_players_user_id']
+  }
+}
+
+Ref: public.game_session_players.session_id > public.game_sessions.session_id [delete: cascade]
+Ref: public.game_session_players.user_id > public.user_profiles.user_id [delete: restrict]
+

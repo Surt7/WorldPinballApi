@@ -1,4 +1,4 @@
-﻿namespace WorldPinball.Application.Security;
+﻿namespace WorldPinball.Application.Security.Secrets;
 
 public sealed record SecretGenerationResult(
     string PlainBase64,

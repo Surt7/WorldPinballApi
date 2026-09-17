@@ -169,4 +169,29 @@ public class ReferenceEntitiesTests
         Action act = () => new UserProfile(Guid.NewGuid(), invalidName!);
         act.Should().Throw<ArgumentException>();
     }
+
+    [Theory]
+    [InlineData("admin")]
+    [InlineData("Admin")]
+    [InlineData("ADMINISTRATOR")]
+    [InlineData("System")]
+    [InlineData("WorldPinball")]
+    [InlineData("No Name")]
+    [InlineData("Anonymous")]
+    public void UserProfile_Constructor_WhenDisplayNameIsReserved_ThrowsArgumentException(string reservedName)
+    {
+        Action act = () => new UserProfile(Guid.NewGuid(), reservedName);
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*reserved*");
+    }
+
+    [Fact]
+    public void UserProfile_UpdateProfile_WhenDisplayNameIsReserved_ThrowsArgumentException()
+    {
+        var profile = new UserProfile(Guid.NewGuid(), "ValidPlayer");
+        Action act = () => profile.UpdateProfile("Admin", "", "", false, DateTime.UtcNow);
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*reserved*");
+    }
 }

@@ -8,7 +8,7 @@ public class GameSessionTests
 {
     private static GameSession CreateValidSession(DateTime? startedAt = null)
     {
-        return new GameSession(
+        var session = new GameSession(
             machineId: Guid.NewGuid(),
             deviceId: Guid.NewGuid(),
             modeId: Guid.NewGuid(),
@@ -16,10 +16,12 @@ public class GameSessionTests
             nonce: "nonce-random-xyz",
             startedAtUtc: startedAt ?? DateTime.UtcNow
         );
+        session.Start(startedAt ?? DateTime.UtcNow);
+        return session;
     }
 
     [Fact]
-    public void Constructor_WhenArgumentsAreValid_ShouldInitializeSessionInStartedState()
+    public void Constructor_WhenArgumentsAreValid_ShouldInitializeSessionInCreatedState()
     {
         // Arrange
         var machineId = Guid.NewGuid();
@@ -48,7 +50,7 @@ public class GameSessionTests
         session.Nonce.Should().Be(nonce);
         session.StartedAtUtc.Should().Be(startedAtUtc);
         session.EndedAtUtc.Should().BeNull();
-        session.State.Should().Be(GameSessionState.Started);
+        session.State.Should().Be(GameSessionState.Created);
         session.ScoreEntry.Should().BeNull();
     }
 
