@@ -17,6 +17,8 @@ using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Features.Machines.Public;
 using WorldPinball.Application.Features.Machines.Public.Enroll;
 using WorldPinball.Application.Features.Machines.Public.Enroll.Profile;
+using WorldPinball.Application.Security.Cryptography;
+using WorldPinball.Infrastructure.Security.Cryptography;
 
 
 // -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
@@ -57,6 +59,7 @@ try
     
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();
     builder.Services.AddScoped<ICanonicalBuilder, CanonicalBuilder>();
+    
     builder.Services.AddSingleton<ISignatureVerifier, EcdsaP256SignatureVerifier>();
     builder.Services.AddScoped<GetLeaderboardHandler>();
  

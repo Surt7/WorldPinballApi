@@ -32,10 +32,10 @@ public class MachineAuthServiceTests
         _signatureVerifierMock = Substitute.For<ISignatureVerifier>();
         _timeProvider = new FakeTimeProvider();
         
-        // Bloquer l'horloge système factice sur une date connue
+        // Lock the fake system clock to a known point in time
         _timeProvider.SetUtcNow(new DateTimeOffset(2026, 9, 17, 12, 0, 0, TimeSpan.Zero));
 
-        // Note: L'instance de NullLogger est utilisée pour ne pas encombrer la sortie des tests
+        // Note: NuLogger is used to avoid cluttering test outputs
         _sut = new MachineAuthService(
             _db,
             _canonicalBuilderMock,
@@ -45,13 +45,13 @@ public class MachineAuthServiceTests
     }
 
     // =========================================================================
-    // TESTS QUE J'AI IMPLEMENTES (COMPLEXE MOCKING CRYPTO ET HAPPY PATH)
+    // PROVIDED TESTS (COMPLEX CRYPTO MOCKING AND HAPPY PATH)
     // =========================================================================
 
     [Fact]
     public async Task ValidateAsync_WithValidSignature_ShouldReturnSuccess()
     {
-        // Assemble (Arrange)
+        // Assemble
         var machineId = Guid.NewGuid();
         var deviceId = Guid.NewGuid();
         var now = _timeProvider.GetUtcNow();
@@ -102,7 +102,7 @@ public class MachineAuthServiceTests
     [Fact]
     public async Task ValidateAsync_WithInvalidSignature_ShouldReturnInvalidSignature()
     {
-        // Assemble (Arrange)
+        // Assemble
         var machineId = Guid.NewGuid();
         var deviceId = Guid.NewGuid();
         var now = _timeProvider.GetUtcNow();
@@ -147,14 +147,14 @@ public class MachineAuthServiceTests
     }
 
     // =========================================================================
-    // TESTS POUR T'ENTRAINER (SKIPPED POUR QUE LE PIPELINE GIT PASSE AU VERT)
+    // TESTS FOR YOUR PRACTICE (SKIPPED SO GIT PIPELINE STAYS GREEN)
     // =========================================================================
 
-    [Fact(Skip = "TODO: Pratique - Vérifie qu'un device ID illisible (ex: 'not-a-guid') renvoie InvalidHeader pour X-Device-Id.")]
+    [Fact(Skip = "TODO: Practice - Verify that an unreadable device ID (e.g. 'not-a-guid') returns InvalidHeader for X-Device-Id.")]
     public async Task ValidateAsync_WhenDeviceIdIsInvalid_ShouldReturnInvalidHeader()
     {
-        // Assemble (Arrange)
-        // TODO: Créer un MachineAuthContext avec DeviceIdHeader = "invalid-guid"
+        // Assemble
+        // TODO: Create a MachineAuthContext with DeviceIdHeader = "invalid-guid"
         
         // Act
         // TODO: var result = await _sut.ValidateAsync(context);
@@ -163,10 +163,10 @@ public class MachineAuthServiceTests
         // TODO: result.Should().BeOfType<MachineAuthResult.InvalidHeader>();
     }
 
-    [Fact(Skip = "TODO: Pratique - Vérifie que si l'écart de temps est de + de 120s (ex: Timestamp 180s en retard), ça renvoie TimestampOutOfWindow.")]
+    [Fact(Skip = "TODO: Practice - Verify that if the time drift is greater than 120s (e.g. Timestamp is 150s late), it returns TimestampOutOfWindow.")]
     public async Task ValidateAsync_WhenTimestampIsTooOld_ShouldReturnTimestampOutOfWindow()
     {
-        // Assemble (Arrange)
+        // Assemble
         // var requestTime = _timeProvider.GetUtcNow().AddSeconds(-150).ToUnixTimeSeconds();
         // ...
 
@@ -175,20 +175,20 @@ public class MachineAuthServiceTests
         // Assert
     }
 
-    [Fact(Skip = "TODO: Pratique - Insère en DB un Device avec Status = DeviceStatus.Revoked et vérifie que le service renvoie bien DeviceNotFoundOrRevoked.")]
+    [Fact(Skip = "TODO: Practice - Insert a Device with Status = DeviceStatus.Revoked in the DB and verify the service returns DeviceNotFoundOrRevoked.")]
     public async Task ValidateAsync_WhenDeviceIsRevoked_ShouldReturnDeviceNotFoundOrRevoked()
     {
-        // Assemble (Arrange)
+        // Assemble
         
         // Act
         
         // Assert
     }
     
-    [Fact(Skip = "TODO: Pratique - Insère un MachineDevice valid, appelle 'md.Detach(now)' (ce qui met IsActive = false), SaveChanges, et vérifie qu'on retourne DeviceNotAttached.")]
+    [Fact(Skip = "TODO: Practice - Insert a valid MachineDevice, call 'md.Detach(now)' (which sets IsActive = false), SaveChanges, and verify it returns DeviceNotAttached.")]
     public async Task ValidateAsync_WhenDeviceIsDetached_ShouldReturnDeviceNotAttached()
     {
-        // Assemble (Arrange)
+        // Assemble
         
         // Act
         

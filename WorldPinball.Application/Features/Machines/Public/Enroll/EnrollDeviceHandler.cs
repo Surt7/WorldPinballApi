@@ -84,13 +84,11 @@ public sealed class EnrollDeviceHandler(
             CreatedAtUtc = now
         };
 
-        var machineDevice = new MachineDevice
-        {
-            MachineId = cmd.MachineId,
-            DeviceId = device.DeviceId,
-            AttachedAtUtc = now,
-            IsActive = true
-        };
+        var machineDevice = new MachineDevice(
+            machineId: cmd.MachineId,
+            deviceId: device.DeviceId,
+            attachedAtUtc: now
+        );
 
         try
         {
