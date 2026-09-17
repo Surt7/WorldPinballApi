@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Api.Contracts.Machine;
+using WorldPinball.Application.Features.Machines.Public;
 using WorldPinball.Application.Features.Machines.Public.Enroll;
 using WorldPinball.Application.Features.Machines.Public.Enroll.Commands;
 

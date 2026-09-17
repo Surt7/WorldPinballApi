@@ -1,6 +1,5 @@
-using System.Security.Cryptography;
+
 using Microsoft.Extensions.Logging;
-using WorldPinball.Application.Features.Machines.Public.Enroll;
 using WorldPinball.Application.Features.Machines.Public.Enroll.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Security.CA;
@@ -33,6 +32,9 @@ public sealed class EnrollDeviceHandler(
     private static readonly EventId EnrollmentTokenIsInvalid =
         new(2104, nameof(EnrollmentTokenIsInvalid));
 
+    private static readonly EventId MachineMismatch =
+        new(2105, nameof(MachineMismatch));
+    
     public async Task<EnrollDeviceResult> HandleAsync(
         EnrollDeviceCommand cmd,
         CancellationToken ct = default)
@@ -41,6 +43,15 @@ public sealed class EnrollDeviceHandler(
 
         string plainTextEnrollementToken = cmd.PlainEnrollmentToken;
 
+        if (cmd.MachineId == Guid.Empty)
+        {
+            logger.LogWarning(
+                MachineMismatch,
+                "Device enrollment rejected for serial {DeviceSerialNumber}: MachineId is empty.",
+                cmd.DeviceSerialNumber);
+            return new EnrollDeviceResult.MachineNotFound(cmd.MachineId);
+        }
+        
         if (string.IsNullOrWhiteSpace(plainTextEnrollementToken))
             throw new ArgumentNullException(
                 cmd.PlainEnrollmentToken,
@@ -65,6 +76,18 @@ public sealed class EnrollDeviceHandler(
                 "Device enrollment rejected for serial {DeviceSerialNumber}: Token not found.",
                 cmd.DeviceSerialNumber);
             return new EnrollDeviceResult.InvalidToken("Token not found");
+        }
+
+
+        if (token.MachineId != cmd.MachineId)
+        {
+            logger.LogWarning(
+                MachineMismatch,
+                "Device enrollment rejected: MachineId mismatch. Command authorized for {TokenMachineId} but requested {CommandMachineId}.",
+                token.MachineId,
+                cmd.MachineId);
+            
+            return new EnrollDeviceResult.MachineNotFound(cmd.MachineId);
         }
 
         if (await deviceEnrollmentReadRepository.DeviceSerialExistsAsync(cmd.DeviceSerialNumber, ct))
@@ -106,8 +129,6 @@ public sealed class EnrollDeviceHandler(
 
         await deviceEnrollmentWriteRepository.SaveEnrollmentAsync(device, machineDevice, token, ct);
 
-        
-        
         var issuedCert = await caService.IssueDeviceCertificateAsync(
             cmd.DeviceSerialNumber,
             cmd.PublicKeyPem,
@@ -119,7 +140,6 @@ public sealed class EnrollDeviceHandler(
             device.DeviceId,
             cmd.DeviceSerialNumber,
             issuedCert.SerialNumber);
-        
         
         logger.LogInformation(
             DeviceEnrolled,

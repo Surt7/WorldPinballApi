@@ -29,6 +29,88 @@ public class EnrollDeviceResultInvalidToken
     }
 
     [Fact]
+    public async Task HandleAsync_WhenMachineIdIsEmpty_ShouldReturnMachineNotFound()
+    {
+        var logger = NullLogger<EnrollDeviceHandler>.Instance;
+        var repoDeviceReadEnroll = Substitute.For<IDeviceEnrollmentReadRepository>();
+        var repoDeviceWriteEnroll = Substitute.For<IDeviceEnrollmentWriteRepository>();
+        var caService = Substitute.For<ICertificateAuthorityService>();
+
+        var command = new EnrollDeviceCommand(
+            MachineId: Guid.Empty, // <--- EMPTY GUID
+            DeviceSerialNumber: "DEV-12345",
+            PlainEnrollmentToken: "some-plain-token",
+            PublicKeyPem: "PUBLIC_KEY"
+        );
+
+        var sut = new EnrollDeviceHandler(
+            repoDeviceWriteEnroll,
+            repoDeviceReadEnroll,
+            caService,
+            _secretService,
+            logger,
+            TimeProvider.System
+        );
+        
+        var result = await sut.HandleAsync(command);
+
+        result.Should().BeOfType<EnrollDeviceResult.MachineNotFound>();
+        var notFoundResult = (EnrollDeviceResult.MachineNotFound)result;
+        notFoundResult.MachineId.Should().Be(Guid.Empty);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenMachineIdMismatch_ShouldReturnMachineNotFound()
+    {
+        var (plainText, tokenHash) = GenerateValidTokenPair();
+        var timeProvider = TimeProvider.System;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+
+        var logger = NullLogger<EnrollDeviceHandler>.Instance;
+        var repoDeviceReadEnroll = Substitute.For<IDeviceEnrollmentReadRepository>();
+        var repoDeviceWriteEnroll = Substitute.For<IDeviceEnrollmentWriteRepository>();
+        var caService = Substitute.For<ICertificateAuthorityService>();
+
+        var tokenMachineId = Guid.NewGuid();
+        var commandMachineId = Guid.NewGuid(); // DIFFERENTS !
+
+        var token = new EnrollmentToken(
+            tokenHash: tokenHash,
+            tokenType: EnrollmentTokenType.DeviceEnroll,
+            issuedByUserId: "admin-1",
+            issuedAt: now,
+            expiresAt: now.AddHours(1),
+            machineId: tokenMachineId // <--- Lié à tokenMachineId
+        );
+
+        repoDeviceReadEnroll
+            .GetTokenByHashAsync(tokenHash, Arg.Any<CancellationToken>())
+            .Returns(token);
+
+        var command = new EnrollDeviceCommand(
+            MachineId: commandMachineId, // <--- Requis avec commandMachineId
+            DeviceSerialNumber: "DEV-12345",
+            PlainEnrollmentToken: plainText,
+            PublicKeyPem: "PUBLIC_KEY"
+        );
+
+        var sut = new EnrollDeviceHandler(
+            repoDeviceWriteEnroll,
+            repoDeviceReadEnroll,
+            caService,
+            _secretService,
+            logger,
+            timeProvider
+        );
+        
+        var result = await sut.HandleAsync(command);
+
+        result.Should().BeOfType<EnrollDeviceResult.MachineNotFound>();
+        var notFoundResult = (EnrollDeviceResult.MachineNotFound)result;
+        notFoundResult.MachineId.Should().Be(commandMachineId);
+    }
+
+    [Fact]
     public async Task HandleAsync_WhenTokenFormatIsInvalid_ShouldReturnInvalidToken()
     {
         var logger = NullLogger<EnrollDeviceHandler>.Instance;
@@ -102,12 +184,15 @@ public class EnrollDeviceResultInvalidToken
         var repoDeviceWriteEnroll = Substitute.For<IDeviceEnrollmentWriteRepository>();
         var caService = Substitute.For<ICertificateAuthorityService>();
 
+        var machineId = Guid.NewGuid(); // <-- Set common ID
+
         var token = new EnrollmentToken(
             tokenHash: tokenHash,
             tokenType: EnrollmentTokenType.DeviceEnroll,
             issuedByUserId: "admin-1",
             issuedAt: now,
-            expiresAt: now.AddHours(1)
+            expiresAt: now.AddHours(1),
+            machineId: machineId // <-- Bind ID
         );
 
         repoDeviceReadEnroll
@@ -119,7 +204,7 @@ public class EnrollDeviceResultInvalidToken
             .Returns(true);
 
         var command = new EnrollDeviceCommand(
-            MachineId: Guid.NewGuid(),
+            MachineId: machineId,
             DeviceSerialNumber: "DEV-12345",
             PlainEnrollmentToken: plainText,
             PublicKeyPem: "PUBLIC_KEY"
@@ -151,12 +236,15 @@ public class EnrollDeviceResultInvalidToken
         var repoDeviceWriteEnroll = Substitute.For<IDeviceEnrollmentWriteRepository>();
         var caService = Substitute.For<ICertificateAuthorityService>();
 
+        var machineId = Guid.NewGuid(); // <-- Set common ID
+
         var token = new EnrollmentToken(
             tokenHash: tokenHash,
             tokenType: EnrollmentTokenType.DeviceEnroll,
             issuedByUserId: "admin-1",
             issuedAt: now,
-            expiresAt: now.AddHours(1)
+            expiresAt: now.AddHours(1),
+            machineId: machineId // <-- Bind ID
         );
 
         repoDeviceReadEnroll
@@ -178,7 +266,7 @@ public class EnrollDeviceResultInvalidToken
                 NotAfterUtc: now.AddYears(1)));
 
         var command = new EnrollDeviceCommand(
-            MachineId: Guid.NewGuid(),
+            MachineId: machineId,
             DeviceSerialNumber: "DEV-12345",
             PlainEnrollmentToken: plainText,
             PublicKeyPem: "PUBLIC_KEY"
@@ -218,12 +306,15 @@ public class EnrollDeviceResultInvalidToken
         var repoDeviceWriteEnroll = Substitute.For<IDeviceEnrollmentWriteRepository>();
         var caService = Substitute.For<ICertificateAuthorityService>();
 
+        var machineId = Guid.NewGuid();
+
         var token = new EnrollmentToken(
             tokenHash: tokenHash,
             tokenType: EnrollmentTokenType.DeviceEnroll,
             issuedByUserId: "admin-1",
             issuedAt: now.AddHours(-2),
-            expiresAt: now.AddHours(-1)
+            expiresAt: now.AddHours(-1),
+            machineId: machineId // <-- Bind ID
         );
 
         repoDeviceReadEnroll
@@ -235,7 +326,7 @@ public class EnrollDeviceResultInvalidToken
             .Returns(false);
 
         var command = new EnrollDeviceCommand(
-            MachineId: Guid.NewGuid(),
+            MachineId: machineId,
             DeviceSerialNumber: "DEV-12345",
             PlainEnrollmentToken: plainText,
             PublicKeyPem: "PUBLIC_KEY"
