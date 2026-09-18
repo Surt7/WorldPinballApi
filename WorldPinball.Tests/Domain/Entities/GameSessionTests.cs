@@ -51,7 +51,7 @@ public class GameSessionTests
         session.StartedAtUtc.Should().Be(startedAtUtc);
         session.EndedAtUtc.Should().BeNull();
         session.State.Should().Be(GameSessionState.Created);
-        session.ScoreEntry.Should().BeNull();
+      
     }
 
     [Fact]

@@ -1,154 +1,109 @@
-﻿// using Microsoft.AspNetCore.Mvc;
-// using Microsoft.EntityFrameworkCore;
-// using System.Text;
-// using WorldPinball.Api.Contracts.Sessions;
-// using WorldPinball.Infrastructure.Security;
-// using WorldPinball.Domain.Entities;
-// using WorldPinball.Domain.Enums;
-// using WorldPinball.Infrastructure.Persistence;
-//
-// namespace WorldPinball.Api.Controllers.Public;
-//
-// [ApiController]
-// [Route("api/v1/sessions")]
-// public class SessionsController(AppDbContext db, IMachineAuthService auth) : ControllerBase
-// {
-//     private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = new()
-//     {
-//         PropertyNameCaseInsensitive = true
-//     };
-//
-//
-//     [HttpPost("start")]
-//     public async Task<ActionResult<StartSessionResponse>> Start(CancellationToken ct)
-//     {
-//         Request.EnableBuffering();
-//         Request.Body.Position = 0;
-//
-//         using var reader = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true);
-//         var rawBody = await reader.ReadToEndAsync(ct);
-//         Request.Body.Position = 0;
-//
-//         if (string.IsNullOrWhiteSpace(rawBody))
-//             return BadRequest(new { message = "Empty body" });
-//
-//         StartSessionRequest? req;
-//         try
-//         {
-//             req = System.Text.Json.JsonSerializer.Deserialize<StartSessionRequest>(rawBody, JsonOpts);
-//         }
-//         catch
-//         {
-//             return BadRequest(new { message = "Invalid JSON" });
-//         }
-//
-//         if (req is null)
-//             return BadRequest(new { message = "Invalid body" });
-//
-//         MachineAuthResult auth1;
-//         try
-//         {
-//             auth1 = await auth.ValidateAsync(Request, rawBody, ct);
-//         }
-//         catch (UnauthorizedAccessException ex)
-//         {
-//             return Unauthorized(new { message = ex.Message });
-//         }
-//
-//         var mode = await db.GameModes
-//             .Where(x => x.Code == req.ModeCode && x.IsActive)
-//             .Select(x => new { x.ModeId })
-//             .FirstOrDefaultAsync(ct);
-//
-//         if (mode is null)
-//             return NotFound(new { message = "Unknown modeCode" });
-//
-//         var session = new GameSession
-//         {
-//             SessionId = Guid.NewGuid(),
-//             MachineId = auth1.MachineId,
-//             ModeId = mode.ModeId,
-//             StartedAtUtc = DateTime.UtcNow,
-//             State = GameSessionState.Started,
-//             Nonce = auth1.Nonce,
-//             ClientVersion = req.ClientVersion
-//         };
-//
-//         db.GameSessions.Add(session);
-//         await db.SaveChangesAsync(ct);
-//
-//         return Ok(new StartSessionResponse(session.SessionId, DateTimeOffset.UtcNow.ToUnixTimeSeconds()));
-//     }
-//
-//     [HttpPost("{sessionId:guid}/submit-score")]
-//     public async Task<ActionResult<SubmitScoreResponse>> SubmitScore(Guid sessionId, CancellationToken ct)
-//     {
-//         Request.EnableBuffering();
-//         Request.Body.Position = 0;
-//
-//         using var reader = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true);
-//         var rawBody = await reader.ReadToEndAsync(ct);
-//         Request.Body.Position = 0;
-//
-//         if (string.IsNullOrWhiteSpace(rawBody))
-//             return BadRequest(new { message = "Empty body" });
-//
-//         SubmitScoreRequest? req;
-//         try
-//         {
-//             req = System.Text.Json.JsonSerializer.Deserialize<SubmitScoreRequest>(rawBody, JsonOpts);
-//             Console.WriteLine($"ModeCode received = '{req}'");
-//         }
-//         catch
-//         {
-//             return BadRequest(new { message = "Invalid JSON" });
-//         }
-//
-//         if (req is null)
-//             return BadRequest(new { message = "Invalid body" });
-//
-//         MachineAuthResult auth1;
-//         try
-//         {
-//             auth1 = await auth.ValidateAsync(Request, rawBody, ct);
-//         }
-//         catch (UnauthorizedAccessException ex)
-//         {
-//             return Unauthorized(new { message = ex.Message });
-//         }
-//
-//         if (req.Score < 0 || req.Score > 2_000_000_000)
-//             return BadRequest(new { message = "Score out of bounds" });
-//
-//         var session = await db.GameSessions
-//             .Include(s => s.Machine)
-//             .FirstOrDefaultAsync(s => s.SessionId == sessionId, ct);
-//
-//         if (session is null) return NotFound(new { message = "Session not found" });
-//         if (session.MachineId != auth1.MachineId) return Forbid();
-//         if (session.State != GameSessionState.Started) return Conflict(new { message = "Session already ended" });
-//
-//         using var tx = await db.Database.BeginTransactionAsync(ct);
-//
-//         session.EndedAtUtc = DateTime.UtcNow;
-//         session.State = GameSessionState.Ended;
-//
-//         var scoreEntry = new ScoreEntry
-//         {
-//             ScoreEntryId = Guid.NewGuid(),
-//             SessionId = session.SessionId,
-//             MachineId = session.MachineId,
-//             IpId = session.Machine.IpId,
-//             ModeId = session.ModeId,
-//             Score = req.Score,
-//             AchievedAtUtc = DateTime.UtcNow,
-//             IsValidated = true
-//         };
-//
-//         db.ScoreEntries.Add(scoreEntry);
-//         await db.SaveChangesAsync(ct);
-//         await tx.CommitAsync(ct);
-//
-//         return Ok(new SubmitScoreResponse(scoreEntry.ScoreEntryId, scoreEntry.IsValidated));
-//     }
-// }
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Text;
+using FluentValidation;
+using WorldPinball.Api.Contracts.Sessions;
+using WorldPinball.Application.Features.GameSessions.Public.Start;
+using WorldPinball.Application.Features.GameSessions.Public.Start.Commands;
+using WorldPinball.Application.Security.Cryptography;
+using WorldPinball.Domain.Entities;
+using WorldPinball.Domain.Enums;
+
+
+namespace WorldPinball.Api.Controllers.Public;
+
+[ApiController]
+[Route("api/v1/sessions")]
+public class SessionsController(
+    IMachineAuthService authService,
+    IStartGameSessionHandler startSessionHandler,
+    IValidator<StartSessionRequest> requestValidator
+) : ControllerBase
+{
+    private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+
+    [HttpPost("start")]
+    [EndpointSummary("Start a game session")]
+    [EndpointDescription("POST to create new game session")]
+    [ProducesResponseType(typeof(StartSessionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<StartSessionResponse>> StartSession(
+        [FromBody] StartSessionRequest request,
+        [FromHeader(Name = "X-Device-Id")] string? deviceId,
+        [FromHeader(Name = "X-Timestamp")] string? timestamp,
+        [FromHeader(Name = "X-Nonce")] string? nonce,
+        [FromHeader(Name = "X-Signature")] string? signature,
+        CancellationToken ct)
+    {
+        var validationResult = await requestValidator.ValidateAsync(request, ct);
+        if (!validationResult.IsValid)
+        {
+            foreach (var failure in validationResult.Errors)
+            {
+                ModelState.AddModelError(
+                    failure.PropertyName,
+                    failure.ErrorMessage);
+            }
+
+            return ValidationProblem(ModelState);
+        }
+
+        var context = new MachineAuthContext(
+            DeviceIdHeader: deviceId,
+            TimestampHeader: timestamp,
+            NonceHeader: nonce,
+            SignatureHeader: signature,
+            HttpMethod: Request.Method,
+            RequestPath: Request.Path.Value ?? string.Empty,
+            RawBody: System.Text.Json.JsonSerializer.Serialize(request));
+
+        var authResult = await authService.ValidateAsync(context, ct);
+        if (authResult is not MachineAuthResult.Success success)
+        {
+            return Unauthorized((new { message = "Machine authentification failed." }));
+        }
+        
+        var command = new StartGameSessionCommand(
+            success.DeviceId,
+            request.ModeCode,
+            request.ClientVersion
+        );
+        
+        var sessionResult = await startSessionHandler.HandleAsync(command, ct);
+        
+        return sessionResult switch
+        {
+            StartGameSessionResult.Success s => Ok(new StartSessionResponse(
+                s.SessionId,
+                s.StartedAtUtc.ToUnixTimeSeconds()
+            )),
+            StartGameSessionResult.ModeNotFound m => NotFound(new
+            {
+                message = $"Mode '{m.ModeCode}' not found or inactive."
+            }),
+            StartGameSessionResult.DeviceNotFound d => NotFound(new
+            {
+                message = $"Device '{d.DeviceId}' not found."
+            }),
+            StartGameSessionResult.DeviceNotActive d => BadRequest(new
+            {
+                message = $"Device '{d.DeviceId}' is not active."
+            }),
+            StartGameSessionResult.MachineNotAttached d => BadRequest(new
+            {
+                message = $"Device '{d.DeviceId}' is not attached to any machine."
+            }),
+            _ => throw new InvalidOperationException($"Unsupported session result: {sessionResult.GetType().Name}")
+        };
+    }
+    // [HttpPost("{sessionId:guid}/submit-score")]
+    // public async Task<ActionResult<SubmitScoreResponse>> SubmitScore(Guid sessionId, CancellationToken ct)
+    // {
+    //
+    // }
+}

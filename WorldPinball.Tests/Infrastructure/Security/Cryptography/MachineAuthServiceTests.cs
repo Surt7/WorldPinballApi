@@ -44,9 +44,6 @@ public class MachineAuthServiceTests
             NullLogger<MachineAuthService>.Instance);
     }
 
-    // =========================================================================
-    // PROVIDED TESTS (COMPLEX CRYPTO MOCKING AND HAPPY PATH)
-    // =========================================================================
 
     [Fact]
     public async Task ValidateAsync_WithValidSignature_ShouldReturnSuccess()
@@ -146,52 +143,154 @@ public class MachineAuthServiceTests
         result.Should().BeOfType<MachineAuthResult.InvalidSignature>();
     }
 
-    // =========================================================================
-    // TESTS FOR YOUR PRACTICE (SKIPPED SO GIT PIPELINE STAYS GREEN)
-    // =========================================================================
 
-    [Fact(Skip = "TODO: Practice - Verify that an unreadable device ID (e.g. 'not-a-guid') returns InvalidHeader for X-Device-Id.")]
+
+    [Fact()]
     public async Task ValidateAsync_WhenDeviceIdIsInvalid_ShouldReturnInvalidHeader()
     {
         // Assemble
-        // TODO: Create a MachineAuthContext with DeviceIdHeader = "invalid-guid"
+        
+        var machineId = Guid.NewGuid();
+        var deviceId = Guid.NewGuid();
+        var now = _timeProvider.GetUtcNow();
+        var timestamp = now.ToUnixTimeSeconds();
+        
+        var device = new Device 
+        { 
+            DeviceId = deviceId, 
+            SerialPhysical = "DEV-001",
+            Status = DeviceStatus.Active, 
+            PublicKey = "pk", 
+            KeyAlgorithm = "algo" 
+        };
+        
+       
+
+        
+
+        
+        var context = new MachineAuthContext(
+            "wrong-id".ToString(),
+            timestamp.ToString(),
+            "1234567890123456",
+            "fake-signature",
+            "POST",
+            "/api/endpoint",
+            "{}");
+        
         
         // Act
-        // TODO: var result = await _sut.ValidateAsync(context);
-
+        var result = await _sut.ValidateAsync(context);
+        
         // Assert
-        // TODO: result.Should().BeOfType<MachineAuthResult.InvalidHeader>();
+        result.Should().BeOfType<MachineAuthResult.InvalidHeader>();
+
     }
 
-    [Fact(Skip = "TODO: Practice - Verify that if the time drift is greater than 120s (e.g. Timestamp is 150s late), it returns TimestampOutOfWindow.")]
+    [Fact()]
     public async Task ValidateAsync_WhenTimestampIsTooOld_ShouldReturnTimestampOutOfWindow()
     {
         // Assemble
-        // var requestTime = _timeProvider.GetUtcNow().AddSeconds(-150).ToUnixTimeSeconds();
-        // ...
+        var machineId = Guid.NewGuid();
+        var deviceId = Guid.NewGuid();
+        var now = _timeProvider.GetUtcNow();
+        var timestamp = now.ToUnixTimeSeconds();
 
-        // Act
+        var oldTimestamp = now.AddSeconds(150).ToUnixTimeSeconds();
         
+        var context = new MachineAuthContext(
+            deviceId.ToString(),
+            oldTimestamp.ToString(),
+            "1234567890123456",
+            "fake-signature",
+            "POST",
+            "/api/endpoint",
+            "{}");
+        
+        // Act
+        var result = await _sut.ValidateAsync(context);
         // Assert
+        result.Should().BeOfType<MachineAuthResult.TimestampOutOfWindow>();
     }
 
-    [Fact(Skip = "TODO: Practice - Insert a Device with Status = DeviceStatus.Revoked in the DB and verify the service returns DeviceNotFoundOrRevoked.")]
+    [Fact()]
     public async Task ValidateAsync_WhenDeviceIsRevoked_ShouldReturnDeviceNotFoundOrRevoked()
     {
         // Assemble
+        var machineId = Guid.NewGuid();
+        var deviceId = Guid.NewGuid();
+        var now = _timeProvider.GetUtcNow();
+        var timestamp = now.ToUnixTimeSeconds();
+
+        var device = new Device 
+        { 
+            DeviceId = deviceId, 
+            SerialPhysical = "DEV-001",
+            Status = DeviceStatus.Revoked, 
+            PublicKey = "pk", 
+            KeyAlgorithm = "algo" 
+        };
+        var machineDevice = new MachineDevice(machineId, deviceId, now.UtcDateTime);
+  
+        var context = new MachineAuthContext(
+            deviceId.ToString(),
+            timestamp.ToString(),
+            "1234567890123456",
+            "fake-signature",
+            "POST",
+            "/api/endpoint",
+            "{}");
         
+        
+        _db.Devices.Add(device);
+        _db.MachineDevices.Add(machineDevice);
+        await _db.SaveChangesAsync();
         // Act
-        
+        var result = await _sut.ValidateAsync(context);
         // Assert
+     
+  
+        result.Should().BeOfType<MachineAuthResult.DeviceNotFoundOrRevoked>();
     }
     
-    [Fact(Skip = "TODO: Practice - Insert a valid MachineDevice, call 'md.Detach(now)' (which sets IsActive = false), SaveChanges, and verify it returns DeviceNotAttached.")]
+    [Fact()]
     public async Task ValidateAsync_WhenDeviceIsDetached_ShouldReturnDeviceNotAttached()
     {
         // Assemble
+        var machineId = Guid.NewGuid();
+        var deviceId = Guid.NewGuid();
+        var now = _timeProvider.GetUtcNow();
+        var timestamp = now.ToUnixTimeSeconds();
+
+        var device = new Device 
+        { 
+            DeviceId = deviceId, 
+            SerialPhysical = "DEV-001",
+            Status = DeviceStatus.Revoked, 
+            PublicKey = "pk", 
+            KeyAlgorithm = "algo" 
+        };
+        var machineDevice = new MachineDevice(machineId, deviceId, now.UtcDateTime);
+  
+        var context = new MachineAuthContext(
+            deviceId.ToString(),
+            timestamp.ToString(),
+            "1234567890123456",
+            "fake-signature",
+            "POST",
+            "/api/endpoint",
+            "{}");
         
+        
+        _db.Devices.Add(device);
+        _db.MachineDevices.Add(machineDevice);
+        machineDevice.Detach(now.UtcDateTime);
+        await _db.SaveChangesAsync();
         // Act
-        
+        var result = await _sut.ValidateAsync(context);
         // Assert
+     
+  
+        result.Should().BeOfType<MachineAuthResult.DeviceNotAttached>();
     }
 }

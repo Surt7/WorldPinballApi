@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 using WorldPinball.Api.Contracts.Machine;
-using WorldPinball.Application.Contracts.Admin.Machine;
+
 
 namespace WorldPinball.Api.Validation.Admin;
 

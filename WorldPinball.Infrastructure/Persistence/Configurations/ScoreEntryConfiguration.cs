@@ -37,10 +37,7 @@ namespace WorldPinball.Infrastructure.Persistence.Configurations
             e.HasIndex(x => new { x.MachineId, x.AchievedAtUtc });
             e.HasIndex(x => new { x.UserId, x.AchievedAtUtc });
 
-            e.HasOne(x => x.Session)
-             .WithOne(x => x.ScoreEntry)
-             .HasForeignKey<ScoreEntry>(x => x.SessionId)
-             .OnDelete(DeleteBehavior.Cascade);
+
 
          
             e.HasOne(x => x.Device)

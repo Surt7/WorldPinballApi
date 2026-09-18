@@ -57,7 +57,7 @@ public class GameSession : Entity
     public string Nonce { get; private set; }
     public string ClientVersion { get; private set; }
 
-    public ScoreEntry? ScoreEntry { get; private set; }
+
 
     private readonly List<GameSessionPlayer> _players = [];
     public IReadOnlyCollection<GameSessionPlayer> Players => _players.AsReadOnly();

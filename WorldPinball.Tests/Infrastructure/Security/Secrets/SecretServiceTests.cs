@@ -1,8 +1,7 @@
 ﻿using System.Security.Cryptography;
 using FluentAssertions;
 using Microsoft.AspNetCore.DataProtection;
-using NSubstitute;
-using WorldPinball.Application.Security.Secrets;
+
 using WorldPinball.Infrastructure.Security.Secrets;
 
 namespace WorldPinball.Tests.Infrastructure.Security.Secrets;
