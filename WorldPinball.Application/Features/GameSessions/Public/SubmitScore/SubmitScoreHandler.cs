@@ -49,6 +49,8 @@ public sealed class SubmitScoreHandler(
                 gameSession.SessionId);
             return new SubmitScoreResult.SessionAlreadyEnded(gameSession.SessionId);
         }
+        
+        // We retrive all players from a game session
         var player = gameSession.Players.FirstOrDefault(p => p.SlotNumber == command.SlotNumber);
         if (player is null)
         {
@@ -64,7 +66,7 @@ public sealed class SubmitScoreHandler(
             command.SlotNumber,
             gameSession.DeviceId,
             gameSession.MachineId,
-            gameSession.Machine?.IpId ?? Guid.NewGuid(), // 👈 L'IpId de la machine
+            gameSession.Machine?.IpId ?? Guid.NewGuid(), // Machine that belong to a license
             gameSession.ModeId,
             command.Score,
             nowUtc,

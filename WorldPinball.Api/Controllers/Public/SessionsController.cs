@@ -1,12 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Text;
+
+using System.Text.Json;
 using FluentValidation;
 using WorldPinball.Api.Contracts.Sessions;
 using WorldPinball.Application.Features.GameSessions.Public.Start;
 using WorldPinball.Application.Features.GameSessions.Public.Start.Commands;
+using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
+using WorldPinball.Application.Features.GameSessions.Public.SubmitScore.Commands;
 using WorldPinball.Application.Security.Cryptography;
-using WorldPinball.Domain.Entities;
-using WorldPinball.Domain.Enums;
+
 
 
 namespace WorldPinball.Api.Controllers.Public;
@@ -16,12 +18,16 @@ namespace WorldPinball.Api.Controllers.Public;
 public class SessionsController(
     IMachineAuthService authService,
     IStartGameSessionHandler startSessionHandler,
-    IValidator<StartSessionRequest> requestValidator
+    ISubmitScoreHandler submitScoreHandler,
+    IValidator<StartSessionRequest> requestValidator,
+IValidator<SubmitScoreRequest> reqValidator
 ) : ControllerBase
 {
     private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = false,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
 
@@ -60,7 +66,7 @@ public class SessionsController(
             SignatureHeader: signature,
             HttpMethod: Request.Method,
             RequestPath: Request.Path.Value ?? string.Empty,
-            RawBody: System.Text.Json.JsonSerializer.Serialize(request));
+            RawBody: System.Text.Json.JsonSerializer.Serialize(request,JsonOpts));
 
         var authResult = await authService.ValidateAsync(context, ct);
         if (authResult is not MachineAuthResult.Success success)
@@ -101,9 +107,58 @@ public class SessionsController(
             _ => throw new InvalidOperationException($"Unsupported session result: {sessionResult.GetType().Name}")
         };
     }
-    // [HttpPost("{sessionId:guid}/submit-score")]
-    // public async Task<ActionResult<SubmitScoreResponse>> SubmitScore(Guid sessionId, CancellationToken ct)
-    // {
-    //
-    // }
+    [HttpPost("{sessionId:guid}/submit-score")]
+    [EndpointSummary("Submit Score Request")]
+    [EndpointDescription("POST to create new score from a game session that just ended")]
+    [ProducesResponseType(typeof(SubmitScoreResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SubmitScoreResponse>> SubmitScore(
+        [FromRoute] Guid sessionId,
+        [FromBody]  SubmitScoreRequest request,
+        CancellationToken ct)
+    {
+        var validationResult = await reqValidator.ValidateAsync(request,ct);
+        if (!validationResult.IsValid)
+        {
+            foreach (var failure in validationResult.Errors)
+            {
+                ModelState.AddModelError(
+                    failure.PropertyName,
+                    failure.ErrorMessage);
+            }
+
+            return ValidationProblem(ModelState);
+        }
+
+        var command = new SubmitScoreCommand(sessionId, request.DeviceId, request.Score, request.SlotNumber);
+        
+        var sessionresult = await submitScoreHandler.HandleAsync(command, ct);
+
+
+        return sessionresult switch
+        {
+            SubmitScoreResult.Success s => Ok(new SubmitScoreResponse(
+                s.ScoreEntryId)),
+            SubmitScoreResult.SessionNotFound s => NotFound(new
+            {
+                message = $"Session '{s.GameSessionId}' not found."
+            }),
+            SubmitScoreResult.SessionAlreadyEnded s => Conflict(new
+            {
+                message = $"Session '{s.GameSessionId}' already ended."
+            }),
+            SubmitScoreResult.DeviceMisMatch s => Conflict(new
+            {
+                message = $"Device '{s.ActualDeviceId}' mismatch."
+            }),
+            SubmitScoreResult.SlotNotFound s => Conflict(new
+            {
+                message = $"Slot number: '{s.SlotNumber}' not found."
+            }),
+            _ => throw new InvalidOperationException($"Unsupported session result: {sessionresult.GetType().Name}")
+        };
+    }
 }

@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using WorldPinball.Api.Contracts.Machine;
+
 using WorldPinball.Api.Contracts.Sessions;
 
 namespace WorldPinball.Api.Validation.Admin;

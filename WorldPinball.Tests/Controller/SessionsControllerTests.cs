@@ -10,6 +10,8 @@ using WorldPinball.Application.Features.GameSessions.Public.Start;
 using WorldPinball.Application.Features.GameSessions.Public.Start.Commands;
 using WorldPinball.Application.Security.Cryptography;
 using WorldPinball.Api.Controllers.Public;
+using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
+using WorldPinball.Application.Features.GameSessions.Public.SubmitScore.Commands;
 
 namespace WorldPinball.Tests.Controller;
 
@@ -18,28 +20,35 @@ public class SessionsControllerTests
     [Fact]
     public async Task StartSession_WhenRequestIsValidAuthenticated_ShouldReturnOk()
     {
-        
-        var machineId = new Guid();
-        var deviceId = new Guid();
+        //Arrange
+        var machineId =  Guid.NewGuid();
+        var deviceId =  Guid.NewGuid();
         string nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var sessionId = new Guid();
-string fakeSignature = RandomNumberGenerator.GetHexString(16);
+        var sessionId =  Guid.NewGuid();
+        string fakeSignature = RandomNumberGenerator.GetHexString(16);
 
-var now = DateTimeOffset.UtcNow;
-var expectedServerTime = now.ToUnixTimeSeconds();
+        var now = DateTimeOffset.UtcNow;
+        var expectedServerTime = now.ToUnixTimeSeconds();
+        var validatorStartSession = Substitute.For<IValidator<StartSessionRequest>>();
+        var validatorSubmitScore = Substitute.For<IValidator<SubmitScoreRequest>>();
 
-        var validator = Substitute.For<IValidator<StartSessionRequest>>();
-        validator.ValidateAsync(
+        //validator
+        validatorStartSession.ValidateAsync(
                 Arg.Any<StartSessionRequest>(),
                 Arg.Any<CancellationToken>())
             .Returns(new ValidationResult());
+        validatorSubmitScore.ValidateAsync(
+                Arg.Any<SubmitScoreRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new ValidationResult());
+
 
         var authService = Substitute.For<IMachineAuthService>();
         authService.ValidateAsync(Arg.Any<MachineAuthContext>(), Arg.Any<CancellationToken>())
             .Returns(new MachineAuthResult.Success(machineId, deviceId, nonce, timestamp));
 
-
+        var submitHandler = Substitute.For<ISubmitScoreHandler>();
         var handler = Substitute.For<IStartGameSessionHandler>();
         handler.HandleAsync(Arg.Any<StartGameSessionCommand>(), Arg.Any<CancellationToken>())
             .Returns(new StartGameSessionResult.Success(sessionId, nonce, now));
@@ -53,7 +62,9 @@ var expectedServerTime = now.ToUnixTimeSeconds();
         var controller = new SessionsController(
             authService,
             handler,
-            validator);
+            submitHandler,
+            validatorStartSession,
+            validatorSubmitScore);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -62,16 +73,16 @@ var expectedServerTime = now.ToUnixTimeSeconds();
         controller.HttpContext.Request.Method = "POST";
         controller.HttpContext.Request.Path = "/api/v1/sessions/start";
 
-
+        // Act
         var result = await controller
             .StartSession(
                 request,
                 deviceId.ToString(),
                 timestamp.ToString(),
-                nonce,fakeSignature,
+                nonce, fakeSignature,
                 CancellationToken.None
-                );
-        
+            );
+        //Assert
         var okResult = result
             .Result
             .Should()
@@ -86,7 +97,92 @@ var expectedServerTime = now.ToUnixTimeSeconds();
 
         response.SessionId.Should().Be(sessionId);
         response.ServerTime.Should().Be(expectedServerTime);
-        
-        
+    }
+
+
+    [Fact]
+    public async Task SubmitScore_WhenRequestIsValid_ShouldReturnOk()
+    {
+        // Arrange
+        var machineId =  Guid.NewGuid();
+        var deviceId =  Guid.NewGuid();
+        var scoreGuid =  Guid.NewGuid();
+        var score = 5_002_214;
+        int slotNumber = 3;
+        string nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var sessionId =  Guid.NewGuid();
+       
+
+      
+       
+        //validator
+        var validatorStartSession = Substitute.For<IValidator<StartSessionRequest>>();
+        var validatorSubmitScore = Substitute.For<IValidator<SubmitScoreRequest>>();
+        validatorStartSession.ValidateAsync(
+                Arg.Any<StartSessionRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new ValidationResult());
+        validatorSubmitScore.ValidateAsync(
+                Arg.Any<SubmitScoreRequest>(),
+                Arg.Any<CancellationToken>())
+            .Returns(new ValidationResult());
+
+        var authService = Substitute.For<IMachineAuthService>();
+        authService.ValidateAsync(Arg.Any<MachineAuthContext>(), Arg.Any<CancellationToken>())
+            .Returns(new MachineAuthResult.Success(machineId, deviceId, nonce, timestamp));
+
+        var command = new SubmitScoreCommand(sessionId, deviceId, score, slotNumber);
+
+        var submitScoreHandler = Substitute.For<ISubmitScoreHandler>();
+        var handler = Substitute.For<IStartGameSessionHandler>();
+       
+        submitScoreHandler.HandleAsync(command, Arg.Any<CancellationToken>())
+            .Returns(new SubmitScoreResult.Success(scoreGuid));
+     
+
+
+        var request = new SubmitScoreRequest(
+            deviceId,
+            score,
+            slotNumber
+        );
+
+        var controller = new SessionsController(
+            authService,
+            handler,
+            submitScoreHandler,
+            validatorStartSession,
+            validatorSubmitScore);
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        controller.HttpContext.Request.Method = "POST";
+        controller.HttpContext.Request.Path = "/api/v1/{sessionId:guid}/submit-score";
+
+        // Act
+        var result = await controller
+            .SubmitScore(
+                sessionId,
+                request,
+                CancellationToken.None
+            );
+
+        //Assert
+        var okResult = result
+            .Result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which;
+
+        var response = okResult
+            .Value
+            .Should()
+            .BeOfType<SubmitScoreResponse>()
+            .Which;
+
+        response.ScoreEntryId.Should().Be(scoreGuid);
     }
 }
