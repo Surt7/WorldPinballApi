@@ -36,7 +36,7 @@ public class ScoreEntry
     public Guid ModeId { get; private set; }
     public GameMode Mode { get; private set; } = null!;
 
-    public int Score { get; private set; }
+    public long Score { get; private set; }
     public DateTime AchievedAtUtc { get; private set; }
 
     public bool IsValidated { get; private set; }
@@ -49,7 +49,7 @@ public class ScoreEntry
         Guid machineId,
         Guid ipId,
         Guid modeId,
-        int score,
+        long score,
         DateTime achievedAtUtc,
         string? userId = null)
     {

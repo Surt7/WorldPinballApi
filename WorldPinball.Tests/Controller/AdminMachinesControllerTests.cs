@@ -1,5 +1,5 @@
 ﻿using NSubstitute;
-using WorldPinball.Application.Features.Machines.Admin;
+
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Api.Controllers.Admin;
 using FluentAssertions;

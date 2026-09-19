@@ -1,23 +1,33 @@
 
+using Microsoft.EntityFrameworkCore;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Domain.Entities;
+using WorldPinball.Domain.Enums;
 
 
 namespace WorldPinball.Infrastructure.Persistence.Repositories;
 
-public class GameSessionWriteRepository:IGameSessionWriteRepository
+public class GameSessionWriteRepository(AppDbContext db) : IGameSessionWriteRepository
 {
-    
-    private readonly AppDbContext _db;
-
-    public GameSessionWriteRepository(AppDbContext db)
-    {
-        _db = db;
-    }
-
-        public async Task SaveSessionAsync(GameSession session, CancellationToken cancellationToken = default)
+    public async Task SaveSessionAsync(GameSession session, CancellationToken cancellationToken = default)
         {
-            await _db.GameSessions.AddAsync(session, cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
+            await db.GameSessions.AddAsync(session, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task<GameSession?> GetSessionWithMachineAsync(Guid sessionId, CancellationToken cancellationToken = default)
+        {
+            return await db.GameSessions
+                .Where(gs => gs.SessionId == sessionId && gs.State ==  GameSessionState.Started)
+                .Include(gs => gs.Machine)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public async Task SaveScoreEntryAsync(GameSession session, ScoreEntry scoreEntry, CancellationToken cancellationToken = default)
+        {
+            
+            await db.GameSessions.AddAsync(session, cancellationToken);
+            await db.ScoreEntries.AddAsync(scoreEntry, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
         }
 }

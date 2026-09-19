@@ -20,7 +20,7 @@ public static class CanonicalJson
         catch (JsonException ex)
         {
             throw new ArgumentException(
-                "Le texte fourni n'est pas un JSON valide.",
+                "The provided text is invalid JSON.",
                 nameof(rawJson),
                 ex);
         }

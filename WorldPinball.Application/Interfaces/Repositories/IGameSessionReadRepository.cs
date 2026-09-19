@@ -18,6 +18,8 @@ public interface IGameSessionReadRepository
         string modeCode,
         CancellationToken cancellationToken = default
     );
+
+ 
 }
 
 

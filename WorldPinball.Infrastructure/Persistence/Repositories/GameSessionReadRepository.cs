@@ -46,5 +46,5 @@ public class GameSessionReadRepository:IGameSessionReadRepository
             return await _db.GameModes.AsNoTracking().Where(m => m.Code == modeCode).FirstOrDefaultAsync(ct);
     
         }
-    
+
 }

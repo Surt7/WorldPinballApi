@@ -4,7 +4,7 @@ public sealed record LeaderboardRowDto(
     Guid ScoreEntryId,
     string IpSlug,
     string ModeCode,
-    int? Score,
+    long? Score,
     DateTime? AchievedAtUtc,
     string UserId,
     Guid MachineId
