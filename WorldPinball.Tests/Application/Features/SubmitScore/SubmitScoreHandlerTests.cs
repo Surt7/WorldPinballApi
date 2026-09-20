@@ -4,6 +4,7 @@ using NSubstitute;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
+using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 
@@ -19,6 +20,8 @@ public class SubmitScoreHandlerTests
         
         var readRepository = Substitute.For<IGameSessionReadRepository>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
+        
+        var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
         writeRepository
             .GetSessionWithMachineAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns((GameSession?)null);
@@ -27,6 +30,7 @@ public class SubmitScoreHandlerTests
         var sut = 
             new SubmitScoreHandler(readRepository,
                 writeRepository,
+                realtimeLeaderboardService,
                 logger,
                 TimeProvider.System
                 );
@@ -67,11 +71,13 @@ public class SubmitScoreHandlerTests
         writeRepository
             .GetSessionWithMachineAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(gameSession);
+        var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
         var command = new SubmitScoreCommand(Guid.NewGuid(), deviceId, 50000);
         
         var sut = 
             new SubmitScoreHandler(readRepository,
                 writeRepository,
+                realtimeLeaderboardService,
                 logger,
                 TimeProvider.System
             );
@@ -87,7 +93,7 @@ public class SubmitScoreHandlerTests
         var logger = new FakeLogger<SubmitScoreHandler>();
         var readRepository = Substitute.For<IGameSessionReadRepository>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
-        
+        var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
 
         var timeProvider = TimeProvider.System;
         var now = timeProvider.GetUtcNow();
@@ -124,6 +130,7 @@ public class SubmitScoreHandlerTests
         var sut = 
             new SubmitScoreHandler(readRepository,
                 writeRepository,
+                realtimeLeaderboardService,
                 logger,
                 TimeProvider.System
             );
@@ -140,7 +147,7 @@ public class SubmitScoreHandlerTests
         var logger = new FakeLogger<SubmitScoreHandler>();
         var readRepository = Substitute.For<IGameSessionReadRepository>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
-        
+        var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
 
         var timeProvider = TimeProvider.System;
         var now = timeProvider.GetUtcNow();
@@ -170,6 +177,7 @@ public class SubmitScoreHandlerTests
         var sut = 
             new SubmitScoreHandler(readRepository,
                 writeRepository,
+                realtimeLeaderboardService,
                 logger,
                 TimeProvider.System
             );
@@ -186,7 +194,7 @@ public class SubmitScoreHandlerTests
         var logger = new FakeLogger<SubmitScoreHandler>();
         var readRepository = Substitute.For<IGameSessionReadRepository>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
-        
+        var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
 
         var timeProvider = TimeProvider.System;
         var now = timeProvider.GetUtcNow();
@@ -224,6 +232,7 @@ public class SubmitScoreHandlerTests
         var sut = 
             new SubmitScoreHandler(readRepository,
                 writeRepository,
+                realtimeLeaderboardService,
                 logger,
                 TimeProvider.System
             );
@@ -240,7 +249,7 @@ public class SubmitScoreHandlerTests
         var logger = new FakeLogger<SubmitScoreHandler>();
         var readRepository = Substitute.For<IGameSessionReadRepository>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
-        
+        var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
 
         var timeProvider = TimeProvider.System;
         var now = timeProvider.GetUtcNow();
@@ -278,11 +287,22 @@ public class SubmitScoreHandlerTests
         var sut = 
             new SubmitScoreHandler(readRepository,
                 writeRepository,
+                realtimeLeaderboardService,
                 logger,
                 TimeProvider.System
             );
         
         var result = await sut.HandleAsync(command, CancellationToken.None);
+        
+        await realtimeLeaderboardService.Received(1).AddScoreAsync(
+            Arg.Any<string>(),
+            Arg.Any<string>(),
+            Arg.Any<Guid>(),
+            50000,
+            Arg.Any<CancellationToken>()
+        );
+        
+        
         gameSession.State.Should().Be(GameSessionState.Ended);
         result.Should().BeOfType<SubmitScoreResult.Success>();
     }

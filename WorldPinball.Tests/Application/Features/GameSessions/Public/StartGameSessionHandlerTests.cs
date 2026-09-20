@@ -5,6 +5,7 @@ using WorldPinball.Application.Features.GameSessions.Public.Start;
 using WorldPinball.Application.Features.GameSessions.Public.Start.Commands;
 using WorldPinball.Application.Features.GameSessions.Public.Start.Dtos;
 using WorldPinball.Application.Interfaces.Repositories;
+using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 
@@ -25,6 +26,8 @@ public class StartGameSessionHandlerTests
         var logger = NullLogger<StartGameSessionHandler>.Instance;
         var repoGameSessionWrite = Substitute.For<IGameSessionWriteRepository>();
         var repoGameSessionRead = Substitute.For<IGameSessionReadRepository>();
+        var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
+        
         
         var deviceContext = new StartGameSessionDto(
             DeviceId: deviceId,
@@ -34,6 +37,9 @@ public class StartGameSessionHandlerTests
         repoGameSessionRead.GetDeviceContextAsync(deviceId, Arg.Any<CancellationToken>())
             .Returns(deviceContext);
 
+        
+        
+        
         var gameMode = new GameMode(
             code: modeCode,
             name: "Classic Mode",
@@ -65,6 +71,7 @@ public class StartGameSessionHandlerTests
         successResult!.Nonce.Should().NotBeNullOrWhiteSpace();
         successResult.SessionId.Should().NotBeEmpty();
 
+        
         await repoGameSessionWrite.Received(1)
             .SaveSessionAsync(Arg.Is<GameSession>(s => 
                 s.DeviceId == deviceId && 

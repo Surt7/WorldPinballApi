@@ -11,12 +11,15 @@ using WorldPinball.Infrastructure.Persistence.Seed;
 using WorldPinball.Infrastructure.Security;
 
 using Microsoft.Extensions.Logging;
+using StackExchange.Redis;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
+using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Application.Security.CA;
 using WorldPinball.Application.Security.Secrets;
 using WorldPinball.Infrastructure.Persistence.Interceptors;
 using WorldPinball.Infrastructure.Security.CA;
 using WorldPinball.Infrastructure.Security.Secrets;
+using WorldPinball.Infrastructure.Services;
 
 namespace WorldPinball.Infrastructure;
 
@@ -30,11 +33,19 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         
         
-        var cs = config.GetConnectionString("DefaultConnection")
-                 ?? throw new InvalidOperationException(
-                     "Connection string 'DefaultConnection' is missing.");
-
         // -------------------- Database + Interceptors--------------------
+        var pgSection = config.GetSection("PostgresMainApp");
+        var csBuilder = new Npgsql.NpgsqlConnectionStringBuilder
+        {
+            Host = pgSection["Host"]?.Split(':')[0] ?? "localhost",
+            Port = int.TryParse(pgSection["Host"]?.Split(':').ElementAtOrDefault(1), out var p) ? p : 5432,
+            Database = pgSection["Database"] ?? "worldpinball",
+            Username = pgSection["UserName"] ?? "postgres",
+            Password = config["PostGres:Password"] ?? pgSection["Password"]
+        };
+        var cs = csBuilder.ConnectionString;
+        
+        //+ Interceptors
         services.AddSingleton<PublishDomainEventsInterceptor>();
         services.AddDbContext<AppDbContext>((sp,options) =>
             options
@@ -43,10 +54,7 @@ public static class DependencyInjection
                 .AddInterceptors(
                     sp.GetRequiredService<PublishDomainEventsInterceptor>()
                     ));
-            
-
-
-    
+        
         // -------------------- Database HealthCheck --------------------
 
         services
@@ -73,6 +81,25 @@ public static class DependencyInjection
         services.AddScoped<IGameSessionReadRepository, GameSessionReadRepository>();
         services.AddScoped<IGameSessionWriteRepository, GameSessionWriteRepository>();
         services.AddScoped<ICertificateAuthorityService, StepCaCertificateAuthorityService>();
+        
+// -------------------- Redis --------------------
+
+        services.AddScoped<IRealtimeLeaderboardService, RedisRealtimeLeaderboardService>();
+
+        var redisHost = config["Redis:Host"] ?? "localhost:6379";
+        var redisPassword = config["Redis:Password"];
+        
+        var configurationOptions = ConfigurationOptions.Parse(redisHost);
+        if (!string.IsNullOrWhiteSpace(redisPassword))
+        {
+            configurationOptions.Password = redisPassword;
+        }
+        configurationOptions.AbortOnConnectFail = false;
+        
+        services.AddSingleton<IConnectionMultiplexer>(sp => 
+            ConnectionMultiplexer.Connect(configurationOptions));
+        
+        
         
         return services;
     }

@@ -2,6 +2,7 @@
 using WorldPinball.Application.Features.GameSessions.Public.Start;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
+using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 
@@ -10,6 +11,7 @@ namespace WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 public sealed class SubmitScoreHandler(
     IGameSessionReadRepository readRepository,
     IGameSessionWriteRepository writeRepository,
+    IRealtimeLeaderboardService realtimeLeaderboardService,
     ILogger<SubmitScoreHandler> logger,
     TimeProvider timeProvider
     ):ISubmitScoreHandler
@@ -74,7 +76,13 @@ public sealed class SubmitScoreHandler(
         );
         
         await writeRepository.SaveScoreEntryAsync(gameSession, scoreEntry, token);
-        
+        await realtimeLeaderboardService.AddScoreAsync(
+            gameSession.Machine?.IpLicense?.Slug ?? "unknown",
+            gameSession.Mode?.Code ?? "default",
+            scoreEntry.ScoreEntryId,
+            command.Score,
+            token
+        );
         return new SubmitScoreResult.Success(scoreEntry.ScoreEntryId);
     }
 }

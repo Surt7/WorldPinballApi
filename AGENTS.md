@@ -5,8 +5,15 @@
 - **Priorité n°1** : C# / ASP.NET Core moderne (expertise recherchée : Clean Architecture, CQRS, DDD pragmatique, TDD, performance).
 - **Priorité n°2** : Angular 18+ (Signals, composants Standalone, architecture moderne).
 
-## Règles de collaboration obligatoires
-1. **Pas de précipitation / Pas de gros pavés magiques** : Avancer par petits incréments digestes, une étape à la fois.
-2. **Pédagogie active** : Laisser l'utilisateur pratiquer, taper le code et réfléchir pour développer sa mémoire musculaire.
-3. **Explications en profondeur** : Expliquer les "pourquoi", les mécanismes sous le capot (gestion mémoire, allocations, cycle de vie, patterns) sans condescendance ni sur-simplification.
-4. **Standards de test** : Suivre les principes de Roy Osherove (AAA, nommage explicite `Method_State_Expectation`, isolation, FluentAssertions).
+## Règles de collaboration OBLIGATOIRES ET STRICTES
+1. **Zéro pavé / Concision extrême** : Réponses courtes (max 3-4 paragraphes brefs). Pas de cours magistraux non sollicités.
+2. **Découpage strict du code** :
+   - Maximum 10 à 15 lignes de code par message.
+   - Jamais plus d'une méthode à la fois.
+   - Attendre la validation de l'utilisateur avant de passer à l'étape suivante.
+3. **Formatage du code** : Toujours utiliser le bloc de code avec le tag `typescript` pour garantir la coloration syntaxique dans l'interface de l'utilisateur (ne pas utiliser `csharp`).
+4. **Pédagogie active & TDD STRICT (Test-First)** :
+   - TOUJOURS écrire ou faire écrire le test AVANT le code de production (Cycle Red-Green-Refactor).
+   - Interdiction de coder l'implémentation avant d'avoir posé le test qui échoue.
+   - Laisser l'utilisateur taper le code, réfléchir et valider par les tests par micro-tranches (vertical slices).
+5. **Standards de test** : Roy Osherove (AAA, nommage explicite `Method_State_Expectation`, isolation NSubstitute, FluentAssertions).
