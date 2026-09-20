@@ -1,21 +1,20 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using WorldPinball.Api.Extensions;
 using WorldPinball.Api.Logging;
 using WorldPinball.Infrastructure.Security;
-using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Infrastructure;
-using WorldPinball.Infrastructure.Persistence.Repositories;
 using FluentValidation;
 using WorldPinball.Api.Contracts.Machine;
+using WorldPinball.Api.Contracts.Sessions;
 using WorldPinball.Api.Middleware;
 using WorldPinball.Api.Validation.Admin;
+using WorldPinball.Application.Features.GameSessions.Public.Start;
+using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Features.Machines.Public;
-using WorldPinball.Application.Features.Machines.Public.Enroll;
 using WorldPinball.Application.Features.Machines.Public.Enroll.Profile;
 using WorldPinball.Application.Security.Cryptography;
 using WorldPinball.Infrastructure.Security.Cryptography;
@@ -37,10 +36,7 @@ try
                            ?? throw new InvalidOperationException("Keycloak:Audience is missing.");
 
 
-    builder.Services.AddAutoMapper(cfg =>
-    {
-        cfg.AddMaps(typeof(EnrollmentMappingProfile).Assembly);
-    });
+    builder.Services.AddAutoMapper(cfg => { cfg.AddMaps(typeof(EnrollmentMappingProfile).Assembly); });
 
 // -------------------- Services --------------------
     builder.Services.AddInfrastructure(builder.Configuration);
@@ -54,28 +50,33 @@ try
 // ----------------------------------------
 
     //Handlers
-    builder.Services.AddScoped<IEnrollDeviceHandler, EnrollDeviceHandler>();
-    builder.Services.AddScoped<IProvisionMachineHandler, ProvisionMachineHandler>();
-    
+    builder.Services.AddScoped<IEnrollDeviceHandler,
+        EnrollDeviceHandler>();
+    builder.Services.AddScoped<IProvisionMachineHandler,
+        ProvisionMachineHandler>();
+
+    builder.Services.AddScoped<IStartGameSessionHandler,
+        StartGameSessionHandler>();
+    builder.Services.AddScoped<ISubmitScoreHandler,
+        SubmitScoreHandler>();
+
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();
     builder.Services.AddScoped<ICanonicalBuilder, CanonicalBuilder>();
-    
-    builder.Services.AddSingleton<ISignatureVerifier, EcdsaP256SignatureVerifier>();
+
+    builder.Services.AddSingleton<ISignatureVerifier,
+        EcdsaP256SignatureVerifier>();
     builder.Services.AddScoped<GetLeaderboardHandler>();
- 
-  //Validators  
+
+    //Validators
+    builder.Services.AddScoped<IValidator<SubmitScoreRequest>,
+        SubmitScoreRequestValidator>();
+    
+    builder.Services.AddScoped<IValidator<StartSessionRequest>,
+        StartSessionRequestValidator>();
+    
     builder.Services.AddScoped<IValidator<ProvisionMachineRequest>,
         ProvisionMachineRequestValidator>();
-
-// DataProtection keys folder (dev vs prod)
-    var keysDir = builder.Environment.IsDevelopment()
-        ? new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "dpkeys"))
-        : new DirectoryInfo("/var/lib/worldpinball/dpkeys");
-
-    builder.Services
-        .AddDataProtection()
-        .SetApplicationName("WorldPinball")
-        .PersistKeysToFileSystem(keysDir);
+    
 // -------------------- AuthN & Z --------------------
 
     builder.Services
@@ -138,7 +139,7 @@ try
 
 // -------------------- USE -------------------- USE -------------------- USE --------------------//
 
-// -------- Middleware pipeline --------
+
     app.UseMiddleware<RequireHttpsMiddleware>();
 
 

@@ -30,6 +30,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "observability", "observabil
 		docker\observability\otel-collector.yml = docker\observability\otel-collector.yml
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldPinball.Bff", "WorldPinball.Bff\WorldPinball.Bff.csproj", "{60436655-A1FC-471F-A1D5-B04B90A96E9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,10 @@ Global
 		{6F2816D1-5375-48A7-A60D-2B560D143459}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F2816D1-5375-48A7-A60D-2B560D143459}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6F2816D1-5375-48A7-A60D-2B560D143459}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60436655-A1FC-471F-A1D5-B04B90A96E9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60436655-A1FC-471F-A1D5-B04B90A96E9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60436655-A1FC-471F-A1D5-B04B90A96E9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60436655-A1FC-471F-A1D5-B04B90A96E9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -67,6 +73,7 @@ Global
 		{3AAD11C1-E4F6-F6A4-76DD-3AEF2439F223} = {C3D2FF15-3421-41F9-AB6D-471CB098C5D9}
 		{6F2816D1-5375-48A7-A60D-2B560D143459} = {BA3965FD-BF12-49DD-9E31-05FF7816518A}
 		{A1AC0535-74DB-4139-9F86-E7D9E79473A7} = {9C8CB701-102D-CF49-A3E0-89AC09D42C2C}
+		{60436655-A1FC-471F-A1D5-B04B90A96E9F} = {C3D2FF15-3421-41F9-AB6D-471CB098C5D9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {132A21DD-F51F-4BC1-8C0F-D792224700B8}

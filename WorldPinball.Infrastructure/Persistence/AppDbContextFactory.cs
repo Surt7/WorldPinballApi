@@ -15,12 +15,11 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
             .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: false)
             .AddJsonFile("appsettings.Development.json", optional: true)
+            .AddUserSecrets(userSecretsId: "ce079cb4-882b-43d0-bf92-82cdc8f8e810", reloadOnChange: false)
             .AddEnvironmentVariables()
             .Build();
 
-        var cs = configuration.GetConnectionString("DefaultConnection");
-        if (string.IsNullOrWhiteSpace(cs))
-            throw new InvalidOperationException("Missing ConnectionStrings:DefaultConnection");
+        var cs = configuration.GetRequiredPostgresConnectionString();
 
 
         optionsBuilder

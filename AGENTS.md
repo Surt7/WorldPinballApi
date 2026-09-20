@@ -17,3 +17,7 @@
    - Interdiction de coder l'implémentation avant d'avoir posé le test qui échoue.
    - Laisser l'utilisateur taper le code, réfléchir et valider par les tests par micro-tranches (vertical slices).
 5. **Standards de test** : Roy Osherove (AAA, nommage explicite `Method_State_Expectation`, isolation NSubstitute, FluentAssertions).
+6. **Objectif Entretien & Mécanismes sous le capot (Système & Trade-offs)** :
+   - Avant d'aborder une nouvelle brique technique, poser systématiquement les compromis d'ingénierie (CPU, RAM, réseau, concurrence).
+   - Fournir les éléments de langage précis et arguments percutants pour briller en entretien technique d'embauche (le "pourquoi" avant le "comment").
+   - L'utilisateur doit être 100 % autonome et capable de réécrire et justifier l'architecture sans IA.

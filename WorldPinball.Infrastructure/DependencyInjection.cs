@@ -34,16 +34,9 @@ public static class DependencyInjection
         
         
         // -------------------- Database + Interceptors--------------------
-        var pgSection = config.GetSection("PostgresMainApp");
-        var csBuilder = new Npgsql.NpgsqlConnectionStringBuilder
-        {
-            Host = pgSection["Host"]?.Split(':')[0] ?? "localhost",
-            Port = int.TryParse(pgSection["Host"]?.Split(':').ElementAtOrDefault(1), out var p) ? p : 5432,
-            Database = pgSection["Database"] ?? "worldpinball",
-            Username = pgSection["UserName"] ?? "postgres",
-            Password = config["PostGres:Password"] ?? pgSection["Password"]
-        };
-        var cs = csBuilder.ConnectionString;
+        
+        var cs = config.GetRequiredPostgresConnectionString();
+
         
         //+ Interceptors
         services.AddSingleton<PublishDomainEventsInterceptor>();

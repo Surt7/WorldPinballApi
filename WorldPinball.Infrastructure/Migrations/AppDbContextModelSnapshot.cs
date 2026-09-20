@@ -513,12 +513,6 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("state");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("character varying(450)")
-                        .HasColumnName("user_id");
-
                     b.HasKey("SessionId")
                         .HasName("pk_game_sessions");
 
@@ -535,10 +529,46 @@ namespace WorldPinball.Infrastructure.Migrations
                     b.HasIndex("ModeId", "StartedAtUtc")
                         .HasDatabaseName("ix_game_sessions_mode_id_started_at_utc");
 
-                    b.HasIndex("UserId", "StartedAtUtc")
-                        .HasDatabaseName("ix_game_sessions_user_id_started_at_utc");
-
                     b.ToTable("game_sessions", "public");
+                });
+
+            modelBuilder.Entity("WorldPinball.Domain.Entities.GameSessionPlayer", b =>
+                {
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("session_id");
+
+                    b.Property<int>("SlotNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("slot_number");
+
+                    b.Property<string>("GuestInitials")
+                        .HasMaxLength(4)
+                        .HasColumnType("character varying(4)")
+                        .HasColumnName("guest_initials");
+
+                    b.Property<DateTime>("JoinedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("joined_at_utc");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid?>("UserProfileUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_profile_user_id");
+
+                    b.HasKey("SessionId", "SlotNumber")
+                        .HasName("pk_game_session_players");
+
+                    b.HasIndex("UserProfileUserId")
+                        .HasDatabaseName("ix_game_session_players_user_profile_user_id");
+
+                    b.HasIndex("UserId", "JoinedAtUtc")
+                        .HasDatabaseName("ix_game_session_players_user_id_joined_at_utc");
+
+                    b.ToTable("game_session_players", "public");
                 });
 
             modelBuilder.Entity("WorldPinball.Domain.Entities.IpLicense", b =>
@@ -995,13 +1025,17 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("mode_id");
 
-                    b.Property<int>("Score")
-                        .HasColumnType("integer")
+                    b.Property<long>("Score")
+                        .HasColumnType("bigint")
                         .HasColumnName("score");
 
                     b.Property<Guid>("SessionId")
                         .HasColumnType("uuid")
                         .HasColumnName("session_id");
+
+                    b.Property<int>("SlotNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("slot_number");
 
                     b.Property<string>("UserId")
                         .HasColumnType("text")
@@ -1018,7 +1052,6 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasDatabaseName("ix_score_entries_mode_id");
 
                     b.HasIndex("SessionId")
-                        .IsUnique()
                         .HasDatabaseName("ix_score_entries_session_id");
 
                     b.HasIndex("DeviceId", "AchievedAtUtc")
@@ -1027,6 +1060,10 @@ namespace WorldPinball.Infrastructure.Migrations
                     b.HasIndex("MachineId", "AchievedAtUtc")
                         .HasDatabaseName("ix_score_entries_machine_id_achieved_at_utc");
 
+                    b.HasIndex("SessionId", "SlotNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_score_entries_session_id_slot_number");
+
                     b.HasIndex("UserId", "AchievedAtUtc")
                         .HasDatabaseName("ix_score_entries_user_id_achieved_at_utc");
 
@@ -1034,6 +1071,46 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasDatabaseName("ix_score_entries_ip_id_mode_id_score_achieved_at_utc");
 
                     b.ToTable("score_entries", "public");
+                });
+
+            modelBuilder.Entity("WorldPinball.Domain.Entities.UserProfile", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("AvatarUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("avatar_url");
+
+                    b.Property<string>("CountryCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("country_code");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("display_name");
+
+                    b.Property<bool>("IsProfilePublic")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_profile_public");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("UserId")
+                        .HasName("pk_user_profiles");
+
+                    b.ToTable("user_profiles", "public");
                 });
 
             modelBuilder.Entity("ip_license_regions", b =>
@@ -1153,6 +1230,25 @@ namespace WorldPinball.Infrastructure.Migrations
                     b.Navigation("Mode");
                 });
 
+            modelBuilder.Entity("WorldPinball.Domain.Entities.GameSessionPlayer", b =>
+                {
+                    b.HasOne("WorldPinball.Domain.Entities.GameSession", "Session")
+                        .WithMany("Players")
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_game_session_players_game_sessions_session_id");
+
+                    b.HasOne("WorldPinball.Domain.Entities.UserProfile", "UserProfile")
+                        .WithMany()
+                        .HasForeignKey("UserProfileUserId")
+                        .HasConstraintName("fk_game_session_players_user_profiles_user_profile_user_id");
+
+                    b.Navigation("Session");
+
+                    b.Navigation("UserProfile");
+                });
+
             modelBuilder.Entity("WorldPinball.Domain.Entities.IpLicense", b =>
                 {
                     b.HasOne("WorldPinball.Domain.Entities.Publisher", "Publisher")
@@ -1259,8 +1355,8 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasConstraintName("fk_score_entries_game_modes_mode_id");
 
                     b.HasOne("WorldPinball.Domain.Entities.GameSession", "Session")
-                        .WithOne("ScoreEntry")
-                        .HasForeignKey("WorldPinball.Domain.Entities.ScoreEntry", "SessionId")
+                        .WithMany("ScoreEntries")
+                        .HasForeignKey("SessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_score_entries_game_sessions_session_id");
@@ -1309,7 +1405,9 @@ namespace WorldPinball.Infrastructure.Migrations
 
             modelBuilder.Entity("WorldPinball.Domain.Entities.GameSession", b =>
                 {
-                    b.Navigation("ScoreEntry");
+                    b.Navigation("Players");
+
+                    b.Navigation("ScoreEntries");
                 });
 
             modelBuilder.Entity("WorldPinball.Domain.Entities.IpLicense", b =>
