@@ -6,10 +6,9 @@ using WorldPinball.Api.Logging;
 using WorldPinball.Infrastructure.Security;
 using WorldPinball.Infrastructure;
 using FluentValidation;
-using WorldPinball.Api.Contracts.Machine;
-using WorldPinball.Api.Contracts.Sessions;
+
 using WorldPinball.Api.Middleware;
-using WorldPinball.Api.Validation.Admin;
+
 using WorldPinball.Application.Features.GameSessions.Public.Start;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
@@ -25,6 +24,11 @@ using WorldPinball.Infrastructure.Security.Cryptography;
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.AddServerHeader = false;
+    });
 
     builder.Services.AddProblemDetails();
 
@@ -68,14 +72,7 @@ try
     builder.Services.AddScoped<GetLeaderboardHandler>();
 
     //Validators
-    builder.Services.AddScoped<IValidator<SubmitScoreRequest>,
-        SubmitScoreRequestValidator>();
-    
-    builder.Services.AddScoped<IValidator<StartSessionRequest>,
-        StartSessionRequestValidator>();
-    
-    builder.Services.AddScoped<IValidator<ProvisionMachineRequest>,
-        ProvisionMachineRequestValidator>();
+    builder.Services.AddValidatorsFromAssemblyContaining<Program>();
     
 // -------------------- AuthN & Z --------------------
 

@@ -1,4 +1,6 @@
-﻿namespace WorldPinball.Bff.Middleware;
+﻿using WorldPinball.Bff.Middleware;
+
+namespace WorldPinball.Bff.Extensions;
 
 public static class SecurityHeadersExtensions
 {

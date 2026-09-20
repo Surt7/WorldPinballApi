@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
@@ -21,7 +22,7 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
       <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.18.0" />
       <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.Http"  Version="1.18.0" />
+      <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
       <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
   </ItemGroup>
 

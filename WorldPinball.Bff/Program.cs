@@ -1,38 +1,42 @@
-using WorldPinball.Bff.Middleware;
+using WorldPinball.Bff.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 
-// Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddBffSecurity(); 
+builder.Services.AddHealthChecks(); 
 
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
-
-
-
 var app = builder.Build();
-// Configure the HTTP request pipeline.
+
+// Security hardening
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.AddServerHeader = false;
+});
+app.UseSecurityHeaders();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-app.UseSecurityHeaders();
-
-if (!app.Environment.IsDevelopment())
+else
 {
     app.UseHsts();
 }
-app.MapReverseProxy();
+
 app.UseHttpsRedirection();
-
+app.UseCors("AngularDevPolicy");
+app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
-app.MapControllers();
+// Health check endpoint for Docker / K8s
+app.MapHealthChecks("/health");
+
+app.MapReverseProxy();
 
 app.Run();
