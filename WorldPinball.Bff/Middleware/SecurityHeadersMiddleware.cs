@@ -4,9 +4,10 @@ public sealed class SecurityHeadersMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<SecurityHeadersMiddleware> _logger;
-    public SecurityHeadersMiddleware(RequestDelegate next)
+    public SecurityHeadersMiddleware(RequestDelegate next, ILogger<SecurityHeadersMiddleware> logger)
     {
         _next = next;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)

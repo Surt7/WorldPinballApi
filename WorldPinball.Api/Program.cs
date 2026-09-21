@@ -6,7 +6,7 @@ using WorldPinball.Api.Logging;
 using WorldPinball.Infrastructure.Security;
 using WorldPinball.Infrastructure;
 using FluentValidation;
-
+using Microsoft.AspNetCore.Http.Timeouts;
 using WorldPinball.Api.Middleware;
 
 using WorldPinball.Application.Features.GameSessions.Public.Start;
@@ -39,7 +39,11 @@ try
     var keycloakAudience = builder.Configuration["Keycloak:Audience"]
                            ?? throw new InvalidOperationException("Keycloak:Audience is missing.");
 
-
+    builder.Services.AddRequestTimeouts(options => {
+        options.DefaultPolicy = new RequestTimeoutPolicy { 
+            Timeout = TimeSpan.FromSeconds(5) 
+        };
+    });
     builder.Services.AddAutoMapper(cfg => { cfg.AddMaps(typeof(EnrollmentMappingProfile).Assembly); });
 
 // -------------------- Services --------------------
@@ -138,7 +142,7 @@ try
 
 
     app.UseMiddleware<RequireHttpsMiddleware>();
-
+    app.UseRequestTimeouts();
 
     app.UseRequestLocalization();
     app.UseRouting();

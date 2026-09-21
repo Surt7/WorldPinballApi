@@ -27,7 +27,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "observability", "observability", "{A1AC0535-74DB-4139-9F86-E7D9E79473A7}"
 	ProjectSection(SolutionItems) = preProject
 		docker-compose.observability.yml = docker-compose.observability.yml
-		docker\observability\otel-collector.yml = docker\observability\otel-collector.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorldPinball.Bff", "WorldPinball.Bff\WorldPinball.Bff.csproj", "{60436655-A1FC-471F-A1D5-B04B90A96E9F}"

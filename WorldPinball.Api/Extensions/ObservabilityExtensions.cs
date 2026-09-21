@@ -1,4 +1,6 @@
-﻿using OpenTelemetry.Metrics;
+using Npgsql;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -6,8 +8,7 @@ namespace WorldPinball.Api.Extensions;
 
 public static class ObservabilityExtensions
 {
-    public static WebApplicationBuilder AddObservability(
-        this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddObservability(this WebApplicationBuilder builder)
     {
         builder.Services
             .AddOpenTelemetry()
@@ -18,14 +19,24 @@ public static class ObservabilityExtensions
                 tracing
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddOtlpExporter();
+                    .AddNpgsql()
+                    .AddRedisInstrumentation()
+                    .AddOtlpExporter(options =>
+                    {
+                        options.Endpoint = new Uri("http://localhost:4318/v1/traces");
+                        options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    });
             })
             .WithMetrics(metrics =>
             {
                 metrics
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddOtlpExporter();
+                    .AddOtlpExporter(options =>
+                    {
+                        options.Endpoint = new Uri("http://localhost:4318/v1/metrics");
+                        options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                    });
             });
 
         return builder;

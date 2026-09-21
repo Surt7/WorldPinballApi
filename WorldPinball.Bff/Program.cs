@@ -1,33 +1,38 @@
+using Microsoft.AspNetCore.Http.Timeouts;
 using WorldPinball.Bff.Extensions;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.AddServerHeader = false;
+});
 
-builder.Services.AddOpenApi();
+builder.Services.AddRequestTimeouts(options => {
+    options.DefaultPolicy = new RequestTimeoutPolicy { 
+        Timeout = TimeSpan.FromSeconds(5) 
+    };
+});
 builder.Services.AddBffSecurity(); 
 builder.Services.AddHealthChecks(); 
+
+builder.AddObservability();
 
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
 var app = builder.Build();
 
-// Security hardening
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.AddServerHeader = false;
-});
 app.UseSecurityHeaders();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-else
+if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
-
+app.UseRequestTimeouts();
 app.UseHttpsRedirection();
 app.UseCors("AngularDevPolicy");
 app.UseAuthentication();

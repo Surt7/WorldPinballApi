@@ -1099,6 +1099,11 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("display_name");
 
+                    b.Property<string>("Initials")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("initials");
+
                     b.Property<bool>("IsProfilePublic")
                         .HasColumnType("boolean")
                         .HasColumnName("is_profile_public");
