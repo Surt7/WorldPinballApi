@@ -17,7 +17,13 @@ builder.Services.AddRequestTimeouts(options => {
     };
 });
 builder.Services.AddBffSecurity(); 
-builder.Services.AddHealthChecks(); 
+builder.Services.AddBffRateLimiting();
+builder.Services.AddHealthChecks();
+
+builder.Services.ConfigureHttpClientDefaults(http =>
+{
+    http.AddStandardResilienceHandler();
+});
 
 builder.AddObservability();
 
@@ -35,6 +41,7 @@ if (!app.Environment.IsDevelopment())
 app.UseRequestTimeouts();
 app.UseHttpsRedirection();
 app.UseCors("AngularDevPolicy");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
@@ -42,6 +49,6 @@ app.UseAntiforgery();
 // Health check endpoint for Docker / K8s
 app.MapHealthChecks("/health");
 
-app.MapReverseProxy();
+app.MapReverseProxy().RequireRateLimiting("public-ip-limit");
 
 app.Run();
