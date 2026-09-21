@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 
 using WorldPinball.Api.Contracts.Sessions;
 
@@ -12,14 +12,14 @@ public sealed class StartSessionRequestValidator
     public StartSessionRequestValidator()
     {
         RuleFor(x => x.ModeCode)
-            .Cascade(CascadeMode.Continue)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty()
             .WithMessage("Please specify a mode code")
             .MaximumLength(32)
             .WithMessage("The mode code must not exceed 32 characters");
 
         RuleFor(x => x.ClientVersion)
-            .Cascade(CascadeMode.Continue)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty()
             .WithMessage("The client version is required.")
             .Matches(@"^[0-9]+\.[0-9]+\.[0-9]+$")

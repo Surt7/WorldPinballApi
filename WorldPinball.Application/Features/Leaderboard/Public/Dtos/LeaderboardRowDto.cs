@@ -1,11 +1,12 @@
 namespace WorldPinball.Application.Features.Leaderboard.Public.Dtos;
 
 public sealed record LeaderboardRowDto(
+    int Rank,
     Guid ScoreEntryId,
-    string IpSlug,
-    string ModeCode,
-    long? Score,
-    DateTime? AchievedAtUtc,
-    string UserId,
-    Guid MachineId
+    string PlayerInitials,
+    string PlayerName,
+    long Score,
+    DateTime AchievedAtUtc,
+    string IpName,
+    string ModeName
 );

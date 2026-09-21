@@ -1,4 +1,4 @@
-﻿namespace WorldPinball.Domain.Entities;
+namespace WorldPinball.Domain.Entities;
 
 public class UserProfile
 {
@@ -18,12 +18,14 @@ public class UserProfile
         public const string InvalidDisplayName = "DisplayName cannot be empty.";
         public const string ReservedDisplayName = "DisplayName is reserved and cannot be used.";
         public const string InvalidDate = "Date cannot be default.";
+        public const string InvalidInitials = "Initials must be between 1 and 4 characters.";
     }
 
     private UserProfile() { }
 
     public Guid UserId { get; private set; }
     public string DisplayName { get; private set; } = "No Name";
+    public string Initials { get; private set; } = "AAA";
     public string AvatarUrl { get; private set; } = string.Empty;
     public string CountryCode { get; private set; } = string.Empty;
     public bool IsProfilePublic { get; private set; }
@@ -33,6 +35,7 @@ public class UserProfile
     public UserProfile(
         Guid userId,
         string displayName,
+        string initials = "AAA",
         string avatarUrl = "",
         string countryCode = "",
         bool isProfilePublic = false,
@@ -48,8 +51,13 @@ public class UserProfile
         if (ReservedDisplayNames.Contains(trimmedName))
             throw new ArgumentException(ErrorMessages.ReservedDisplayName, nameof(displayName));
 
+        var trimmedInitials = string.IsNullOrWhiteSpace(initials) ? "AAA" : initials.Trim().ToUpperInvariant();
+        if (trimmedInitials.Length is < 1 or > 4)
+            throw new ArgumentException(ErrorMessages.InvalidInitials, nameof(initials));
+
         UserId = userId;
         DisplayName = trimmedName;
+        Initials = trimmedInitials;
         AvatarUrl = avatarUrl?.Trim() ?? string.Empty;
         CountryCode = countryCode?.Trim().ToUpperInvariant() ?? string.Empty;
         IsProfilePublic = isProfilePublic;

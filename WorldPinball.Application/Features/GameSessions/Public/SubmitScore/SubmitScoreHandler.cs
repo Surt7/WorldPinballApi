@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Features.GameSessions.Public.Start;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
@@ -77,8 +77,8 @@ public sealed class SubmitScoreHandler(
         
         await writeRepository.SaveScoreEntryAsync(gameSession, scoreEntry, token);
         await realtimeLeaderboardService.AddScoreAsync(
-            gameSession.Machine?.IpLicense?.Slug ?? "unknown",
-            gameSession.Mode?.Code ?? "default",
+            scoreEntry.IpId,
+            scoreEntry.ModeId,
             scoreEntry.ScoreEntryId,
             command.Score,
             token

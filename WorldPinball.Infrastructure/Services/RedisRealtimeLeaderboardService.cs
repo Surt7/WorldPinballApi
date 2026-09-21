@@ -1,4 +1,6 @@
-﻿using StackExchange.Redis;
+using System.Text.Json;
+using StackExchange.Redis;
+using WorldPinball.Application.Features.Leaderboard.Public.Dtos;
 using WorldPinball.Application.Interfaces.Services;
 
 namespace WorldPinball.Infrastructure.Services;
@@ -12,32 +14,32 @@ public class RedisRealtimeLeaderboardService : IRealtimeLeaderboardService
         _redis = redis;
     }
 
-    private static string GetKey(string ipSlug, string modeCode) =>
-        $"leaderboard:{ipSlug.ToLowerInvariant()}:{modeCode.ToLowerInvariant()}";
+    private static string GetKey(Guid ipId, Guid modeId) =>
+        $"leaderboard:{ipId}:{modeId}";
 
     public async Task AddScoreAsync(
-        string ipSlug,
-        string modeCode,
+        Guid ipId,
+        Guid modeId,
         Guid scoreEntryId,
         long scoreEntry,
         CancellationToken ct = default)
     {
         var db = _redis.GetDatabase();
-        var key = GetKey(ipSlug, modeCode);
+        var key = GetKey(ipId, modeId);
 
         await db.SortedSetAddAsync(key, scoreEntryId.ToString(), scoreEntry);
     }
 
 
     public async Task<IReadOnlyList<LeaderboardEntryDto>> GetTopScoresAsync(
-        string ipSlug,
-        string modeCode,
+        Guid ipId,
+        Guid modeId,
         int limit = 50,
         CancellationToken ct = default
     )
     {
         var db = _redis.GetDatabase();
-        var key = GetKey(ipSlug, modeCode);
+        var key = GetKey(ipId, modeId);
 
         var entries = await db.SortedSetRangeByRankWithScoresAsync(
             key,
@@ -53,7 +55,7 @@ public class RedisRealtimeLeaderboardService : IRealtimeLeaderboardService
             if (Guid.TryParse(entry.Element.ToString(), out var scoreEntryId) &&
                 entry.Score is >= 0 and <= long.MaxValue)
             {
-                // It could be long(entry.Score) but i'm cautious about casting and overflow
+                // It could be long(entry.Score) but I'm cautious about casting and overflow
                 var entryScore = Convert.ToInt64(entry.Score);
                 result.Add(new LeaderboardEntryDto(scoreEntryId, entryScore, i + 1));
             }
@@ -64,13 +66,13 @@ public class RedisRealtimeLeaderboardService : IRealtimeLeaderboardService
 
 
     public async Task<long?> GetRankAsync(
-        string ipSlug,
-        string modeCode,
+        Guid ipId,
+        Guid modeId,
         Guid scoreEntryId,
         CancellationToken ct = default)
     {
         var db = _redis.GetDatabase();
-        var key = GetKey(ipSlug, modeCode);
+        var key = GetKey(ipId, modeId);
 
         var rankIndex = await db.SortedSetRankAsync(
             key,
@@ -87,5 +89,39 @@ public class RedisRealtimeLeaderboardService : IRealtimeLeaderboardService
 
         return rankIndex.Value + 1;
     }
-    
+
+
+    public async Task<IReadOnlyList<LeaderboardRowDto>?> GetCachedLeaderboardAsync(
+        Guid ipId,
+        Guid modeId,
+        int limit,
+        CancellationToken ct = default)
+    {
+        var db = _redis.GetDatabase();
+        var key = $"leaderboard:dto:{ipId}:{modeId}:{limit}";
+        var value = await db.StringGetAsync(key);
+        
+        if (value.IsNullOrEmpty)
+            return null;
+        
+        return JsonSerializer.Deserialize<IReadOnlyList<LeaderboardRowDto>>(value.ToString());
+    }
+
+
+
+    public async Task SetCachedLeaderboardAsync(
+        Guid ipId,
+        Guid modeId,
+        int limit,
+        IReadOnlyList<LeaderboardRowDto> rows,
+        TimeSpan? ttl = null,
+        CancellationToken ct = default)
+    {
+        var db = _redis.GetDatabase();
+        var key = $"leaderboard:dto:{ipId}:{modeId}:{limit}";
+        var json = JsonSerializer.Serialize(rows);
+        var expiry = ttl ?? TimeSpan.FromSeconds(60);
+
+        await db.StringSetAsync(key, json, expiry);
+    }
 }

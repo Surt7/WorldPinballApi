@@ -1,4 +1,6 @@
-﻿namespace WorldPinball.Application.Interfaces.Services;
+using WorldPinball.Application.Features.Leaderboard.Public.Dtos;
+
+namespace WorldPinball.Application.Interfaces.Services;
 
 
 public record LeaderboardEntryDto(
@@ -9,22 +11,37 @@ public record LeaderboardEntryDto(
 public interface IRealtimeLeaderboardService
 {
     Task AddScoreAsync(
-        string ipSlug,
-        string modeCode,
+        Guid ipId,
+        Guid modeId,
         Guid scoreEntryId,
         long score,
         CancellationToken ct = default
     );
     Task<IReadOnlyList<LeaderboardEntryDto>> GetTopScoresAsync(
-        string ipSlug,
-        string modeCode,
+        Guid ipId,
+        Guid modeId,
         int limit = 50,
         CancellationToken ct = default
     );
     Task<long?> GetRankAsync(
-        string ipSlug,
-        string modeCode,
+        Guid ipId,
+        Guid modeId,
         Guid scoreEntryId,
         CancellationToken ct = default
     );
+
+
+    Task<IReadOnlyList<LeaderboardRowDto>?> GetCachedLeaderboardAsync(
+        Guid ipId,
+        Guid modeId,
+        int limit,
+        CancellationToken ct = default);
+    
+    Task SetCachedLeaderboardAsync(Guid ipId,
+        Guid modeId,
+        int limit,
+        IReadOnlyList<LeaderboardRowDto> rows,
+        TimeSpan? ttl = null,
+        CancellationToken ct = default);
+
 }

@@ -8,7 +8,7 @@ public class GameSessionPlayer
 
     // 2. Player slot on the machine (1, 2, 3 or 4)
     public int SlotNumber { get; set; }
-
+    
     // 3. Player identification:
     // - If registered Keycloak user: UserId is set (e.g. Keycloak sub GUID)
     // - If guest / anonymous: UserId is null, and GuestInitials can be set (e.g. "TOM", "AAA")

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Api.Contracts.Machine;
 using WorldPinball.Application.Features.Machines.Public;
 using WorldPinball.Application.Features.Machines.Public.Enroll;
@@ -8,7 +9,9 @@ namespace WorldPinball.Api.Controllers.Public;
 
 [ApiController]
 [Route("api/v1/machines")]
-public class MachinesController(IEnrollDeviceHandler enrollHandler) : ControllerBase
+public class MachinesController(
+    IEnrollDeviceHandler enrollHandler,
+    IValidator<EnrollDeviceRequest> validator) : ControllerBase
 {
     [HttpPost("enroll")]
     [EndpointSummary("Enrolls a new physical device onto a provisioned machine")]
@@ -20,6 +23,16 @@ public class MachinesController(IEnrollDeviceHandler enrollHandler) : Controller
         [FromBody] EnrollDeviceRequest request,
         CancellationToken ct)
     {
+        var validationResult = await validator.ValidateAsync(request, ct);
+        if (!validationResult.IsValid)
+        {
+            foreach (var failure in validationResult.Errors)
+            {
+                ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
+            }
+            return ValidationProblem(ModelState);
+        }
+
         var command = new EnrollDeviceCommand(
             request.MachineId,
             request.PlainEnrollmentToken,

@@ -1,7 +1,9 @@
 namespace WorldPinball.Application.Features.Leaderboard.Public.Queries;
 
 public sealed record GetLeaderboardQuery(
-    string? IpSlug,
-    string? ModeCode,
+    Guid? IpId = null,
+    Guid? ModeId = null,
+    string? IpSlug = null,
+    string? ModeCode = null,
     int Limit = 50
 );

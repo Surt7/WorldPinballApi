@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.Extensions.Logging.Testing;
 using NSubstitute;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
@@ -295,8 +295,8 @@ public class SubmitScoreHandlerTests
         var result = await sut.HandleAsync(command, CancellationToken.None);
         
         await realtimeLeaderboardService.Received(1).AddScoreAsync(
-            Arg.Any<string>(),
-            Arg.Any<string>(),
+            Arg.Any<Guid>(),
+            Arg.Any<Guid>(),
             Arg.Any<Guid>(),
             50000,
             Arg.Any<CancellationToken>()

@@ -105,7 +105,7 @@ try
 
     app.UseSerilogRequestLogging();
 
-    if (app.Environment.IsDevelopment())
+    if (app.Environment.IsDevelopment() || app.Environment.IsStaging() )
     {
         await app.Services.MigrateDatabaseAsync();
         await app.Services.SeedDevelopmentDataAsync();

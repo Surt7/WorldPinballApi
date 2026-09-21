@@ -59,7 +59,7 @@ public static class DependencyInjection
         //Repositories
         services.AddScoped<ISecretService, SecretService>();
         services.AddScoped<IIpLicenseReadRepository, IpLicenseReadRepository>();
-        services.AddScoped<ILeaderboardRepository, LeaderboardRepository>();
+        services.AddScoped<ILeaderboardReadRepository, LeaderboardReadRepository>();
         services.AddScoped<IMachineReadRepository, MachineReadRepository>();
         services.AddScoped<IMachineWriteRepository, MachineWriteRepository>();
         services.AddScoped<IGameModeRepository, GameModeRepository>();
