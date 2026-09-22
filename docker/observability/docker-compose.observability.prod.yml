@@ -1,0 +1,79 @@
+﻿services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.110.0
+    container_name: worldpinball-prod-otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector.yml:/etc/otelcol/config.yaml:ro
+    depends_on:
+      - tempo
+      - loki
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    container_name: worldpinball-prod-tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo.yml:/etc/tempo.yaml:ro
+      - tempo_prod_data:/var/tempo
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: worldpinball-prod-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_prod_data:/prometheus
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+  loki:
+    image: grafana/loki:3.2.0
+    container_name: worldpinball-prod-loki
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - ./loki.yml:/etc/loki/local-config.yaml:ro
+      - loki_prod_data:/loki
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: worldpinball-prod-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD must be set}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - grafana_prod_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - tempo
+      - prometheus
+      - loki
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+volumes:
+  tempo_prod_data:
+  prometheus_prod_data:
+  loki_prod_data:
+  grafana_prod_data:
+
+networks:
+  worldpinball-network:
+    external: true

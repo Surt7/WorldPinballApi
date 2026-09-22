@@ -1,0 +1,96 @@
+﻿services:
+  # 1. Reverse Proxy BFF (Public entry point)
+  bff:
+    build:
+      context: .
+      dockerfile: WorldPinball.Bff/Dockerfile
+    container_name: worldpinball-prod-bff
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ReverseProxy__Clusters__core-api-cluster__Destinations__destination1__Address=http://api:8080
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+    ports:
+      - "80:8080"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+  # 2. Core Backend API
+  api:
+    build:
+      context: .
+      dockerfile: WorldPinball.Api/Dockerfile
+    container_name: worldpinball-prod-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=worldpinball;Username=postgres;Password=${POSTGRES_PASSWORD}
+      - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+  # 3. PostgreSQL Database
+  db:
+    image: postgres:16.15-alpine
+    container_name: worldpinball-prod-db
+    environment:
+      POSTGRES_DB: worldpinball
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    volumes:
+      - worldpinball_prod_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d worldpinball"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+  # 4. Redis Cache
+  redis:
+    image: redis:8.10.1-alpine
+    container_name: worldpinball-prod-redis
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+    volumes:
+      - worldpinball_prod_redisdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+  # 5. OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.110.0
+    container_name: worldpinball-prod-otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./docker/observability/otel-collector.yml:/etc/otelcol/config.yaml:ro
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+volumes:
+  worldpinball_prod_pgdata:
+  worldpinball_prod_redisdata:
+
+networks:
+  worldpinball-network:
+    driver: bridge
