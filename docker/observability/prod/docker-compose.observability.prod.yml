@@ -1,10 +1,10 @@
-﻿services:
+services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.110.0
     container_name: worldpinball-prod-otel-collector
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
-      - ./otel-collector.yml:/etc/otelcol/config.yaml:ro
+      - ./otel-collector.prod.yml:/etc/otelcol/config.yaml:ro
     depends_on:
       - tempo
       - loki
@@ -17,7 +17,7 @@
     container_name: worldpinball-prod-tempo
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
-      - ./tempo.yml:/etc/tempo.yaml:ro
+      - ./tempo.prod.yml:/etc/tempo.yaml:ro
       - tempo_prod_data:/var/tempo
     restart: unless-stopped
     networks:
@@ -31,7 +31,7 @@
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=30d
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus.prod.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_prod_data:/prometheus
     restart: unless-stopped
     networks:
@@ -42,7 +42,7 @@
     container_name: worldpinball-prod-loki
     command: ["-config.file=/etc/loki/local-config.yaml"]
     volumes:
-      - ./loki.yml:/etc/loki/local-config.yaml:ro
+      - ./loki.prod.yml:/etc/loki/local-config.yaml:ro
       - loki_prod_data:/loki
     restart: unless-stopped
     networks:

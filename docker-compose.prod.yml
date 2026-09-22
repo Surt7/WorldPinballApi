@@ -1,4 +1,4 @@
-﻿services:
+services:
   # 1. Reverse Proxy BFF (Public entry point)
   bff:
     build:
@@ -82,7 +82,7 @@
     container_name: worldpinball-prod-otel-collector
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
-      - ./docker/observability/otel-collector.yml:/etc/otelcol/config.yaml:ro
+      - ./docker/observability/prod/otel-collector.prod.yml:/etc/otelcol/config.yaml:ro
     restart: unless-stopped
     networks:
       - worldpinball-network
