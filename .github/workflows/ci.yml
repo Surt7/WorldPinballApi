@@ -1,0 +1,30 @@
+﻿name: CI
+
+on:
+  push:
+    branches: [ "dev", "main" ]
+  pull_request:
+    branches: [ "dev", "main" ]
+
+jobs:
+  test:
+    name: Build and Test (.NET 10)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore Leaderboard_WorldPinball.sln
+
+      - name: Build solution (Release)
+        run: dotnet build Leaderboard_WorldPinball.sln --configuration Release --no-restore
+
+      - name: Execute unit tests
+        run: dotnet test Leaderboard_WorldPinball.sln --configuration Release --no-build --verbosity normal
