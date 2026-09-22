@@ -14,6 +14,7 @@ public sealed class StepCaCertificateAuthorityService(
     private static readonly ECDsa CaSigningKey = ECDsa.Create(ECCurve.NamedCurves.nistP256);
 
     public Task<IssuedCertificate> IssueDeviceCertificateAsync(
+        Guid machineId,
         string deviceSerialNumber,
         string publicKeyPem,
         CancellationToken ct = default)
@@ -50,6 +51,12 @@ public sealed class StepCaCertificateAuthorityService(
                 new OidCollection { new("1.3.6.1.5.5.7.3.2") },
                 critical: false));
 
+        var sanBuilder = new SubjectAlternativeNameBuilder();
+        sanBuilder.AddUri(new Uri($"urn:pinball:machine:{machineId}"));
+        request.CertificateExtensions.Add(sanBuilder.Build());
+
+        
+        
         // 4. Generate random positive serial number on the stack (Safe Span - 0 GC allocation)
         Span<byte> serialNumberBytes = stackalloc byte[16];
         RandomNumberGenerator.Fill(serialNumberBytes);
@@ -76,6 +83,7 @@ public sealed class StepCaCertificateAuthorityService(
         var issued = new IssuedCertificate(
             CertPem: certPem,
             SerialNumber: certSerialNumber,
+            MachineId: machineId,
             ThumbprintSha256: thumbprint,
             SubjectDn: subjectDn,
             IssuerDn: issuerDn,

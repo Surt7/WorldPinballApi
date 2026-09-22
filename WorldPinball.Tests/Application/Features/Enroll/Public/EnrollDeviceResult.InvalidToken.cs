@@ -255,10 +255,14 @@ public class EnrollDeviceResultInvalidToken
             .DeviceSerialExistsAsync("DEV-12345", Arg.Any<CancellationToken>())
             .Returns(false);
 
-        caService.IssueDeviceCertificateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+        caService.IssueDeviceCertificateAsync(Arg.Any<Guid>(),
+                Arg.Any<string>(), 
+                Arg.Any<string>(), 
+                Arg.Any<CancellationToken>())
             .Returns(new IssuedCertificate(
                 CertPem: "-----BEGIN CERTIFICATE-----\nTEST_CERT\n-----END CERTIFICATE-----",
                 SerialNumber: "cert-serial-123",
+                MachineId: machineId,
                 ThumbprintSha256: "thumbprint-123",
                 SubjectDn: "CN=DEV-12345",
                 IssuerDn: "CN=WorldPinball Intermediate CA",

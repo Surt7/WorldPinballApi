@@ -2,6 +2,7 @@
 
 using System.Text.Json;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using WorldPinball.Api.Contracts.Sessions;
 using WorldPinball.Application.Features.GameSessions.Public.Start;
 using WorldPinball.Application.Features.GameSessions.Public.Start.Commands;
@@ -23,7 +24,8 @@ public class SessionsController(
 IValidator<SubmitScoreRequest> reqValidator
 ) : ControllerBase
 {
-    private static readonly System.Text.Json.JsonSerializerOptions JsonOpts = new()
+    
+    private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNameCaseInsensitive = true,
         WriteIndented = false,
@@ -66,7 +68,7 @@ IValidator<SubmitScoreRequest> reqValidator
             SignatureHeader: signature,
             HttpMethod: Request.Method,
             RequestPath: Request.Path.Value ?? string.Empty,
-            RawBody: System.Text.Json.JsonSerializer.Serialize(request,JsonOpts));
+            RawBody: JsonSerializer.Serialize(request,JsonOpts));
 
         var authResult = await authService.ValidateAsync(context, ct);
         if (authResult is not MachineAuthResult.Success success)
@@ -108,6 +110,7 @@ IValidator<SubmitScoreRequest> reqValidator
         };
     }
     [HttpPost("{sessionId:guid}/submit-score")]
+    [Authorize(Policy = "ActiveMachineOnly")]
     [EndpointSummary("Submit Score Request")]
     [EndpointDescription("POST to create new score from a game session that just ended")]
     [ProducesResponseType(typeof(SubmitScoreResponse), StatusCodes.Status200OK)]
@@ -135,10 +138,10 @@ IValidator<SubmitScoreRequest> reqValidator
 
         var command = new SubmitScoreCommand(sessionId, request.DeviceId, request.Score, request.SlotNumber);
         
-        var sessionresult = await submitScoreHandler.HandleAsync(command, ct);
+        var scoreResult = await submitScoreHandler.HandleAsync(command, ct);
 
 
-        return sessionresult switch
+        return scoreResult switch
         {
             SubmitScoreResult.Success s => Ok(new SubmitScoreResponse(
                 s.ScoreEntryId)),
@@ -158,7 +161,7 @@ IValidator<SubmitScoreRequest> reqValidator
             {
                 message = $"Slot number: '{s.SlotNumber}' not found."
             }),
-            _ => throw new InvalidOperationException($"Unsupported session result: {sessionresult.GetType().Name}")
+            _ => throw new InvalidOperationException($"Unsupported session result: {scoreResult.GetType().Name}")
         };
     }
 }

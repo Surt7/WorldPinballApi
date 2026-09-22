@@ -10,7 +10,7 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     options.AddServerHeader = false;
 });
-
+// I Configured cancellation token source 5 sec timeout
 builder.Services.AddRequestTimeouts(options => {
     options.DefaultPolicy = new RequestTimeoutPolicy { 
         Timeout = TimeSpan.FromSeconds(5) 

@@ -51,7 +51,8 @@ try
 
     builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
     builder.Services.AddWorldPinballLocalization();
-
+    
+    
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.AddObservability();

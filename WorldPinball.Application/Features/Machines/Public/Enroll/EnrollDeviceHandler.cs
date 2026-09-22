@@ -130,6 +130,7 @@ public sealed class EnrollDeviceHandler(
         await deviceEnrollmentWriteRepository.SaveEnrollmentAsync(device, machineDevice, token, ct);
 
         var issuedCert = await caService.IssueDeviceCertificateAsync(
+            cmd.MachineId,
             cmd.DeviceSerialNumber,
             cmd.PublicKeyPem,
             ct);

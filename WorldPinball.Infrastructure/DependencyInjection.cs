@@ -1,22 +1,20 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WorldPinball.Application.Interfaces.Repositories;
-using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
-
-using WorldPinball.Application.Security;
 using WorldPinball.Infrastructure.Persistence;
 using WorldPinball.Infrastructure.Persistence.Repositories;
 using WorldPinball.Infrastructure.Persistence.Seed;
-using WorldPinball.Infrastructure.Security;
-
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
-using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Application.Security.CA;
 using WorldPinball.Application.Security.Secrets;
 using WorldPinball.Infrastructure.Persistence.Interceptors;
+using WorldPinball.Infrastructure.Security.Authentification;
+using WorldPinball.Infrastructure.Security.Authorization;
 using WorldPinball.Infrastructure.Security.CA;
 using WorldPinball.Infrastructure.Security.Secrets;
 using WorldPinball.Infrastructure.Services;
@@ -48,7 +46,7 @@ public static class DependencyInjection
                     sp.GetRequiredService<PublishDomainEventsInterceptor>()
                     ));
         
-        // -------------------- Database HealthCheck --------------------
+        // -------------------- Database health check --------------------
 
         services
             .AddHealthChecks()
@@ -75,8 +73,22 @@ public static class DependencyInjection
         services.AddScoped<IGameSessionWriteRepository, GameSessionWriteRepository>();
         services.AddScoped<ICertificateAuthorityService, StepCaCertificateAuthorityService>();
         
+       
+        
+        
+        // For Auth policies check
+        services.AddTransient<IClaimsTransformation, MachineClaimsTransformation>();
+        
+        
+        // Auth policies
+        services.AddSingleton<IAuthorizationHandler, ActiveMachineAuthorizationHandler>();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("ActiveMachineOnly", policy =>
+                policy.Requirements.Add(new ActiveMachineRequirement()));
+        });
 // -------------------- Redis --------------------
-
+       
         services.AddScoped<IRealtimeLeaderboardService, RedisRealtimeLeaderboardService>();
 
         var redisHost = config["Redis:Host"] ?? "localhost:6379";
@@ -92,6 +104,8 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionMultiplexer>(sp => 
             ConnectionMultiplexer.Connect(configurationOptions));
         
+        
+        services.AddScoped<IMachineStatusCacheService, RedisMachineStatusCacheService>();
         
         
         return services;
