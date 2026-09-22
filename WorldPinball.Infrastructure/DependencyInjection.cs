@@ -73,20 +73,12 @@ public static class DependencyInjection
         services.AddScoped<IGameSessionWriteRepository, GameSessionWriteRepository>();
         services.AddScoped<ICertificateAuthorityService, StepCaCertificateAuthorityService>();
         
-       
-        
-        
         // For Auth policies check
         services.AddTransient<IClaimsTransformation, MachineClaimsTransformation>();
         
-        
-        // Auth policies
+        // Auth policies handler
         services.AddSingleton<IAuthorizationHandler, ActiveMachineAuthorizationHandler>();
-        services.AddAuthorization(options =>
-        {
-            options.AddPolicy("ActiveMachineOnly", policy =>
-                policy.Requirements.Add(new ActiveMachineRequirement()));
-        });
+  
 // -------------------- Redis --------------------
        
         services.AddScoped<IRealtimeLeaderboardService, RedisRealtimeLeaderboardService>();

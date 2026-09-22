@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+
+using System.Security.Cryptography;
 
 namespace WorldPinball.Infrastructure.Security
 {
@@ -55,8 +56,8 @@ namespace WorldPinball.Infrastructure.Security
                 // Import public key. Expected PEM: -----BEGIN PUBLIC KEY----- ... -----END PUBLIC KEY-----
                 ecdsa.ImportFromPem(publicKeyPem);
 
-                // Verify signature over the data using SHA-256 (ECDSA P-256).
-                return ecdsa.VerifyData(data, sigBytes, HashAlgorithmName.SHA256);
+                // Verify signature over the data using SHA-256 (ECDSA P-256 in DER format).
+                return ecdsa.VerifyData(data, sigBytes, HashAlgorithmName.SHA256, DSASignatureFormat.Rfc3279DerSequence);
             }
             catch (CryptographicException ex)
             {

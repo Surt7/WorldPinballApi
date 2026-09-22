@@ -54,8 +54,8 @@ public class GameSession : Entity
     public DateTime? EndedAtUtc { get; private set; }
 
     public GameSessionState State { get; private set; }
-    public string Nonce { get; private set; }
-    public string ClientVersion { get; private set; }
+    public string Nonce { get; private set; } = null!;
+    public string ClientVersion { get; private set; } = null!;
 
 
 

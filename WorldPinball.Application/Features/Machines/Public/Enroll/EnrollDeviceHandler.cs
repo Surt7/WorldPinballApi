@@ -5,6 +5,7 @@ using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Security.CA;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Application.Security.Secrets;
+using WorldPinball.Domain.Enums;
 
 namespace WorldPinball.Application.Features.Machines.Public;
 
@@ -104,6 +105,8 @@ public sealed class EnrollDeviceHandler(
             DeviceId = Guid.NewGuid(),
             SerialPhysical = cmd.DeviceSerialNumber,
             PublicKey = cmd.PublicKeyPem,
+            Status = DeviceStatus.Active,
+            ActivatedAtUtc = now,
             CreatedAtUtc = now
         };
 

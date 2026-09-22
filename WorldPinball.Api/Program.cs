@@ -1,5 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+
 using Serilog;
 using WorldPinball.Api.Extensions;
 using WorldPinball.Api.Logging;
@@ -7,6 +6,7 @@ using WorldPinball.Infrastructure.Security;
 using WorldPinball.Infrastructure;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.Timeouts;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
 using WorldPinball.Api.Middleware;
 
 using WorldPinball.Application.Features.GameSessions.Public.Start;
@@ -28,17 +28,19 @@ try
     builder.WebHost.ConfigureKestrel(options =>
     {
         options.AddServerHeader = false;
+        options.ConfigureHttpsDefaults(httpsOptions =>
+        {
+            httpsOptions.ClientCertificateMode = ClientCertificateMode.AllowCertificate;
+            
+            // Allow custom CA (Step-CA) certificates during TLS handshake
+            httpsOptions.ClientCertificateValidation = (certificate, chain, sslPolicyErrors) => true;
+        });
     });
 
     builder.Services.AddProblemDetails();
 
     builder.AddWorldPinballLogging();
-
-    var keycloakAuthority = builder.Configuration["Keycloak:Authority"]
-                            ?? throw new InvalidOperationException("Keycloak:Authority is missing.");
-    var keycloakAudience = builder.Configuration["Keycloak:Audience"]
-                           ?? throw new InvalidOperationException("Keycloak:Audience is missing.");
-
+    
     builder.Services.AddRequestTimeouts(options => {
         options.DefaultPolicy = new RequestTimeoutPolicy { 
             Timeout = TimeSpan.FromSeconds(5) 
@@ -81,26 +83,7 @@ try
     
 // -------------------- AuthN & Z --------------------
 
-    builder.Services
-        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options =>
-        {
-            options.Authority = keycloakAuthority;
-            options.Audience = keycloakAudience;
-            options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
-            options.MapInboundClaims = false;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                NameClaimType = "preferred_username",
-                RoleClaimType = "roles",
-                ClockSkew = TimeSpan.FromMinutes(1)
-            };
-        });
-
-    builder.Services.AddAuthorization();
+    builder.Services.AddApiSecurity(builder.Configuration, builder.Environment);
 
 // -------------------- Open Api Doc --------------------
     builder.Services.AddWorldPinballOpenApi();

@@ -20,13 +20,14 @@ public class GameSessionWriteRepository(AppDbContext db) : IGameSessionWriteRepo
             return await db.GameSessions
                 .Where(gs => gs.SessionId == sessionId && gs.State ==  GameSessionState.Started)
                 .Include(gs => gs.Machine)
+                .Include(gs => gs.Players)
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
         public async Task SaveScoreEntryAsync(GameSession session, ScoreEntry scoreEntry, CancellationToken cancellationToken = default)
         {
             
-            await db.GameSessions.AddAsync(session, cancellationToken);
+         
             await db.ScoreEntries.AddAsync(scoreEntry, cancellationToken);
             await db.SaveChangesAsync(cancellationToken);
         }

@@ -18,7 +18,6 @@ public sealed class MachineAuthService(
 {
     private AppDbContext _db = db;
     private static readonly EventId InvalidHeaderReceived = new(3100, nameof(InvalidHeaderReceived));
-    private static readonly EventId TimestampOutOfWindow = new(3101, nameof(TimestampOutOfWindow));
     private static readonly EventId DeviceNotAttached = new(3102, nameof(DeviceNotAttached));
     private static readonly EventId DeviceRevokedOrInactive = new(3103, nameof(DeviceRevokedOrInactive));
     private static readonly EventId DeviceMissingPublicKey = new(3104, nameof(DeviceMissingPublicKey));
@@ -102,7 +101,7 @@ public sealed class MachineAuthService(
                 headerError.Reason);
             return headerError!;
         }
-        
+
         // timestamp window (±120s) anti-replay
         var timestampError = ValidateTimestampWindow(headers.Timestamp);
 
@@ -110,9 +109,8 @@ public sealed class MachineAuthService(
         {
             return timestampError;
         }
-        
-       
-      
+
+
         var attached = await GetActiveAttachedDevice(headers.DeviceId, ct);
 
         if (attached is null)
@@ -201,8 +199,8 @@ public sealed class MachineAuthService(
                 md.MachineId,
                 md.DeviceId,
                 md.Device.Status,
-                md.Device.PublicKey,
-                md.Device.KeyAlgorithm
+                md.Device.PublicKey ?? string.Empty,
+                md.Device.KeyAlgorithm ?? string.Empty
             )).FirstOrDefaultAsync(ct);
     }
 

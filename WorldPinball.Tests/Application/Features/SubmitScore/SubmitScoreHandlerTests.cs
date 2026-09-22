@@ -28,7 +28,7 @@ public class SubmitScoreHandlerTests
         
         var command = new SubmitScoreCommand(Guid.NewGuid(), Guid.NewGuid(), 50000);
         var sut = 
-            new SubmitScoreHandler(readRepository,
+            new SubmitScoreHandler(
                 writeRepository,
                 realtimeLeaderboardService,
                 logger,
@@ -75,7 +75,7 @@ public class SubmitScoreHandlerTests
         var command = new SubmitScoreCommand(Guid.NewGuid(), deviceId, 50000);
         
         var sut = 
-            new SubmitScoreHandler(readRepository,
+            new SubmitScoreHandler(
                 writeRepository,
                 realtimeLeaderboardService,
                 logger,
@@ -128,7 +128,7 @@ public class SubmitScoreHandlerTests
         var command = new SubmitScoreCommand(Guid.NewGuid(), Guid.NewGuid(), 50000,slotNumber);
         
         var sut = 
-            new SubmitScoreHandler(readRepository,
+            new SubmitScoreHandler(
                 writeRepository,
                 realtimeLeaderboardService,
                 logger,
@@ -175,7 +175,7 @@ public class SubmitScoreHandlerTests
         var command = new SubmitScoreCommand(Guid.NewGuid(), deviceId, 50000);
         
         var sut = 
-            new SubmitScoreHandler(readRepository,
+            new SubmitScoreHandler(
                 writeRepository,
                 realtimeLeaderboardService,
                 logger,
@@ -230,7 +230,7 @@ public class SubmitScoreHandlerTests
        
         
         var sut = 
-            new SubmitScoreHandler(readRepository,
+            new SubmitScoreHandler(
                 writeRepository,
                 realtimeLeaderboardService,
                 logger,
@@ -285,7 +285,7 @@ public class SubmitScoreHandlerTests
         var command = new SubmitScoreCommand(gameSession.SessionId, deviceId, 50000, slotNumber);
         
         var sut = 
-            new SubmitScoreHandler(readRepository,
+            new SubmitScoreHandler(
                 writeRepository,
                 realtimeLeaderboardService,
                 logger,

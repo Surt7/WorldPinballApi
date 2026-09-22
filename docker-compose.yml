@@ -1,3 +1,5 @@
+name: worldpinball-dev
+
 services:
   db:
     image: postgres:16.15-alpine

@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using WorldPinball.Application.Features.GameSessions.Public.Start;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Interfaces.Services;
@@ -9,7 +8,6 @@ using WorldPinball.Domain.Enums;
 namespace WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 
 public sealed class SubmitScoreHandler(
-    IGameSessionReadRepository readRepository,
     IGameSessionWriteRepository writeRepository,
     IRealtimeLeaderboardService realtimeLeaderboardService,
     ILogger<SubmitScoreHandler> logger,

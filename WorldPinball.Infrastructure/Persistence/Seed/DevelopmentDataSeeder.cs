@@ -407,16 +407,27 @@ public static class DevelopmentDataSeeder
         IReadOnlyList<GameMode> modes,
         DateTime now) =>
         new Faker<GameSession>("fr").UseSeed(Seed + 11)
-            .RuleFor(x => x.SessionId, f => f.Random.Guid())
-            .RuleFor(x => x.MachineId, f => links[f.IndexFaker % links.Count].MachineId)
-            .RuleFor(x => x.DeviceId, f => links[f.IndexFaker % links.Count].DeviceId)
-            .RuleFor(x => x.ModeId, f =>
-                modes[f.Random.Int(0, modes.Count - 1)].ModeId)
-            .RuleFor(x => x.StartedAtUtc, f => Utc(f.Date.Recent(90, now)))
-            .RuleFor(x => x.EndedAtUtc, (f, x) => x.StartedAtUtc.AddMinutes(f.Random.Int(3, 45)))
-            .RuleFor(x => x.State, GameSessionState.Ended)
-            .RuleFor(x => x.Nonce, f => $"development-nonce-{f.IndexFaker + 1:00000}")
-            .RuleFor(x => x.ClientVersion, f => $"1.{f.Random.Int(0, 8)}.{f.Random.Int(0, 20)}")
+            .CustomInstantiator(f =>
+            {
+                var link = links[f.IndexFaker % links.Count];
+                var mode = modes[f.Random.Int(0, modes.Count - 1)];
+                var startedAt = Utc(f.Date.Recent(90, now));
+                var nonce = $"development-nonce-{f.IndexFaker + 1:00000}";
+                var clientVersion = $"1.{f.Random.Int(0, 8)}.{f.Random.Int(0, 20)}";
+
+                var session = new GameSession(
+                    link.MachineId,
+                    link.DeviceId,
+                    mode.ModeId,
+                    clientVersion,
+                    nonce,
+                    startedAt);
+
+                session.Start(startedAt);
+                session.End(startedAt.AddMinutes(f.Random.Int(3, 45)));
+
+                return session;
+            })
             .Generate(60);
 
     private static List<ScoreEntry> CreateScoreEntries(

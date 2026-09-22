@@ -1,3 +1,5 @@
+name: worldpinball-observability-dev
+
 services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.110.0

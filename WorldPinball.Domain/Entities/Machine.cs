@@ -64,7 +64,7 @@ public class Machine
     public IpLicense IpLicense { get; set; } = null!;
 
     public  Guid IdempotencyKey { get;private set; }
-    public  string Nonce { get; private set; }
+    public  string Nonce { get; private set; } = null!;
     //Internal serial number WorldPinball
     public string WorldPinballSerialNumber { get; private set; } = null!;
 
@@ -84,7 +84,7 @@ public class Machine
     public DateOnly? ManufacturedDate { get; set; }
 
 
-    public string DisplayName { get; private set; }
+    public string DisplayName { get; private set; } = null!;
 
     public MachineStatus Status { get; private set; } = MachineStatus.PendingEnrollment;
 
