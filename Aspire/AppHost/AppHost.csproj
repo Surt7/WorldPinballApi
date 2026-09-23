@@ -1,0 +1,18 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.5.3">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AspireUseCliBundle>true</AspireUseCliBundle>
+        <UserSecretsId>feefe05c-64c4-4557-8a28-49539f306330</UserSecretsId>
+        <RootNamespace>AppHost</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\WorldPinball.Api\WorldPinball.Api.csproj" />
+      <ProjectReference Include="..\..\WorldPinball.Bff\WorldPinball.Bff.csproj" />
+    </ItemGroup>
+
+</Project>

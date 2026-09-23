@@ -27,8 +27,18 @@ public static class LoggingExtensions
             {
                 configuration.WriteTo.Seq(seqServerUrl);
             }
-        });
 
+            configuration.WriteTo.OpenTelemetry(options =>
+                {
+                    options.Endpoint = "http://localhost:4318/v1/logs";
+                    options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.HttpProtobuf;
+                    options.ResourceAttributes = new Dictionary<string, object>
+                    {
+                        ["service.name"] = "WorldPinball.Api"
+                    };
+                }
+            );
+        });
         return builder;
     }
 }

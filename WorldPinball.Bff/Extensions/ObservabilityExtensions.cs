@@ -1,4 +1,5 @@
-﻿using OpenTelemetry.Exporter;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -17,11 +18,12 @@ public static class ObservabilityExtensions
                 tracing
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
-                    .AddOtlpExporter(options =>
-                    {
-                        options.Endpoint = new Uri("http://localhost:4318/v1/traces");
-                        options.Protocol = OtlpExportProtocol.HttpProtobuf;
-                    });
+                    .AddOtlpExporter(
+                        options =>
+                        {
+                            options.Endpoint = new Uri("http://localhost:4318/v1/traces");
+                            options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                        });
             })
             .WithMetrics(metrics =>
             {
@@ -33,7 +35,15 @@ public static class ObservabilityExtensions
                         options.Endpoint = new Uri("http://localhost:4318/v1/metrics");
                         options.Protocol = OtlpExportProtocol.HttpProtobuf;
                     });
-            });
+            })
+            .WithLogging(logging =>
+            {
+                logging.AddOtlpExporter(options =>
+                {
+                    options.Endpoint = new Uri("http://localhost:4318/v1/logs");
+                    options.Protocol = OtlpExportProtocol.HttpProtobuf;
+                });
+            });;
         return builder;
     }
 }
