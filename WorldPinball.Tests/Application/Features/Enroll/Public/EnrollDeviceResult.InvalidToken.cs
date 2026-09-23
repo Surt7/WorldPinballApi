@@ -43,9 +43,12 @@ public class EnrollDeviceResultInvalidToken
             PublicKeyPem: "PUBLIC_KEY"
         );
 
+        var repoMachineWrite = Substitute.For<IMachineWriteRepository>();
+
         var sut = new EnrollDeviceHandler(
             repoDeviceWriteEnroll,
             repoDeviceReadEnroll,
+            repoMachineWrite,
             caService,
             _secretService,
             logger,
@@ -94,9 +97,12 @@ public class EnrollDeviceResultInvalidToken
             PublicKeyPem: "PUBLIC_KEY"
         );
 
+        var repoMachineWrite = Substitute.For<IMachineWriteRepository>();
+
         var sut = new EnrollDeviceHandler(
             repoDeviceWriteEnroll,
             repoDeviceReadEnroll,
+            repoMachineWrite,
             caService,
             _secretService,
             logger,
@@ -125,9 +131,12 @@ public class EnrollDeviceResultInvalidToken
             PublicKeyPem: "PUBLIC_KEY"
         );
 
+        var repoMachineWrite = Substitute.For<IMachineWriteRepository>();
+
         var sut = new EnrollDeviceHandler(
             repoDeviceWriteEnroll,
             repoDeviceReadEnroll,
+            repoMachineWrite,
             caService,
             _secretService,
             logger,
@@ -159,9 +168,12 @@ public class EnrollDeviceResultInvalidToken
             PublicKeyPem: "PUBLIC_KEY"
         );
 
+        var repoMachineWrite = Substitute.For<IMachineWriteRepository>();
+
         var sut = new EnrollDeviceHandler(
             repoDeviceWriteEnroll,
             repoDeviceReadEnroll,
+            repoMachineWrite,
             caService,
             _secretService,
             logger,
@@ -210,9 +222,12 @@ public class EnrollDeviceResultInvalidToken
             PublicKeyPem: "PUBLIC_KEY"
         );
 
+        var repoMachineWrite = Substitute.For<IMachineWriteRepository>();
+
         var sut = new EnrollDeviceHandler(
             repoDeviceWriteEnroll,
             repoDeviceReadEnroll,
+            repoMachineWrite,
             caService,
             _secretService,
             logger,
@@ -236,7 +251,17 @@ public class EnrollDeviceResultInvalidToken
         var repoDeviceWriteEnroll = Substitute.For<IDeviceEnrollmentWriteRepository>();
         var caService = Substitute.For<ICertificateAuthorityService>();
 
-        var machineId = Guid.NewGuid(); // <-- Set common ID
+        var repoMachineWrite = Substitute.For<IMachineWriteRepository>();
+
+        var machine = new Machine(
+            ipId: Guid.NewGuid(),
+            serialNumber: "WP-TEST-001",
+            displayName: "Test Machine",
+            registeredAtUtc: now,
+            idempotencyKey: Guid.NewGuid(),
+            nonce: "test-nonce"
+        );
+        var machineId = machine.MachineId;
 
         var token = new EnrollmentToken(
             tokenHash: tokenHash,
@@ -244,7 +269,7 @@ public class EnrollDeviceResultInvalidToken
             issuedByUserId: "admin-1",
             issuedAt: now,
             expiresAt: now.AddHours(1),
-            machineId: machineId // <-- Bind ID
+            machineId: machineId
         );
 
         repoDeviceReadEnroll
@@ -254,6 +279,10 @@ public class EnrollDeviceResultInvalidToken
         repoDeviceReadEnroll
             .DeviceSerialExistsAsync("DEV-12345", Arg.Any<CancellationToken>())
             .Returns(false);
+
+        repoMachineWrite
+            .GetByIdAsync(machineId, Arg.Any<CancellationToken>())
+            .Returns(machine);
 
         caService.IssueDeviceCertificateAsync(Arg.Any<Guid>(),
                 Arg.Any<string>(), 
@@ -279,6 +308,7 @@ public class EnrollDeviceResultInvalidToken
         var sut = new EnrollDeviceHandler(
             repoDeviceWriteEnroll,
             repoDeviceReadEnroll,
+            repoMachineWrite,
             caService,
             _secretService,
             logger,
@@ -289,6 +319,7 @@ public class EnrollDeviceResultInvalidToken
 
         result.Should().BeOfType<EnrollDeviceResult.Success>();
         token.UsesCount.Should().Be(1);
+        machine.Status.Should().Be(MachineStatus.Active);
 
         await repoDeviceWriteEnroll.Received(1).SaveEnrollmentAsync(
             Arg.Any<Device>(),
@@ -308,6 +339,7 @@ public class EnrollDeviceResultInvalidToken
         var logger = NullLogger<EnrollDeviceHandler>.Instance;
         var repoDeviceReadEnroll = Substitute.For<IDeviceEnrollmentReadRepository>();
         var repoDeviceWriteEnroll = Substitute.For<IDeviceEnrollmentWriteRepository>();
+        var repoMachineWrite = Substitute.For<IMachineWriteRepository>();
         var caService = Substitute.For<ICertificateAuthorityService>();
 
         var machineId = Guid.NewGuid();
@@ -318,7 +350,7 @@ public class EnrollDeviceResultInvalidToken
             issuedByUserId: "admin-1",
             issuedAt: now.AddHours(-2),
             expiresAt: now.AddHours(-1),
-            machineId: machineId // <-- Bind ID
+            machineId: machineId
         );
 
         repoDeviceReadEnroll
@@ -339,6 +371,7 @@ public class EnrollDeviceResultInvalidToken
         var sut = new EnrollDeviceHandler(
             repoDeviceWriteEnroll,
             repoDeviceReadEnroll,
+            repoMachineWrite,
             caService,
             _secretService,
             logger,
@@ -349,6 +382,148 @@ public class EnrollDeviceResultInvalidToken
 
         result.Should().BeOfType<EnrollDeviceResult.InvalidToken>();
         token.UsesCount.Should().Be(0);
+
+        await repoDeviceWriteEnroll.DidNotReceive().SaveEnrollmentAsync(
+            Arg.Any<Device>(),
+            Arg.Any<MachineDevice>(),
+            Arg.Any<EnrollmentToken>(),
+            Arg.Any<CancellationToken>()
+        );
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenMachineDoesNotExistInRepository_ShouldReturnMachineNotFound()
+    {
+        var (plainText, tokenHash) = GenerateValidTokenPair();
+        var timeProvider = TimeProvider.System;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+
+        var logger = NullLogger<EnrollDeviceHandler>.Instance;
+        var repoDeviceReadEnroll = Substitute.For<IDeviceEnrollmentReadRepository>();
+        var repoDeviceWriteEnroll = Substitute.For<IDeviceEnrollmentWriteRepository>();
+        var repoMachineWrite = Substitute.For<IMachineWriteRepository>();
+        var caService = Substitute.For<ICertificateAuthorityService>();
+
+        var machineId = Guid.NewGuid();
+
+        var token = new EnrollmentToken(
+            tokenHash: tokenHash,
+            tokenType: EnrollmentTokenType.DeviceEnroll,
+            issuedByUserId: "admin-1",
+            issuedAt: now,
+            expiresAt: now.AddHours(1),
+            machineId: machineId
+        );
+
+        repoDeviceReadEnroll
+            .GetTokenByHashAsync(tokenHash, Arg.Any<CancellationToken>())
+            .Returns(token);
+
+        repoDeviceReadEnroll
+            .DeviceSerialExistsAsync("DEV-12345", Arg.Any<CancellationToken>())
+            .Returns(false);
+
+        repoMachineWrite
+            .GetByIdAsync(machineId, Arg.Any<CancellationToken>())
+            .Returns((Machine?)null);
+
+        var command = new EnrollDeviceCommand(
+            MachineId: machineId,
+            DeviceSerialNumber: "DEV-12345",
+            PlainEnrollmentToken: plainText,
+            PublicKeyPem: "PUBLIC_KEY"
+        );
+
+        var sut = new EnrollDeviceHandler(
+            repoDeviceWriteEnroll,
+            repoDeviceReadEnroll,
+            repoMachineWrite,
+            caService,
+            _secretService,
+            logger,
+            timeProvider
+        );
+
+        var result = await sut.HandleAsync(command);
+
+        result.Should().BeOfType<EnrollDeviceResult.MachineNotFound>();
+        var notFound = (EnrollDeviceResult.MachineNotFound)result;
+        notFound.MachineId.Should().Be(machineId);
+
+        await repoDeviceWriteEnroll.DidNotReceive().SaveEnrollmentAsync(
+            Arg.Any<Device>(),
+            Arg.Any<MachineDevice>(),
+            Arg.Any<EnrollmentToken>(),
+            Arg.Any<CancellationToken>()
+        );
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenMachineCannotCompleteEnrollment_ShouldReturnInvalidToken()
+    {
+        var (plainText, tokenHash) = GenerateValidTokenPair();
+        var timeProvider = TimeProvider.System;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+
+        var logger = NullLogger<EnrollDeviceHandler>.Instance;
+        var repoDeviceReadEnroll = Substitute.For<IDeviceEnrollmentReadRepository>();
+        var repoDeviceWriteEnroll = Substitute.For<IDeviceEnrollmentWriteRepository>();
+        var repoMachineWrite = Substitute.For<IMachineWriteRepository>();
+        var caService = Substitute.For<ICertificateAuthorityService>();
+
+        var machine = new Machine(
+            ipId: Guid.NewGuid(),
+            serialNumber: "WP-TEST-002",
+            displayName: "Test Machine",
+            registeredAtUtc: now,
+            idempotencyKey: Guid.NewGuid(),
+            nonce: "test-nonce"
+        );
+        machine.CompleteEnrollment();
+
+        var machineId = machine.MachineId;
+
+        var token = new EnrollmentToken(
+            tokenHash: tokenHash,
+            tokenType: EnrollmentTokenType.DeviceEnroll,
+            issuedByUserId: "admin-1",
+            issuedAt: now,
+            expiresAt: now.AddHours(1),
+            machineId: machineId
+        );
+
+        repoDeviceReadEnroll
+            .GetTokenByHashAsync(tokenHash, Arg.Any<CancellationToken>())
+            .Returns(token);
+
+        repoDeviceReadEnroll
+            .DeviceSerialExistsAsync("DEV-12345", Arg.Any<CancellationToken>())
+            .Returns(false);
+
+        repoMachineWrite
+            .GetByIdAsync(machineId, Arg.Any<CancellationToken>())
+            .Returns(machine);
+
+        var command = new EnrollDeviceCommand(
+            MachineId: machineId,
+            DeviceSerialNumber: "DEV-12345",
+            PlainEnrollmentToken: plainText,
+            PublicKeyPem: "PUBLIC_KEY"
+        );
+
+        var sut = new EnrollDeviceHandler(
+            repoDeviceWriteEnroll,
+            repoDeviceReadEnroll,
+            repoMachineWrite,
+            caService,
+            _secretService,
+            logger,
+            timeProvider
+        );
+
+        var result = await sut.HandleAsync(command);
+
+        result.Should().BeOfType<EnrollDeviceResult.InvalidToken>();
 
         await repoDeviceWriteEnroll.DidNotReceive().SaveEnrollmentAsync(
             Arg.Any<Device>(),

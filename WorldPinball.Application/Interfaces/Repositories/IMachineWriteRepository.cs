@@ -17,4 +17,12 @@ Task AddProvisioningAsync(
         Machine machine,
         EnrollmentToken enrollmentToken,
         CancellationToken ct = default);
+
+Task<Machine?> GetByIdAsync(
+    Guid machineId,
+    CancellationToken ct = default);
+
+Task AddEnrollmentTokenAsync(
+    EnrollmentToken enrollmentToken,
+    CancellationToken ct = default);
 }

@@ -13,6 +13,7 @@ using WorldPinball.Application.Features.GameSessions.Public.Start;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
+using WorldPinball.Application.Features.Machines.Admin.ReissueToken;
 using WorldPinball.Application.Features.Machines.Public;
 using WorldPinball.Application.Features.Machines.Public.Enroll.Profile;
 using WorldPinball.Application.Security.Cryptography;
@@ -65,6 +66,8 @@ try
         EnrollDeviceHandler>();
     builder.Services.AddScoped<IProvisionMachineHandler,
         ProvisionMachineHandler>();
+    builder.Services.AddScoped<IReissueEnrollmentTokenHandler,
+        ReissueEnrollmentTokenHandler>();
 
     builder.Services.AddScoped<IStartGameSessionHandler,
         StartGameSessionHandler>();

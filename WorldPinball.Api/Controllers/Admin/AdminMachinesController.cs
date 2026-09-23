@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Application.Features.Machines.Admin;
 using FluentValidation;
@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.WebUtilities;
 using WorldPinball.Api.Contracts.Machine;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
+using WorldPinball.Application.Features.Machines.Admin.ReissueToken;
+using WorldPinball.Application.Features.Machines.Admin.ReissueToken.Commands;
 
 namespace WorldPinball.Api.Controllers.Admin;
 
@@ -18,6 +20,7 @@ namespace WorldPinball.Api.Controllers.Admin;
 [Route("api/v1/admin/machines")]
 public sealed class AdminMachinesController(
     IProvisionMachineHandler handler,
+    IReissueEnrollmentTokenHandler reissueHandler,
     IValidator<ProvisionMachineRequest> requestValidator) 
     : ControllerBase
 {
@@ -99,6 +102,53 @@ public sealed class AdminMachinesController(
 
             _ => throw new InvalidOperationException(
                 $"Unsupported provisioning result: {resultProvisioning.GetType().Name}")
+        };
+    }
+
+    [HttpPost("{machineId:guid}/tokens")]
+    [EndpointSummary("Reissues a new enrollment token for an existing machine")]
+    [EndpointDescription("POST to reissue an enrollment token for a machine in PendingEnrollment status.")]
+    [ProducesResponseType(typeof(ReissueEnrollmentTokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ReissueEnrollmentTokenResponse>> ReissueToken(
+        [FromRoute] Guid machineId,
+        CancellationToken ct)
+    {
+        var issuedByUser = User.FindFirstValue("sub");
+        if (string.IsNullOrWhiteSpace(issuedByUser))
+        {
+            return Unauthorized(new
+            {
+                message = "The authenticated user has no subject identifier."
+            });
+        }
+
+        var cmd = new ReissueEnrollmentTokenCommand(machineId, issuedByUser);
+        var result = await reissueHandler.HandleAsync(cmd, ct);
+
+        return result switch
+        {
+            ReissueEnrollmentTokenResult.Success success =>
+                Ok(new ReissueEnrollmentTokenResponse(
+                    success.MachineId,
+                    success.EnrollmentToken,
+                    success.ExpiresAtUtc)),
+
+            ReissueEnrollmentTokenResult.MachineNotFound notFound =>
+                NotFound(new
+                {
+                    message = $"Machine with ID '{notFound.MachineId}' could not be found."
+                }),
+
+            ReissueEnrollmentTokenResult.InvalidMachineStatus invalidStatus =>
+                BadRequest(new
+                {
+                    message = $"Cannot reissue token: Machine is in status '{invalidStatus.Status}' (expected PendingEnrollment)."
+                }),
+
+            _ => throw new InvalidOperationException(
+                $"Unsupported reissue token result: {result.GetType().Name}")
         };
     }
 }

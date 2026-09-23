@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Domain.Entities;
 
@@ -34,6 +33,21 @@ public sealed class MachineWriteRepository(AppDbContext db) : IMachineWriteRepos
         db.Machines.Add(machine);
         db.EnrollmentTokens.Add(enrollmentToken);
 
+        await db.SaveChangesAsync(ct);
+    }
+
+    public async Task<Machine?> GetByIdAsync(
+        Guid machineId, 
+        CancellationToken ct = default)
+    {
+        return await db.Machines.FirstOrDefaultAsync(m => m.MachineId == machineId, ct);
+    }
+
+    public async Task AddEnrollmentTokenAsync(
+        EnrollmentToken enrollmentToken,
+        CancellationToken ct = default)
+    {
+        db.EnrollmentTokens.Add(enrollmentToken);
         await db.SaveChangesAsync(ct);
     }
 }

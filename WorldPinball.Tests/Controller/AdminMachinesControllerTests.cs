@@ -1,4 +1,4 @@
-﻿using NSubstitute;
+using NSubstitute;
 
 using WorldPinball.Application.Contracts.Admin.Machine;
 using WorldPinball.Api.Controllers.Admin;
@@ -11,6 +11,7 @@ using System.Security.Claims;
 using WorldPinball.Api.Contracts.Machine;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
+using WorldPinball.Application.Features.Machines.Admin.ReissueToken;
 
 namespace WorldPinball.Tests.Controller;
 
@@ -50,7 +51,8 @@ public class AdminMachinesControllerTests
             validityHour);
         
         // create controller
-        var controller = new AdminMachinesController(handler,validator);
+        var reissueHandler = Substitute.For<IReissueEnrollmentTokenHandler>();
+        var controller = new AdminMachinesController(handler, reissueHandler, validator);
         controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext

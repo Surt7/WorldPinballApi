@@ -12,6 +12,7 @@ namespace WorldPinball.Application.Features.Machines.Public;
 public sealed class EnrollDeviceHandler(
     IDeviceEnrollmentWriteRepository deviceEnrollmentWriteRepository,
     IDeviceEnrollmentReadRepository deviceEnrollmentReadRepository,
+    IMachineWriteRepository  machineWriteRepository,
     ICertificateAuthorityService caService,
     ISecretService secretService,
     ILogger<EnrollDeviceHandler> logger,
@@ -34,7 +35,17 @@ public sealed class EnrollDeviceHandler(
         new(2104, nameof(EnrollmentTokenIsInvalid));
 
     private static readonly EventId MachineMismatch =
-        new(2105, nameof(MachineMismatch));
+        new(2106, nameof(MachineMismatch));
+    
+    private static readonly EventId MachineNotFound =
+        new(2107, nameof(MachineNotFound));
+    
+    private static readonly EventId MachineStateInvalid =
+        new(2108, nameof(MachineStateInvalid));
+    
+    private static readonly EventId MachineStatusChanged =
+        new(2109, nameof(MachineStatusChanged));
+    
     
     public async Task<EnrollDeviceResult> HandleAsync(
         EnrollDeviceCommand cmd,
@@ -129,7 +140,32 @@ public sealed class EnrollDeviceHandler(
                 ex.Message);
             return new EnrollDeviceResult.InvalidToken(ex.Message);
         }
-
+        
+        
+        var machine = await machineWriteRepository.GetByIdAsync(cmd.MachineId,ct);
+        if (machine is null)
+        {
+            logger.LogWarning(
+                MachineNotFound,
+                "Device enrollment rejected: Machine {MachineId} not found.",
+                cmd.MachineId);
+            return new EnrollDeviceResult.MachineNotFound(cmd.MachineId);
+        }
+        
+        try
+        {
+            machine.CompleteEnrollment();
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(
+                MachineStateInvalid,
+                "Machine {MachineId} cannot complete enrollment: {Reason}",
+                cmd.MachineId,
+                ex.Message);
+            return new EnrollDeviceResult.InvalidToken(ex.Message);
+        }
+       
         await deviceEnrollmentWriteRepository.SaveEnrollmentAsync(device, machineDevice, token, ct);
 
         var issuedCert = await caService.IssueDeviceCertificateAsync(
@@ -137,20 +173,20 @@ public sealed class EnrollDeviceHandler(
             cmd.DeviceSerialNumber,
             cmd.PublicKeyPem,
             ct);
-
+        
         logger.LogInformation(
-            DeviceEnrolled,
-            "Device {DeviceId} with serial {DeviceSerialNumber} successfully enrolled with CertSerial {CertSerial}.",
-            device.DeviceId,
-            cmd.DeviceSerialNumber,
-            issuedCert.SerialNumber);
+            MachineStatusChanged,
+            "Machine {MachineId} status changed to {MachineStatus} after successful enrollment.",
+            machine.MachineId,
+            machine.Status);
         
         logger.LogInformation(
             DeviceEnrolled,
-            "Device {DeviceId} with serial {DeviceSerialNumber} successfully enrolled and attached to machine {MachineId}.",
+            "Device {DeviceId} (serial: {DeviceSerialNumber}) enrolled and attached to machine {MachineId} with CertSerial {CertSerial}.",
             device.DeviceId,
             cmd.DeviceSerialNumber,
-            cmd.MachineId);
+            cmd.MachineId,
+            issuedCert.SerialNumber);
 
         return new EnrollDeviceResult.Success(
             DeviceId: device.DeviceId,
