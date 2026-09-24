@@ -7,6 +7,9 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.WebUtilities;
 using WorldPinball.Api.Contracts.Machine;
+using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard;
+using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Dtos;
+using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Queries;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
 using WorldPinball.Application.Features.Machines.Admin.ReissueToken;
@@ -151,4 +154,28 @@ public sealed class AdminMachinesController(
                 $"Unsupported reissue token result: {result.GetType().Name}")
         };
     }
+    
+    
+    [HttpGet("{machineId:guid}/dashboard")]
+    [EndpointSummary("Retrieves aggregate statistics for a machine dashboard")]
+    [ProducesResponseType(typeof(MachineDashboardDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<MachineDashboardDto>> GetDashboard(
+        [FromRoute] Guid machineId,
+        [FromServices] IGetMachineDashboardHandler handler,
+        CancellationToken ct)
+    {
+        var result = await handler.HandleAsync(new GetMachineDashboardQuery(machineId), ct);
+        return result switch
+        {
+            GetMachineDashboardResult.Success s => Ok(s.Stats),
+            GetMachineDashboardResult.NotFound nf => NotFound(new { message = $"Machine '{nf.MachineId}' not found." }),
+            _ => throw new InvalidOperationException($"Unsupported result: {result.GetType().Name}")
+        };
+    }
+    
+    
+    
+    
+    
 }

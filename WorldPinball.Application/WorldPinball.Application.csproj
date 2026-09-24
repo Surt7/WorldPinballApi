@@ -21,7 +21,6 @@
 
   <ItemGroup>
     <Folder Include="Features\GameSessions\Public\SubmitScore\Dtos\" />
-    <Folder Include="Features\Leaderboard\Admin\" />
     <Folder Include="Features\IpLicenses\Admin\" />
     <Folder Include="Security\Cryptography\" />
   </ItemGroup>

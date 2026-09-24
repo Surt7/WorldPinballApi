@@ -26,7 +26,9 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
     {
         
-
+        
+        // -------------------- Dapper --------------------
+        services.AddScoped<IMachineDashboardReadRepository, MachineDashboardReadRepository>();
         // -------------------- Time Provider --------------------
         services.AddSingleton(TimeProvider.System);
         

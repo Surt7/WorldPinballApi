@@ -19,6 +19,8 @@ using WorldPinball.Application.Features.Machines.Public.Enroll.Profile;
 using WorldPinball.Application.Security.Cryptography;
 using WorldPinball.Infrastructure.Security.Cryptography;
 using WorldPinball.Api.Grpc;
+using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard;
+using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Queries;
 
 // -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
 
@@ -77,7 +79,10 @@ try
         StartGameSessionHandler>();
     builder.Services.AddScoped<ISubmitScoreHandler,
         SubmitScoreHandler>();
-
+    
+    builder.Services.AddScoped<IGetMachineDashboardHandler, GetMachineDashboardHandler>();
+    
+    // Security
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();
     builder.Services.AddScoped<ICanonicalBuilder, CanonicalBuilder>();
 
