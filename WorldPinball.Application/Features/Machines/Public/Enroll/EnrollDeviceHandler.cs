@@ -111,15 +111,10 @@ public sealed class EnrollDeviceHandler(
             return new EnrollDeviceResult.DeviceAlreadyEnrolled(cmd.DeviceSerialNumber);
         }
 
-        var device = new Device
-        {
-            DeviceId = Guid.NewGuid(),
-            SerialPhysical = cmd.DeviceSerialNumber,
-            PublicKey = cmd.PublicKeyPem,
-            Status = DeviceStatus.Active,
-            ActivatedAtUtc = now,
-            CreatedAtUtc = now
-        };
+        var device = Device.Enroll(
+            cmd.DeviceSerialNumber,
+            cmd.PublicKeyPem,
+            now);
 
         var machineDevice = new MachineDevice(
             machineId: cmd.MachineId,

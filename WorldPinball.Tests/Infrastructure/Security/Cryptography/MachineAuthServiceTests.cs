@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
@@ -55,14 +55,7 @@ public class MachineAuthServiceTests
         var timestamp = now.ToUnixTimeSeconds();
         var nonce = "1234567890123456";
 
-        var device = new Device 
-        { 
-            DeviceId = deviceId, 
-            SerialPhysical = "DEV-001",
-            Status = DeviceStatus.Active, 
-            PublicKey = "pk", 
-            KeyAlgorithm = "algo" 
-        };
+        var device = Device.CreateActive("DEV-001", "pk", "algo", now.UtcDateTime, deviceId);
         var machineDevice = new MachineDevice(machineId, deviceId, now.UtcDateTime);
 
         _db.Devices.Add(device);
@@ -105,14 +98,7 @@ public class MachineAuthServiceTests
         var now = _timeProvider.GetUtcNow();
         var timestamp = now.ToUnixTimeSeconds();
         
-        var device = new Device 
-        { 
-            DeviceId = deviceId, 
-            SerialPhysical = "DEV-001",
-            Status = DeviceStatus.Active, 
-            PublicKey = "pk", 
-            KeyAlgorithm = "algo" 
-        };
+        var device = Device.CreateActive("DEV-001", "pk", "algo", now.UtcDateTime, deviceId);
         var machineDevice = new MachineDevice(machineId, deviceId, now.UtcDateTime);
 
         _db.Devices.Add(device);
@@ -155,14 +141,7 @@ public class MachineAuthServiceTests
         var now = _timeProvider.GetUtcNow();
         var timestamp = now.ToUnixTimeSeconds();
         
-        var device = new Device 
-        { 
-            DeviceId = deviceId, 
-            SerialPhysical = "DEV-001",
-            Status = DeviceStatus.Active, 
-            PublicKey = "pk", 
-            KeyAlgorithm = "algo" 
-        };
+        var device = Device.CreateActive("DEV-001", "pk", "algo", now.UtcDateTime, deviceId);
         
        
 
@@ -222,14 +201,8 @@ public class MachineAuthServiceTests
         var now = _timeProvider.GetUtcNow();
         var timestamp = now.ToUnixTimeSeconds();
 
-        var device = new Device 
-        { 
-            DeviceId = deviceId, 
-            SerialPhysical = "DEV-001",
-            Status = DeviceStatus.Revoked, 
-            PublicKey = "pk", 
-            KeyAlgorithm = "algo" 
-        };
+        var device = Device.CreateActive("DEV-001", "pk", "algo", now.UtcDateTime, deviceId);
+        device.Revoke(now.UtcDateTime);
         var machineDevice = new MachineDevice(machineId, deviceId, now.UtcDateTime);
   
         var context = new MachineAuthContext(
@@ -262,14 +235,8 @@ public class MachineAuthServiceTests
         var now = _timeProvider.GetUtcNow();
         var timestamp = now.ToUnixTimeSeconds();
 
-        var device = new Device 
-        { 
-            DeviceId = deviceId, 
-            SerialPhysical = "DEV-001",
-            Status = DeviceStatus.Revoked, 
-            PublicKey = "pk", 
-            KeyAlgorithm = "algo" 
-        };
+        var device = Device.CreateActive("DEV-001", "pk", "algo", now.UtcDateTime, deviceId);
+        device.Revoke(now.UtcDateTime);
         var machineDevice = new MachineDevice(machineId, deviceId, now.UtcDateTime);
   
         var context = new MachineAuthContext(

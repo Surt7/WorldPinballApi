@@ -1,33 +1,151 @@
-﻿using WorldPinball.Domain.Enums;
+using WorldPinball.Domain.Enums;
 
 namespace WorldPinball.Domain.Entities;
 
 public class Device
 {
-    public Guid DeviceId { get; set; }
+    private static class ErrorMessages
+    {
+        public const string EmptySerialPhysical = "Physical serial number cannot be empty.";
+        public const string EmptyPublicKey = "Public key cannot be empty.";
+        public const string DeviceAlreadyRevoked = "A revoked device cannot perform operations or be reactivated.";
+        public const string DeviceNotActive = "Device must be in Active status to perform this action.";
+        public const string CounterMustBeStrictlyIncreasing = "Counter value {0} is invalid. It must be strictly greater than last counter {1}.";
+    }
 
-    public string SerialPhysical { get; set; } = null!;
-    public DeviceStatus Status { get; set; } = DeviceStatus.Pending;
+    private Device() { } // Used by EF Core
 
-    public string? PublicKey { get; set; }
-    public string? PublicKeyFingerprint { get; set; }
-    public string? KeyType { get; set; }
-    public string? KeyAlgorithm { get; set; }
+    public Device(
+        string serialPhysical,
+        DateTime createdAtUtc,
+        Guid? deviceId = null,
+        string? clientVersion = null,
+        string? notes = null)
+    {
+        if (string.IsNullOrWhiteSpace(serialPhysical))
+            throw new ArgumentException(ErrorMessages.EmptySerialPhysical, nameof(serialPhysical));
 
-    public long LastCounter { get; set; } = 0;
+        DeviceId = deviceId ?? Guid.NewGuid();
+        SerialPhysical = serialPhysical.Trim();
+        Status = DeviceStatus.Pending;
+        CreatedAtUtc = createdAtUtc;
+        ClientVersion = clientVersion;
+        Notes = notes;
+        LastCounter = 0;
+    }
 
-    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
-    public DateTime? ProvisionedAtUtc { get; set; }
-    public DateTime? ActivatedAtUtc { get; set; }
-    public DateTime? RevokedAtUtc { get; set; }
-    public DateTime? LastSeenAtUtc { get; set; }
+    public Guid DeviceId { get; private set; }
+    public string SerialPhysical { get; private set; } = null!;
+    public DeviceStatus Status { get; private set; } = DeviceStatus.Pending;
 
-    public string? ClientVersion { get; set; }
-    public string? Notes { get; set; }
+    public string? PublicKey { get; private set; }
+    public string? PublicKeyFingerprint { get; private set; }
+    public string? KeyType { get; private set; }
+    public string? KeyAlgorithm { get; private set; }
 
-    public DateTime? UpdatedAtUtc { get; set; }
+    public long LastCounter { get; private set; } = 0;
+
+    public DateTime CreatedAtUtc { get; private set; } = DateTime.UtcNow;
+    public DateTime? ProvisionedAtUtc { get; private set; }
+    public DateTime? ActivatedAtUtc { get; private set; }
+    public DateTime? RevokedAtUtc { get; private set; }
+    public DateTime? LastSeenAtUtc { get; private set; }
+
+    public string? ClientVersion { get; private set; }
+    public string? Notes { get; private set; }
+
+    public DateTime? UpdatedAtUtc { get; private set; }
 
     public ICollection<MachineDevice> MachineDevices { get; private set; } = [];
     public ICollection<DeviceCertificate> Certificates { get; private set; } = [];
     public ICollection<EnrollmentToken> ConsumedTokens { get; private set; } = [];
+
+    public static Device Enroll(
+        string serialPhysical,
+        string publicKeyPem,
+        DateTime enrolledAtUtc,
+        string? keyAlgorithm = null,
+        Guid? deviceId = null)
+    {
+        var device = new Device(serialPhysical, enrolledAtUtc, deviceId);
+        device.Activate(publicKeyPem, keyAlgorithm, enrolledAtUtc);
+        return device;
+    }
+
+    public static Device CreateActive(
+        string serialPhysical,
+        string publicKey,
+        string keyAlgorithm,
+        DateTime activatedAtUtc,
+        Guid? deviceId = null)
+    {
+        var device = new Device(serialPhysical, activatedAtUtc, deviceId);
+        device.Activate(publicKey, keyAlgorithm, activatedAtUtc);
+        return device;
+    }
+
+    public void Activate(string publicKey, string? keyAlgorithm, DateTime activatedAtUtc)
+    {
+        if (Status == DeviceStatus.Revoked)
+            throw new InvalidOperationException(ErrorMessages.DeviceAlreadyRevoked);
+
+        if (string.IsNullOrWhiteSpace(publicKey))
+            throw new ArgumentException(ErrorMessages.EmptyPublicKey, nameof(publicKey));
+
+        PublicKey = publicKey.Trim();
+        KeyAlgorithm = keyAlgorithm?.Trim();
+        Status = DeviceStatus.Active;
+        ActivatedAtUtc = activatedAtUtc;
+        UpdatedAtUtc = activatedAtUtc;
+    }
+
+    public void Revoke(DateTime revokedAtUtc, string? reason = null)
+    {
+        if (Status == DeviceStatus.Revoked)
+            throw new InvalidOperationException(ErrorMessages.DeviceAlreadyRevoked);
+
+        Status = DeviceStatus.Revoked;
+        RevokedAtUtc = revokedAtUtc;
+        UpdatedAtUtc = revokedAtUtc;
+
+        if (!string.IsNullOrWhiteSpace(reason))
+        {
+            Notes = string.IsNullOrWhiteSpace(Notes) ? $"Revoked: {reason.Trim()}" : $"{Notes} | Revoked: {reason.Trim()}";
+        }
+    }
+
+    public void VerifyAndIncrementCounter(long incomingCounter)
+    {
+        if (Status == DeviceStatus.Revoked)
+            throw new InvalidOperationException(ErrorMessages.DeviceAlreadyRevoked);
+
+        if (Status != DeviceStatus.Active)
+            throw new InvalidOperationException(ErrorMessages.DeviceNotActive);
+
+        if (incomingCounter <= LastCounter)
+        {
+            throw new InvalidOperationException(
+                string.Format(ErrorMessages.CounterMustBeStrictlyIncreasing, incomingCounter, LastCounter));
+        }
+
+        LastCounter = incomingCounter;
+    }
+
+    public void RecordHeartbeat(DateTime lastSeenAtUtc, string? clientVersion = null)
+    {
+        if (Status == DeviceStatus.Revoked)
+            throw new InvalidOperationException(ErrorMessages.DeviceAlreadyRevoked);
+
+        LastSeenAtUtc = lastSeenAtUtc;
+        if (!string.IsNullOrWhiteSpace(clientVersion))
+        {
+            ClientVersion = clientVersion.Trim();
+        }
+        UpdatedAtUtc = lastSeenAtUtc;
+    }
+
+    public void SetPublicKeyFingerprint(string fingerprint)
+    {
+        PublicKeyFingerprint = fingerprint;
+    }
 }

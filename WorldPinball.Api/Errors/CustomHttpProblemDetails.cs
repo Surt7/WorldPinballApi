@@ -13,7 +13,7 @@ public class CustomHttpProblemDetails : ProblemDetails
         Instance =
             $"{context.Request.Path} ({context.TraceIdentifier})";
 
-        Dictionary<string, string?> relevantHeaders = new()
+        Dictionary<string, string?> additionalHeaders = new()
         {
             ["Host"] = context.Request.Headers["Host"],
             ["User-Agent"] = context.Request.Headers["User-Agent"],
@@ -22,7 +22,8 @@ public class CustomHttpProblemDetails : ProblemDetails
             ["X-Forwarded-For"] =
                 context.Request.Headers["X-Forwarded-For"]
         };
-
-        Extensions["headers"] = relevantHeaders;
+         
+        // Foward is meant to be useful for proxy
+        Extensions["headers"] = additionalHeaders;
     }
 }

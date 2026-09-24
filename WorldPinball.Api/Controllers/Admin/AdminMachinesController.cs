@@ -56,11 +56,8 @@ public sealed class AdminMachinesController(
         {
             foreach (var failure in validationResult.Errors)
             {
-            ModelState.AddModelError(
-                failure.PropertyName,
-                failure.ErrorMessage);
+                ModelState.AddModelError(failure.PropertyName, failure.ErrorMessage);
             }
-            
             return ValidationProblem(ModelState);
         }
         

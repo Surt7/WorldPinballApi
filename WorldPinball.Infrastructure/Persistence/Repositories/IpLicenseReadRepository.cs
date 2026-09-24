@@ -27,7 +27,7 @@ public class IpLicenseReadRepository : IIpLicenseReadRepository
                  x.Publisher.Slug
              )
          ))
-         .ToListAsync();
+         .ToListAsync(cancellationToken: cancellation);
 
     }
 
