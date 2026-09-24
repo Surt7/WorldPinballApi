@@ -29,7 +29,13 @@
       <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
       <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
   </ItemGroup>
-
+    
+<ItemGroup>
+    <PackageReference Include="Grpc.AspNetCore" Version="2.71.0" />
+</ItemGroup>
+    <ItemGroup>
+        <Protobuf Include="Protos\v1\gamesessions\game_session.proto" GrpcServices="Server" />
+    </ItemGroup>    
   <ItemGroup>
     <ProjectReference Include="..\WorldPinball.Application\WorldPinball.Application.csproj" />
     <ProjectReference Include="..\WorldPinball.Infrastructure\WorldPinball.Infrastructure.csproj" />

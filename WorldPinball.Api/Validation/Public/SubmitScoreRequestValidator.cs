@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using WorldPinball.Api.Contracts.Sessions;
 
-namespace WorldPinball.Api.Validation.Admin;
+namespace WorldPinball.Api.Validation.Public;
 
 public sealed class SubmitScoreRequestValidator : AbstractValidator<SubmitScoreRequest>
 {

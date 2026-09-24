@@ -1,6 +1,7 @@
 using FluentAssertions;
 using WorldPinball.Api.Contracts.Sessions;
 using WorldPinball.Api.Validation.Admin;
+using WorldPinball.Api.Validation.Public;
 
 namespace WorldPinball.Tests.Validation.Public;
 

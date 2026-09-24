@@ -25,7 +25,10 @@ public sealed class StartGameSessionHandler(
     {
         var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
         
-        var device = await readRepository.GetDeviceContextAsync(command.DeviceId, cancellationToken);
+        var device = await readRepository.GetDeviceContextAsync(
+            command.DeviceId,
+            cancellationToken
+            );
 
         if (device is null)
         {
@@ -41,7 +44,8 @@ public sealed class StartGameSessionHandler(
             logger.LogWarning(
                 DeviceNotActive,
                 "Device {DeviceId} not active.",
-                command.DeviceId);   
+                command.DeviceId
+                );   
             return new StartGameSessionResult.DeviceNotActive(command.DeviceId);
         }
 
@@ -50,7 +54,8 @@ public sealed class StartGameSessionHandler(
             logger.LogWarning(
                 MachineNotAttached,
                 "Device {DeviceId} has no active machine attached.",
-                command.DeviceId);
+                command.DeviceId
+                );
             return new StartGameSessionResult.MachineNotAttached(command.DeviceId);
         }
 
@@ -60,7 +65,8 @@ public sealed class StartGameSessionHandler(
             logger.LogWarning(
                 ModeNotFound,
                 "Game mode {ModeCode} could not be found or is inactive.",
-                command.ModeCode);
+                command.ModeCode
+                );
             return new StartGameSessionResult.ModeNotFound(command.ModeCode);
         }
 

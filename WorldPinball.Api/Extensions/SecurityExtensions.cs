@@ -46,21 +46,22 @@ public static class SecurityExtensions
                 options.ValidateValidityPeriod = false;
                 options.RevocationMode = X509RevocationMode.NoCheck;
                 options.ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust;
-                var rootCert = new X509Certificate2(File.ReadAllBytes("root_ca.crt"));
+                var rootCert = X509CertificateLoader.LoadCertificateFromFile("root_ca.crt");
                 options.CustomTrustStore.Add(rootCert);
-                var interCert = new X509Certificate2(File.ReadAllBytes("intermediate_ca.crt"));
+                var interCert = X509CertificateLoader.LoadCertificateFromFile("intermediate_ca.crt");
                 options.CustomTrustStore.Add(interCert);
-     
+                
                 options.Events = new CertificateAuthenticationEvents
                 {
                     OnAuthenticationFailed = async context =>
                     {
                         if (context.HttpContext.Connection.ClientCertificate is not null)
                         {
-                            var validatedContext = new CertificateValidatedContext(context.HttpContext, context.Scheme, options)
-                            {
-                                ClientCertificate = context.HttpContext.Connection.ClientCertificate
-                            };
+                            var validatedContext =
+                                new CertificateValidatedContext(context.HttpContext, context.Scheme, options)
+                                {
+                                    ClientCertificate = context.HttpContext.Connection.ClientCertificate
+                                };
                             await ValidateMachineCertificateAsync(validatedContext);
                             if (validatedContext.Result?.Succeeded == true)
                             {
@@ -72,7 +73,7 @@ public static class SecurityExtensions
                     OnCertificateValidated = ValidateMachineCertificateAsync
                 };
             });
-        
+
         // 2. Authorization policies
         services.AddAuthorization(options =>
         {
@@ -90,22 +91,29 @@ public static class SecurityExtensions
     private static Task ValidateMachineCertificateAsync(CertificateValidatedContext context)
     {
         var cert = context.ClientCertificate;
-
-
-        // Debug logs to see what Kestrel receives
-        Console.WriteLine($"[mTLS] Received client certificate: {cert?.Subject}");
-
-        // 1. Get the URI from certificate Subject Alternative Name (SAN)
+        // 1. Extract URI from certificate SAN
         var uriString = cert.GetNameInfo(X509NameType.UrlName, false);
-
-        Console.WriteLine($"[mTLS] Extracted URI: '{uriString}'");
-
-        // 2. Validate that it is a valid absolute URI
+        if (string.IsNullOrWhiteSpace(uriString))
+        {
+            context.Fail("Certificate does not contain a SAN URI.");
+            return Task.CompletedTask;
+        }
+        
+#if DEBUG
+        Console.WriteLine($@"[mTLS] Received client certificate: {cert.Subject}");
+#endif
+        
+        // 2. Validate absolute URI format
         if (!Uri.TryCreate(uriString, UriKind.Absolute, out var uri))
         {
             context.Fail("Certificate does not contain a valid absolute URI.");
             return Task.CompletedTask;
         }
+        
+#if DEBUG
+        Console.WriteLine($@"[mTLS] Extracted URI: '{uriString}'");
+#endif
+        
 
         // 3. Ensure the URI scheme is URN
         if (!string.Equals(uri.Scheme, "urn", StringComparison.OrdinalIgnoreCase))

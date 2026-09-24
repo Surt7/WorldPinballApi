@@ -101,7 +101,10 @@ public class GameSession : Entity
 
     public void Start(DateTime startedAtUtc)
     {
-        if (State is not (GameSessionState.Created or GameSessionState.MatchFound))
+        if (State is not (GameSessionState.Created 
+            or GameSessionState.Pending
+            or  GameSessionState.SearchingPlayer
+            ))
             throw new InvalidOperationException(ErrorMessages.CannotCancelSession);
 
         StartedAtUtc = startedAtUtc;
@@ -206,20 +209,22 @@ public class GameSession : Entity
         int slotNumber,
         Guid? userId = null,
         string? guestInitials = null,
-        bool requiresRegisteredUser = false)
+        bool requiresRegisteredUser = true)
     {
-        if (requiresRegisteredUser && !userId.HasValue)
-            throw new InvalidOperationException(ErrorMessages.RegisteredUserRequired);
-        
         if (State is not (GameSessionState.Created or GameSessionState.Pending or GameSessionState.SearchingPlayer or GameSessionState.Started or GameSessionState.Resumed))
             throw new InvalidOperationException(ErrorMessages.AddPlayerNotStarted);
-
+        
         if (slotNumber is < 1 or > 4)
             throw new ArgumentOutOfRangeException(nameof(slotNumber), ErrorMessages.InvalidSlotNumber);
 
+        if (requiresRegisteredUser && !userId.HasValue)
+            throw new InvalidOperationException(ErrorMessages.RegisteredUserRequired);
+        
+        
         if (_players.Count >= 4)
             throw new InvalidOperationException(ErrorMessages.MaxPlayersReached);
-
+        
+        
         if (_players.Any(p => p.SlotNumber == slotNumber))
             throw new InvalidOperationException(ErrorMessages.SlotAlreadyOccupied);
 

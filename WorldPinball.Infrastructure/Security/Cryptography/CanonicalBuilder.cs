@@ -17,8 +17,8 @@ public sealed class CanonicalBuilder : ICanonicalBuilder
     public byte[] Build(long ts, string nonce, string method, string path, string rawBody)
     {
         if (ts <= 0) throw new ArgumentOutOfRangeException(nameof(ts));
-        if (string.IsNullOrWhiteSpace(nonce)) throw new ArgumentException("nonce manquant", nameof(nonce));
-        if (string.IsNullOrWhiteSpace(method)) throw new ArgumentException("method manquant", nameof(method));
+        if (string.IsNullOrWhiteSpace(nonce)) throw new ArgumentException("missing nonce", nameof(nonce));
+        if (string.IsNullOrWhiteSpace(method)) throw new ArgumentException("missing method", nameof(method));
 
         // Important: must match the client exactly
         var normalizedMethod = method.ToUpperInvariant();

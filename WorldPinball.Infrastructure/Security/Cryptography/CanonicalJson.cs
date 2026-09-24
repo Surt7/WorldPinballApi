@@ -27,7 +27,7 @@ public static class CanonicalJson
 
         if (node is null)
         {
-            // Le texte "null" est un JSON valide.
+          // "null" is a valid json technically
             return "null";
         }
 

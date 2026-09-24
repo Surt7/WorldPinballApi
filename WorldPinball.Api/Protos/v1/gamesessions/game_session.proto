@@ -1,0 +1,21 @@
+﻿syntax = "proto3";
+
+package worldpinball.gamesessions.v1;
+option csharp_namespace = "WorldPinball.Api.Protos.V1.GameSessions";
+
+message AddPlayerRequest {
+  string session_id = 1;
+  int32 slot_number = 2;
+  optional string user_id = 3;
+  optional string guest_initials=4;
+}
+
+message AddPlayerResponse{
+  bool success = 1;
+  int32 slot_number = 2;
+  string message = 3;
+}
+
+service GameSessionService{
+  rpc AddPlayer(AddPlayerRequest) returns (AddPlayerResponse);
+}

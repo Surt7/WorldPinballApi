@@ -8,7 +8,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using WorldPinball.Api.Middleware;
-
+using WorldPinball.Application.Features.GameSessions.Public.AddPlayer;
 using WorldPinball.Application.Features.GameSessions.Public.Start;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
@@ -18,7 +18,7 @@ using WorldPinball.Application.Features.Machines.Public;
 using WorldPinball.Application.Features.Machines.Public.Enroll.Profile;
 using WorldPinball.Application.Security.Cryptography;
 using WorldPinball.Infrastructure.Security.Cryptography;
-
+using WorldPinball.Api.Grpc;
 
 // -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
 
@@ -59,6 +59,10 @@ try
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.AddObservability();
+    
+    builder.Services.AddGrpc();
+    builder.Services.AddScoped<IAddPlayerHandler, AddPlayerHandler>();
+    
 // ----------------------------------------
 
     //Handlers
@@ -138,7 +142,7 @@ try
     app.UseAuthorization();
 
     app.MapControllers();
-
+    app.MapGrpcService<GameSessionGrpcService>();
 
     app.Run();
 }
