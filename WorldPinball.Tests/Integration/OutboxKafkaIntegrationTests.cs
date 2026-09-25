@@ -1,4 +1,5 @@
 using Confluent.Kafka;
+using Confluent.Kafka.Admin;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -41,23 +42,38 @@ public class OutboxKafkaIntegrationTests
         await dbContext.Database.MigrateAsync();
         dbContext.OutboxMessages.Add(message);
         await dbContext.SaveChangesAsync();
-        
-     
-        
-        var producerConfig  = new ProducerConfig
+
+        var adminConfig = new AdminClientConfig { BootstrapServers = "localhost:9092" };
+        using (var adminClient = new AdminClientBuilder(adminConfig).Build())
+        {
+            try
+            {
+                await adminClient.CreateTopicsAsync(new[]
+                {
+                    new TopicSpecification { Name = "game-sessions", NumPartitions = 1, ReplicationFactor = 1 }
+                });
+            }
+            catch (CreateTopicsException ex) when (ex.Results.Any(r => r.Error.Code == ErrorCode.TopicAlreadyExists))
+            {
+                // Topic already exists
+            }
+        }
+
+        var producerConfig = new ProducerConfig
         {
             BootstrapServers = "localhost:9092"
         };
-        var producer = new ProducerBuilder<string,string>(producerConfig ).Build();
+        var producer = new ProducerBuilder<string, string>(producerConfig).Build();
 
         var consumerConfig = new ConsumerConfig
         {
             BootstrapServers = "localhost:9092",
             GroupId = $"test-group-{Guid.NewGuid()}",
-            AutoOffsetReset = AutoOffsetReset.Earliest
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            AllowAutoCreateTopics = true
         };
 
-        using var consumer = new ConsumerBuilder<string , string> (consumerConfig).Build();
+        using var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
 
         consumer.Subscribe("game-sessions");
         
@@ -66,23 +82,30 @@ public class OutboxKafkaIntegrationTests
         
         await processor.ProcessBatchAsync(CancellationToken.None);
 
-
         var updatedMessage = await dbContext.OutboxMessages.FindAsync(message.Id);
+        await dbContext.Entry(updatedMessage!).ReloadAsync();
 
         updatedMessage.Should().NotBeNull();
-        updatedMessage!.ProcessedAtUtc.Should().NotBeNull();
-        updatedMessage.Error.Should().BeNull();
+        updatedMessage!.Error.Should().BeNull();
+        updatedMessage.ProcessedAtUtc.Should().NotBeNull();
         
-        
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         ConsumeResult<string, string>? foundMessage = null;
         while (!cts.IsCancellationRequested)
         {
-            var result = consumer.Consume(TimeSpan.FromSeconds(1));
-            if (result?.Message.Key == message.Id.ToString())
+            try
             {
-                foundMessage = result;
-                break;
+                var result = consumer.Consume(TimeSpan.FromMilliseconds(500));
+                if (result?.Message.Key == message.Id.ToString())
+                {
+                    foundMessage = result;
+                    break;
+                }
+            }
+            catch (ConsumeException ex) when (ex.Error.Code == ErrorCode.UnknownTopicOrPart)
+            {
+                // Wait for topic metadata propagation
+                await Task.Delay(200);
             }
         }
         foundMessage.Should().NotBeNull("Expected message was not published to Kafka topic within timeout.");
