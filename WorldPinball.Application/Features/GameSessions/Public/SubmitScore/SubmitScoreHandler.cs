@@ -89,9 +89,10 @@ public sealed class SubmitScoreHandler(
         // End the session now that all scores are recorded
         gameSession.End(nowUtc);
 
+        await writeRepository.SaveScoreEntriesAsync(gameSession, scoreEntries, token);
+
         foreach (var scoreEntry in scoreEntries)
         {
-            await writeRepository.SaveScoreEntryAsync(gameSession, scoreEntry, token);
             await realtimeLeaderboardService.AddScoreAsync(
                 scoreEntry.IpId,
                 scoreEntry.ModeId,

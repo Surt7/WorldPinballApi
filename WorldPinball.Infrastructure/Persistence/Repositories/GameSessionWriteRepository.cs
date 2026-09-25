@@ -35,4 +35,11 @@ public class GameSessionWriteRepository(AppDbContext db) : IGameSessionWriteRepo
         await db.ScoreEntries.AddAsync(scoreEntry, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task SaveScoreEntriesAsync(GameSession session, IEnumerable<ScoreEntry> scoreEntries,
+        CancellationToken cancellationToken = default)
+    {
+        await db.ScoreEntries.AddRangeAsync(scoreEntries, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
+    }
 }
