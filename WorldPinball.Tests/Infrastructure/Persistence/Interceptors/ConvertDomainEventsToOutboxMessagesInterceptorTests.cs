@@ -1,6 +1,8 @@
 ﻿using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
+using NSubstitute;
+using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Events;
 using WorldPinball.Infrastructure.Persistence;
@@ -11,6 +13,8 @@ namespace WorldPinball.Tests.Infrastructure.Persistence.Interceptors;
 public class ConvertDomainEventsToOutboxMessagesInterceptorTests
 {
     private readonly FakeTimeProvider _timeProvider = new();
+    private readonly IOutboxNotificationChannel _channel = 
+        Substitute.For<IOutboxNotificationChannel>();
     private readonly AppDbContext _db;
 
     public ConvertDomainEventsToOutboxMessagesInterceptorTests()
@@ -20,7 +24,9 @@ public class ConvertDomainEventsToOutboxMessagesInterceptorTests
                 2026, 9, 25, 12, 0, 0, TimeSpan.Zero
                 ));
         
-        var interceptor = new ConvertDomainEventsToOutboxMessagesInterceptor(_timeProvider);
+        var interceptor = new ConvertDomainEventsToOutboxMessagesInterceptor(
+            _timeProvider,
+            _channel);
         
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())

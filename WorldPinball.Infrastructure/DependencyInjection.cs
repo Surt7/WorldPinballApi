@@ -100,10 +100,11 @@ public static class DependencyInjection
             };
             return new ProducerBuilder<string, string>(producerConfig).Build();
         });
+        
         services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
         services.AddScoped<IOutboxProcessor, OutboxProcessor>();
         services.AddHostedService<OutboxBackgroundService>();
-        
+        services.AddSingleton<IOutboxNotificationChannel, OutboxNotificationChannel>();
         
         // -------------------- Redis --------------------
        
