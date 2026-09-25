@@ -11,8 +11,10 @@ public sealed class SubmitScoreRequestValidatorTests
 
     private static readonly SubmitScoreRequest ValidRequest = new(
         DeviceId: Guid.NewGuid(),
-        Score: 150_000_000,
-        SlotNumber: 1
+        Scores:
+        [
+            new SlotScoreRequest(1, 150_000_000)
+        ]
     );
 
     [Fact]
@@ -35,14 +37,28 @@ public sealed class SubmitScoreRequestValidatorTests
     }
 
     [Fact]
-    public void Validate_WhenScoreIsNegative_ShouldHaveError()
+    public void Validate_WhenScoresIsEmpty_ShouldHaveError()
     {
-        var request = ValidRequest with { Score = -1 };
+        var request = ValidRequest with { Scores = [] };
 
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => e.PropertyName == nameof(SubmitScoreRequest.Score));
+        result.Errors.Should().ContainSingle(e => e.PropertyName == nameof(SubmitScoreRequest.Scores));
+    }
+
+    [Fact]
+    public void Validate_WhenScoreIsNegative_ShouldHaveError()
+    {
+        var request = ValidRequest with
+        {
+            Scores = [new SlotScoreRequest(1, -1)]
+        };
+
+        var result = _validator.Validate(request);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => e.PropertyName.Contains("Score"));
     }
 
     [Theory]
@@ -52,11 +68,14 @@ public sealed class SubmitScoreRequestValidatorTests
     [InlineData(10)]
     public void Validate_WhenSlotNumberIsOutOfRange_ShouldHaveError(int invalidSlot)
     {
-        var request = ValidRequest with { SlotNumber = invalidSlot };
+        var request = ValidRequest with
+        {
+            Scores = [new SlotScoreRequest(invalidSlot, 100)]
+        };
 
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => e.PropertyName == nameof(SubmitScoreRequest.SlotNumber));
+        result.Errors.Should().ContainSingle(e => e.PropertyName.Contains("SlotNumber"));
     }
 }

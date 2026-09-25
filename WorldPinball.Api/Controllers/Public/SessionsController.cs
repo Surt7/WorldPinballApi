@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 
 using System.Text.Json;
 using FluentValidation;
@@ -136,7 +136,10 @@ IValidator<SubmitScoreRequest> reqValidator
             return ValidationProblem(ModelState);
         }
 
-        var command = new SubmitScoreCommand(sessionId, request.DeviceId, request.Score, request.SlotNumber);
+        var command = new SubmitScoreCommand(
+            sessionId,
+            request.DeviceId,
+            request.Scores.Select(s => new SlotScoreDto(s.SlotNumber, s.Score)).ToList());
         
         var scoreResult = await submitScoreHandler.HandleAsync(command, ct);
 
@@ -144,7 +147,7 @@ IValidator<SubmitScoreRequest> reqValidator
         return scoreResult switch
         {
             SubmitScoreResult.Success s => Ok(new SubmitScoreResponse(
-                s.ScoreEntryId)),
+                s.ScoreEntryIds)),
             SubmitScoreResult.SessionNotFound s => NotFound(new
             {
                 message = $"Session '{s.GameSessionId}' not found."
@@ -160,6 +163,10 @@ IValidator<SubmitScoreRequest> reqValidator
             SubmitScoreResult.SlotNotFound s => Conflict(new
             {
                 message = $"Slot number: '{s.SlotNumber}' not found."
+            }),
+            SubmitScoreResult.EmptyScores => BadRequest(new
+            {
+                message = "Scores list cannot be empty."
             }),
             _ => throw new InvalidOperationException($"Unsupported session result: {scoreResult.GetType().Name}")
         };

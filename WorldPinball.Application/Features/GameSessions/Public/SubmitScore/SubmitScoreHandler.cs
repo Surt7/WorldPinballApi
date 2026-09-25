@@ -12,13 +12,14 @@ public sealed class SubmitScoreHandler(
     IRealtimeLeaderboardService realtimeLeaderboardService,
     ILogger<SubmitScoreHandler> logger,
     TimeProvider timeProvider
-    ):ISubmitScoreHandler
+    ) : ISubmitScoreHandler
 {
     private static readonly EventId SessionNotFound = new EventId(2400, nameof(SessionNotFound));
     private static readonly EventId SessionAlreadyEnded = new EventId(2401, nameof(SessionAlreadyEnded));
     private static readonly EventId DeviceMisMatch = new EventId(2402, nameof(DeviceMisMatch));
-    private static readonly EventId SlotNotFound = new EventId(2402, nameof(SlotNotFound));
-    public  async Task<SubmitScoreResult> HandleAsync(SubmitScoreCommand command, CancellationToken token = default)
+    private static readonly EventId SlotNotFound = new EventId(2403, nameof(SlotNotFound));
+
+    public async Task<SubmitScoreResult> HandleAsync(SubmitScoreCommand command, CancellationToken token = default)
     {
         var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
         
@@ -28,10 +29,11 @@ public sealed class SubmitScoreHandler(
         {
             logger.LogWarning(
                 SessionNotFound,
-                "Device {DeviceId}  could not be found.",
+                "Device {DeviceId} could not be found.",
                 command.DeviceId);
             return new SubmitScoreResult.SessionNotFound(command.DeviceId);
         }
+
         if (gameSession.DeviceId != command.DeviceId)
         {
             logger.LogWarning(
@@ -49,38 +51,56 @@ public sealed class SubmitScoreHandler(
                 gameSession.SessionId);
             return new SubmitScoreResult.SessionAlreadyEnded(gameSession.SessionId);
         }
-        
-        // We retrive all players from a game session
-        var player = gameSession.Players.FirstOrDefault(p => p.SlotNumber == command.SlotNumber);
-        if (player is null)
+
+        if (command.Scores.Count == 0)
         {
-            logger.LogWarning(
-                SlotNotFound,
-                "Device {DeviceId} Already ended.",
-                command.SlotNumber);
-            return new SubmitScoreResult.SlotNotFound(command.SlotNumber);
+            return new SubmitScoreResult.EmptyScores();
         }
+
+        // Validate all submitted slots exist in the session
+        var scoreEntries = new List<ScoreEntry>();
+        foreach (var scoreDto in command.Scores)
+        {
+            var player = gameSession.Players.FirstOrDefault(p => p.SlotNumber == scoreDto.SlotNumber);
+            if (player is null)
+            {
+                logger.LogWarning(
+                    SlotNotFound,
+                    "Slot {SlotNumber} not found in session {SessionId}.",
+                    scoreDto.SlotNumber,
+                    gameSession.SessionId);
+                return new SubmitScoreResult.SlotNotFound(scoreDto.SlotNumber);
+            }
+
+            var scoreEntry = new ScoreEntry(
+                gameSession.SessionId,
+                scoreDto.SlotNumber,
+                gameSession.DeviceId,
+                gameSession.MachineId,
+                gameSession.Machine?.IpId ?? Guid.NewGuid(),
+                gameSession.ModeId,
+                scoreDto.Score,
+                nowUtc,
+                player.UserId?.ToString()
+            );
+            scoreEntries.Add(scoreEntry);
+        }
+
+        // End the session now that all scores are recorded
         gameSession.End(nowUtc);
-        var scoreEntry = new ScoreEntry(
-            gameSession.SessionId,
-            command.SlotNumber,
-            gameSession.DeviceId,
-            gameSession.MachineId,
-            gameSession.Machine?.IpId ?? Guid.NewGuid(), // Machine that belong to a license
-            gameSession.ModeId,
-            command.Score,
-            nowUtc,
-            player?.UserId?.ToString()
-        );
-        
-        await writeRepository.SaveScoreEntryAsync(gameSession, scoreEntry, token);
-        await realtimeLeaderboardService.AddScoreAsync(
-            scoreEntry.IpId,
-            scoreEntry.ModeId,
-            scoreEntry.ScoreEntryId,
-            command.Score,
-            token
-        );
-        return new SubmitScoreResult.Success(scoreEntry.ScoreEntryId);
+
+        foreach (var scoreEntry in scoreEntries)
+        {
+            await writeRepository.SaveScoreEntryAsync(gameSession, scoreEntry, token);
+            await realtimeLeaderboardService.AddScoreAsync(
+                scoreEntry.IpId,
+                scoreEntry.ModeId,
+                scoreEntry.ScoreEntryId,
+                scoreEntry.Score,
+                token
+            );
+        }
+
+        return new SubmitScoreResult.Success(scoreEntries.Select(s => s.ScoreEntryId).ToList());
     }
 }

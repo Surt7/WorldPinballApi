@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Interfaces.Services;
+using System.Threading;
+
 
 namespace WorldPinball.Infrastructure.Services.Outbox;
 
@@ -12,21 +14,28 @@ public sealed class OutboxBackgroundService(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
         try
         {
             // Enter the loop immediately and wait for EITHER channel OR timer
             while (!stoppingToken.IsCancellationRequested)
             {
-                
-                // Wait for EITHER an instant channel signal OR the fallback 5s timer
-                await Task.WhenAny(
-                    channel.Reader.WaitToReadAsync(stoppingToken).AsTask(),
-                    timer.WaitForNextTickAsync(stoppingToken).AsTask());
-                
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+                timeoutCts.CancelAfter(TimeSpan.FromSeconds(5));
+
+                try
+                {
+                    // The missing line: WAIT for signal or 5s timeout
+                    await channel.Reader.WaitToReadAsync(timeoutCts.Token);
+                }
+                catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+                {
+                    // 5-second fallback reached
+                    
+                }
                 
                 // Drain all pending signals from buffer
                 while (channel.Reader.TryRead(out _)) { }
+
                 try
                 {
                     using var scope = scopeFactory.CreateScope();
@@ -45,7 +54,5 @@ public sealed class OutboxBackgroundService(
                 "-- Outbox background service is shutting down.--> {Message}",
                 ex.ToString());
         }
-        
-    
     }
 }

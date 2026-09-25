@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
@@ -132,20 +132,19 @@ public class SessionsControllerTests
         authService.ValidateAsync(Arg.Any<MachineAuthContext>(), Arg.Any<CancellationToken>())
             .Returns(new MachineAuthResult.Success(machineId, deviceId, nonce, timestamp));
 
-        var command = new SubmitScoreCommand(sessionId, deviceId, score, slotNumber);
+        var command = new SubmitScoreCommand(sessionId, deviceId, [new SlotScoreDto(slotNumber, score)]);
 
         var submitScoreHandler = Substitute.For<ISubmitScoreHandler>();
         var handler = Substitute.For<IStartGameSessionHandler>();
        
-        submitScoreHandler.HandleAsync(command, Arg.Any<CancellationToken>())
-            .Returns(new SubmitScoreResult.Success(scoreGuid));
-     
-
+        submitScoreHandler.HandleAsync(
+                Arg.Is<SubmitScoreCommand>(c => c.SessionId == sessionId && c.DeviceId == deviceId && c.Scores.Count == 1),
+                Arg.Any<CancellationToken>())
+            .Returns(new SubmitScoreResult.Success([scoreGuid]));
 
         var request = new SubmitScoreRequest(
             deviceId,
-            score,
-            slotNumber
+            [new SlotScoreRequest(slotNumber, score)]
         );
 
         var controller = new SessionsController(
@@ -183,6 +182,6 @@ public class SessionsControllerTests
             .BeOfType<SubmitScoreResponse>()
             .Which;
 
-        response.ScoreEntryId.Should().Be(scoreGuid);
+        response.ScoreEntryIds.Should().ContainSingle().Which.Should().Be(scoreGuid);
     }
 }

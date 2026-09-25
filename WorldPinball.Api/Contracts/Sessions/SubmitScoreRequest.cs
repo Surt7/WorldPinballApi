@@ -1,7 +1,8 @@
-﻿namespace WorldPinball.Api.Contracts.Sessions;
+namespace WorldPinball.Api.Contracts.Sessions;
+
+public sealed record SlotScoreRequest(int SlotNumber, long Score);
 
 public sealed record SubmitScoreRequest(
     Guid DeviceId,
-    long Score,
-    int SlotNumber = 1
+    List<SlotScoreRequest> Scores
 );
