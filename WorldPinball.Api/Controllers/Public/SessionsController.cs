@@ -158,7 +158,7 @@ IValidator<SubmitScoreRequest> reqValidator
             }),
             SubmitScoreResult.DeviceMisMatch s => Conflict(new
             {
-                message = $"Device '{s.ActualDeviceId}' mismatch."
+                message = $"Device '{s.ActualDeviceId}' mismatch (expected '{s.ExpectedDeviceId}')."
             }),
             SubmitScoreResult.SlotNotFound s => Conflict(new
             {

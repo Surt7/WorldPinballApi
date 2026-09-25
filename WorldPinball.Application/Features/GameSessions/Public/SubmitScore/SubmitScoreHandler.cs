@@ -29,25 +29,26 @@ public sealed class SubmitScoreHandler(
         {
             logger.LogWarning(
                 SessionNotFound,
-                "Device {DeviceId} could not be found.",
-                command.DeviceId);
-            return new SubmitScoreResult.SessionNotFound(command.DeviceId);
+                "Session {SessionId} could not be found or is not active.",
+                command.SessionId);
+            return new SubmitScoreResult.SessionNotFound(command.SessionId);
         }
 
         if (gameSession.DeviceId != command.DeviceId)
         {
             logger.LogWarning(
                 DeviceMisMatch,
-                "Actual device {DeviceId} doesn't match the expected device.",
-                gameSession.SessionId);
-            return new SubmitScoreResult.DeviceMisMatch(command.DeviceId, gameSession.SessionId);
+                "Actual device {ActualDeviceId} doesn't match expected device {ExpectedDeviceId}.",
+                command.DeviceId,
+                gameSession.DeviceId);
+            return new SubmitScoreResult.DeviceMisMatch(gameSession.DeviceId, command.DeviceId);
         }
         
         if (gameSession.State == GameSessionState.Ended)
         {
             logger.LogWarning(
                 SessionAlreadyEnded,
-                "Device {DeviceId} Already ended.",
+                "Session {SessionId} is already ended.",
                 gameSession.SessionId);
             return new SubmitScoreResult.SessionAlreadyEnded(gameSession.SessionId);
         }
