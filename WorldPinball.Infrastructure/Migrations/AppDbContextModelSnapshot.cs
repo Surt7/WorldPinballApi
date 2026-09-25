@@ -920,6 +920,49 @@ namespace WorldPinball.Infrastructure.Migrations
                     b.ToTable("mission_progress", "public");
                 });
 
+            modelBuilder.Entity("WorldPinball.Domain.Entities.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text")
+                        .HasColumnName("error");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at_utc");
+
+                    b.Property<DateTime?>("ProcessedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at_utc");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("retry_count");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_outbox_messages");
+
+                    b.HasIndex("ProcessedAtUtc")
+                        .HasDatabaseName("ix_outbox_messages_processed_at_utc");
+
+                    b.ToTable("outbox_messages", "public");
+                });
+
             modelBuilder.Entity("WorldPinball.Domain.Entities.Publisher", b =>
                 {
                     b.Property<Guid>("PublisherId")

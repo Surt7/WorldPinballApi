@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using Confluent.Kafka;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,7 @@ using WorldPinball.Infrastructure.Security.Authorization;
 using WorldPinball.Infrastructure.Security.CA;
 using WorldPinball.Infrastructure.Security.Secrets;
 using WorldPinball.Infrastructure.Services;
+using WorldPinball.Infrastructure.Services.Outbox;
 
 namespace WorldPinball.Infrastructure;
 
@@ -27,37 +29,42 @@ public static class DependencyInjection
     {
         
         
-        // -------------------- Dapper --------------------
-        services.AddScoped<IMachineDashboardReadRepository, MachineDashboardReadRepository>();
         // -------------------- Time Provider --------------------
         services.AddSingleton(TimeProvider.System);
         
         
         // -------------------- Database + Interceptors--------------------
-        
+        //Database connection
         var cs = config.GetRequiredPostgresConnectionString();
 
         
         //+ Interceptors
-        services.AddSingleton<PublishDomainEventsInterceptor>();
+        services.AddSingleton<ConvertDomainEventsToOutboxMessagesInterceptor>();
         services.AddDbContext<AppDbContext>((sp,options) =>
             options
                 .UseNpgsql(cs)
                 .UseSnakeCaseNamingConvention()
                 .AddInterceptors(
-                    sp.GetRequiredService<PublishDomainEventsInterceptor>()
+                    sp.GetRequiredService<ConvertDomainEventsToOutboxMessagesInterceptor>()
                     ));
+        // -------------------- Dapper --------------------
+        services.AddScoped<IMachineDashboardReadRepository, MachineDashboardReadRepository>();
         
-        // -------------------- Database health check --------------------
-
+        
+        // -------------------- health check --------------------
+        //Database health check
         services
             .AddHealthChecks()
             .AddDbContextCheck<AppDbContext>(
                 name: "Database",
                 tags: ["database"]);
-       
-        //Repositories
+        
+        
+        // -------------------- Repositories registering --------------------
+        // Security crypto
         services.AddScoped<ISecretService, SecretService>();
+        
+        // Business repo
         services.AddScoped<IIpLicenseReadRepository, IpLicenseReadRepository>();
         services.AddScoped<ILeaderboardReadRepository, LeaderboardReadRepository>();
         services.AddScoped<IMachineReadRepository, MachineReadRepository>();
@@ -80,8 +87,25 @@ public static class DependencyInjection
         
         // Auth policies handler
         services.AddSingleton<IAuthorizationHandler, ActiveMachineAuthorizationHandler>();
-  
-// -------------------- Redis --------------------
+
+        
+        // -------------------- Kafka & Outbox --------------------
+        services.AddSingleton<IProducer<string, string>>(_ =>
+        {
+            var producerConfig = new ProducerConfig
+            {
+                BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092",
+                Acks = Acks.All,
+                EnableIdempotence = true
+            };
+            return new ProducerBuilder<string, string>(producerConfig).Build();
+        });
+        services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
+        services.AddScoped<IOutboxProcessor, OutboxProcessor>();
+        services.AddHostedService<OutboxBackgroundService>();
+        
+        
+        // -------------------- Redis --------------------
        
         services.AddScoped<IRealtimeLeaderboardService, RedisRealtimeLeaderboardService>();
 
@@ -98,13 +122,18 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionMultiplexer>(sp => 
             ConnectionMultiplexer.Connect(configurationOptions));
         
-        
         services.AddScoped<IMachineStatusCacheService, RedisMachineStatusCacheService>();
         
+        
+        
+        
+        // End Return service
         
         return services;
     }
 
+
+    
     public static async Task MigrateDatabaseAsync(
         this IServiceProvider serviceProvider,
         CancellationToken cancellationToken = default)

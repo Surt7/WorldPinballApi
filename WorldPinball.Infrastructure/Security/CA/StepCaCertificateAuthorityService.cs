@@ -37,7 +37,11 @@ public sealed class StepCaCertificateAuthorityService(
         // 3. Configure standard X.509 extensions for client authentication
         // Basic Constraints: End-entity leaf certificate (cannot act as a CA)
         request.CertificateExtensions.Add(
-            new X509BasicConstraintsExtension(certificateAuthority: false, hasPathLengthConstraint: false, pathLengthConstraint: 0, critical: true));
+            new X509BasicConstraintsExtension(
+                certificateAuthority: false,
+                hasPathLengthConstraint: false,
+                pathLengthConstraint: 0,
+                critical: true));
 
         // Key Usage: Digital Signature and Key Agreement
         request.CertificateExtensions.Add(
