@@ -1,6 +1,0 @@
-@WorldPinball.Bff_HostAddress = http://localhost:5231
-
-GET {{WorldPinball.Bff_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

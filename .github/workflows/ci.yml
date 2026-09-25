@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -10,6 +10,43 @@ jobs:
   test:
     name: Build and Test (.NET 10)
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: worldpinball
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      kafka:
+        image: apache/kafka:latest
+        ports:
+          - 9092:9092
+        env:
+          KAFKA_NODE_ID: 1
+          KAFKA_PROCESS_ROLES: broker,controller
+          KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+          KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+          KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+          KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+          KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+    env:
+      ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=worldpinball;Username=postgres;
+      POSTGRES_PASSWORD: ci_test_password
+      Kafka__BootstrapServers: localhost:9092
 
     steps:
       - name: Checkout code
@@ -26,5 +63,5 @@ jobs:
       - name: Build solution (Release)
         run: dotnet build Leaderboard_WorldPinball.sln --configuration Release --no-restore
 
-      - name: Execute unit tests
+      - name: Execute tests
         run: dotnet test Leaderboard_WorldPinball.sln --configuration Release --no-build --verbosity normal

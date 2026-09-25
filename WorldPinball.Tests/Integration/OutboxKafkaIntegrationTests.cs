@@ -1,4 +1,4 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -38,6 +38,7 @@ public class OutboxKafkaIntegrationTests
             .Options;
         
         await using var dbContext = new AppDbContext(options);
+        await dbContext.Database.MigrateAsync();
         dbContext.OutboxMessages.Add(message);
         await dbContext.SaveChangesAsync();
         
