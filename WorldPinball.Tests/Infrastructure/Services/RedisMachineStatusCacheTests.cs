@@ -2,6 +2,7 @@
 using NSubstitute;
 using StackExchange.Redis;
 using WorldPinball.Infrastructure.Services;
+using WorldPinball.Infrastructure.Services.Redis;
 
 namespace WorldPinball.Tests.Infrastructure.Services;
 

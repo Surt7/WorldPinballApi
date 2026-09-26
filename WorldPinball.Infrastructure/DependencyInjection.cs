@@ -20,6 +20,7 @@ using WorldPinball.Infrastructure.Security.CA;
 using WorldPinball.Infrastructure.Security.Secrets;
 using WorldPinball.Infrastructure.Services;
 using WorldPinball.Infrastructure.Services.Outbox;
+using WorldPinball.Infrastructure.Services.Redis;
 
 namespace WorldPinball.Infrastructure;
 
@@ -47,6 +48,10 @@ public static class DependencyInjection
                 .AddInterceptors(
                     sp.GetRequiredService<ConvertDomainEventsToOutboxMessagesInterceptor>()
                     ));
+        
+        services.AddSingleton<ILobbyNotificationService, InMemoryLobbyNotificationService>();
+        
+        
         // -------------------- Dapper --------------------
         services.AddScoped<IMachineDashboardReadRepository, MachineDashboardReadRepository>();
         
@@ -106,6 +111,7 @@ public static class DependencyInjection
         services.AddHostedService<OutboxBackgroundService>();
         services.AddSingleton<IOutboxNotificationChannel, OutboxNotificationChannel>();
         
+       
         // -------------------- Redis --------------------
        
         services.AddScoped<IRealtimeLeaderboardService, RedisRealtimeLeaderboardService>();

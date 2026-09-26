@@ -1,8 +1,10 @@
-﻿syntax = "proto3";
+syntax = "proto3";
 
 package worldpinball.gamesessions.v1;
 option csharp_namespace = "WorldPinball.Api.Protos.V1.GameSessions";
 
+
+// Add player action
 message AddPlayerRequest {
   string session_id = 1;
   int32 slot_number = 2;
@@ -16,6 +18,48 @@ message AddPlayerResponse{
   string message = 3;
 }
 
+
+// kicking player from lobby
+message KickPlayerRequest{
+  string session_id=1;
+  int32 slot_number=2;
+  optional string reason = 3;
+}
+
+message KickPlayerResponse {
+  bool success = 1;
+  int32 slot_number = 2;
+  string message = 3;
+}
+
+// Session watch
+message PlayerSlotInfo {
+  int32 slot_number = 1;
+  bool is_occupied = 2;
+  optional string user_id = 3;
+  optional string guest_initials = 4;
+}
+
+message GetLobbyRequest {
+  string session_id = 1;
+}
+
+message WatchLobbyRequest {
+  string session_id = 1;
+}
+
+message SessionLobbyResponse {
+  string session_id = 1;
+  string session_state = 2;
+  repeated PlayerSlotInfo slots = 3;
+}
+
 service GameSessionService{
   rpc AddPlayer(AddPlayerRequest) returns (AddPlayerResponse);
+  
+  rpc KickPlayer(KickPlayerRequest) returns(KickPlayerResponse);
+
+  rpc WatchLobby(WatchLobbyRequest) returns (stream SessionLobbyResponse);
+
+  rpc GetLobby(GetLobbyRequest) returns (SessionLobbyResponse);
 }

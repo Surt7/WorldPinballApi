@@ -19,8 +19,10 @@ using WorldPinball.Application.Features.Machines.Public.Enroll.Profile;
 using WorldPinball.Application.Security.Cryptography;
 using WorldPinball.Infrastructure.Security.Cryptography;
 using WorldPinball.Api.Grpc;
+using WorldPinball.Application.Features.GameSessions.Public.GetLobby;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Queries;
+
 
 // -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
 
@@ -62,8 +64,12 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.AddObservability();
     
+    // Grpc
     builder.Services.AddGrpc();
     builder.Services.AddScoped<IAddPlayerHandler, AddPlayerHandler>();
+    builder.Services.AddScoped<IAddPlayerHandler, AddPlayerHandler>();
+    builder.Services.AddScoped<IGetLobbyHandler, GetLobbyHandler>();
+
     
 // ----------------------------------------
 

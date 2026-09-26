@@ -3,7 +3,7 @@ using StackExchange.Redis;
 using WorldPinball.Application.Features.Leaderboard.Public.Dtos;
 using WorldPinball.Application.Interfaces.Services;
 
-namespace WorldPinball.Infrastructure.Services;
+namespace WorldPinball.Infrastructure.Services.Redis;
 
 public class RedisRealtimeLeaderboardService : IRealtimeLeaderboardService
 {
