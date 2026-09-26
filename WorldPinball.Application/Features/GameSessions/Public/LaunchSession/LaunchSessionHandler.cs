@@ -24,7 +24,7 @@ public sealed class LaunchSessionHandler(
         try
         {
             var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
-            session.Start(nowUtc);
+            session.Launch(nowUtc);
         }
         catch (InvalidOperationException ex)
         {

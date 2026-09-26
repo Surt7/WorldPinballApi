@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using WorldPinball.Api.Middleware;
 using WorldPinball.Application.Features.GameSessions.Public.AddPlayer;
-using WorldPinball.Application.Features.GameSessions.Public.Start;
+using WorldPinball.Application.Features.GameSessions.Public.CreateGameSession;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
@@ -84,8 +84,8 @@ try
     builder.Services.AddScoped<IReissueEnrollmentTokenHandler,
         ReissueEnrollmentTokenHandler>();
 
-    builder.Services.AddScoped<IStartGameSessionHandler,
-        StartGameSessionHandler>();
+    builder.Services.AddScoped<ICreateGameSessionHandler,
+        CreateGameSessionHandler>();
     builder.Services.AddScoped<ISubmitScoreHandler,
         SubmitScoreHandler>();
     

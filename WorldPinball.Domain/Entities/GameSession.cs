@@ -99,6 +99,8 @@ public class GameSession : Entity
         State = GameSessionState.Created;
     }
 
+    public void Launch(DateTime launchedAtUtc) => Start(launchedAtUtc);
+
     public void Start(DateTime startedAtUtc)
     {
         if (State is not (GameSessionState.Created 

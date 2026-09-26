@@ -1,25 +1,26 @@
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging;
-using WorldPinball.Application.Features.GameSessions.Public.Start.Commands;
+using WorldPinball.Application.Features.GameSessions.Public.CreateGameSession.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 
-namespace WorldPinball.Application.Features.GameSessions.Public.Start;
+namespace WorldPinball.Application.Features.GameSessions.Public.CreateGameSession;
 
-public sealed class StartGameSessionHandler(
+public sealed class CreateGameSessionHandler(
     IGameSessionReadRepository readRepository,
     IGameSessionWriteRepository writeRepository,
-    ILogger<StartGameSessionHandler> logger,
+    ILogger<CreateGameSessionHandler> logger,
     TimeProvider timeProvider
-) : IStartGameSessionHandler
+) : ICreateGameSessionHandler
 {
     private static readonly EventId DeviceNotFound = new EventId(2300, nameof(DeviceNotFound));
     private static readonly EventId DeviceNotActive = new EventId(2301, nameof(DeviceNotActive));
     private static readonly EventId MachineNotAttached = new EventId(2302, nameof(MachineNotAttached));
     private static readonly EventId ModeNotFound = new EventId(2303, nameof(ModeNotFound));
-    public async Task<StartGameSessionResult> HandleAsync(
-        StartGameSessionCommand command,
+
+    public async Task<CreateGameSessionResult> HandleAsync(
+        CreateGameSessionCommand command,
         CancellationToken cancellationToken = default
     )
     {
@@ -28,15 +29,15 @@ public sealed class StartGameSessionHandler(
         var device = await readRepository.GetDeviceContextAsync(
             command.DeviceId,
             cancellationToken
-            );
+        );
 
         if (device is null)
         {
             logger.LogWarning(
                 DeviceNotFound,
-                "Device {DeviceId}  could not be found.",
+                "Device {DeviceId} could not be found.",
                 command.DeviceId);
-            return new StartGameSessionResult.DeviceNotFound(command.DeviceId);
+            return new CreateGameSessionResult.DeviceNotFound(command.DeviceId);
         }
 
         if (device.Status is not DeviceStatus.Active)
@@ -45,8 +46,8 @@ public sealed class StartGameSessionHandler(
                 DeviceNotActive,
                 "Device {DeviceId} not active.",
                 command.DeviceId
-                );   
-            return new StartGameSessionResult.DeviceNotActive(command.DeviceId);
+            );   
+            return new CreateGameSessionResult.DeviceNotActive(command.DeviceId);
         }
 
         if (device.ActiveMachineId is null)
@@ -55,8 +56,8 @@ public sealed class StartGameSessionHandler(
                 MachineNotAttached,
                 "Device {DeviceId} has no active machine attached.",
                 command.DeviceId
-                );
-            return new StartGameSessionResult.MachineNotAttached(command.DeviceId);
+            );
+            return new CreateGameSessionResult.MachineNotAttached(command.DeviceId);
         }
 
         var mode = await readRepository.GetActiveModeByCodeAsync(command.ModeCode, cancellationToken);
@@ -66,8 +67,8 @@ public sealed class StartGameSessionHandler(
                 ModeNotFound,
                 "Game mode {ModeCode} could not be found or is inactive.",
                 command.ModeCode
-                );
-            return new StartGameSessionResult.ModeNotFound(command.ModeCode);
+            );
+            return new CreateGameSessionResult.ModeNotFound(command.ModeCode);
         }
 
         var nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
@@ -82,6 +83,6 @@ public sealed class StartGameSessionHandler(
 
         await writeRepository.SaveSessionAsync(session, cancellationToken);
 
-        return new StartGameSessionResult.Success(session.SessionId, nonce, nowUtc);
+        return new CreateGameSessionResult.Success(session.SessionId, nonce, nowUtc);
     }
 }

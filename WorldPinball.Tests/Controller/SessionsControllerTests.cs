@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using WorldPinball.Api.Contracts.Sessions;
-using WorldPinball.Application.Features.GameSessions.Public.Start;
-using WorldPinball.Application.Features.GameSessions.Public.Start.Commands;
+using WorldPinball.Application.Features.GameSessions.Public.CreateGameSession;
+using WorldPinball.Application.Features.GameSessions.Public.CreateGameSession.Commands;
 using WorldPinball.Application.Security.Cryptography;
 using WorldPinball.Api.Controllers.Public;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
@@ -18,14 +18,14 @@ namespace WorldPinball.Tests.Controller;
 public class SessionsControllerTests
 {
     [Fact]
-    public async Task StartSession_WhenRequestIsValidAuthenticated_ShouldReturnOk()
+    public async Task CreateGameSession_WhenRequestIsValidAuthenticated_ShouldReturnOk()
     {
         //Arrange
-        var machineId =  Guid.NewGuid();
-        var deviceId =  Guid.NewGuid();
+        var machineId = Guid.NewGuid();
+        var deviceId = Guid.NewGuid();
         string nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var sessionId =  Guid.NewGuid();
+        var sessionId = Guid.NewGuid();
         string fakeSignature = RandomNumberGenerator.GetHexString(16);
 
         var now = DateTimeOffset.UtcNow;
@@ -49,9 +49,9 @@ public class SessionsControllerTests
             .Returns(new MachineAuthResult.Success(machineId, deviceId, nonce, timestamp));
 
         var submitHandler = Substitute.For<ISubmitScoreHandler>();
-        var handler = Substitute.For<IStartGameSessionHandler>();
-        handler.HandleAsync(Arg.Any<StartGameSessionCommand>(), Arg.Any<CancellationToken>())
-            .Returns(new StartGameSessionResult.Success(sessionId, nonce, now));
+        var handler = Substitute.For<ICreateGameSessionHandler>();
+        handler.HandleAsync(Arg.Any<CreateGameSessionCommand>(), Arg.Any<CancellationToken>())
+            .Returns(new CreateGameSessionResult.Success(sessionId, nonce, now));
 
 
         var request = new StartSessionRequest(
@@ -71,11 +71,11 @@ public class SessionsControllerTests
             HttpContext = new DefaultHttpContext()
         };
         controller.HttpContext.Request.Method = "POST";
-        controller.HttpContext.Request.Path = "/api/v1/sessions/start";
+        controller.HttpContext.Request.Path = "/api/v1/sessions/create";
 
         // Act
         var result = await controller
-            .StartSession(
+            .CreateGameSession(
                 request,
                 deviceId.ToString(),
                 timestamp.ToString(),
@@ -92,7 +92,7 @@ public class SessionsControllerTests
         var response = okResult
             .Value
             .Should()
-            .BeOfType<StartSessionResponse>()
+            .BeAssignableTo<CreateGameSessionResponse>()
             .Which;
 
         response.SessionId.Should().Be(sessionId);
@@ -104,18 +104,15 @@ public class SessionsControllerTests
     public async Task SubmitScore_WhenRequestIsValid_ShouldReturnOk()
     {
         // Arrange
-        var machineId =  Guid.NewGuid();
-        var deviceId =  Guid.NewGuid();
-        var scoreGuid =  Guid.NewGuid();
+        var machineId = Guid.NewGuid();
+        var deviceId = Guid.NewGuid();
+        var scoreGuid = Guid.NewGuid();
         var score = 5_002_214;
         int slotNumber = 3;
         string nonce = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        var sessionId =  Guid.NewGuid();
-       
+        var sessionId = Guid.NewGuid();
 
-      
-       
         //validator
         var validatorStartSession = Substitute.For<IValidator<StartSessionRequest>>();
         var validatorSubmitScore = Substitute.For<IValidator<SubmitScoreRequest>>();
@@ -135,7 +132,7 @@ public class SessionsControllerTests
         var command = new SubmitScoreCommand(sessionId, deviceId, [new SlotScoreDto(slotNumber, score)]);
 
         var submitScoreHandler = Substitute.For<ISubmitScoreHandler>();
-        var handler = Substitute.For<IStartGameSessionHandler>();
+        var handler = Substitute.For<ICreateGameSessionHandler>();
        
         submitScoreHandler.HandleAsync(
                 Arg.Is<SubmitScoreCommand>(c => c.SessionId == sessionId && c.DeviceId == deviceId && c.Scores.Count == 1),

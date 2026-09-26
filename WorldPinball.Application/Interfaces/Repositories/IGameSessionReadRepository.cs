@@ -1,28 +1,18 @@
-
-using WorldPinball.Application.Features.GameSessions.Public.Start.Dtos;
+using WorldPinball.Application.Features.GameSessions.Public.CreateGameSession.Dtos;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 
 namespace WorldPinball.Application.Interfaces.Repositories;
 
-
-
 public interface IGameSessionReadRepository
 {
- Task<StartGameSessionDto?> GetDeviceContextAsync(
+    Task<CreateGameSessionDto?> GetDeviceContextAsync(
         Guid deviceId,
         CancellationToken cancellationToken = default
     );
 
-  Task<GameMode?> GetActiveModeByCodeAsync(
+    Task<GameMode?> GetActiveModeByCodeAsync(
         string modeCode,
         CancellationToken cancellationToken = default
     );
-
- 
 }
-
-
-
-
-
