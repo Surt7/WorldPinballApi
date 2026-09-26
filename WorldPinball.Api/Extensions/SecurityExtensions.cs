@@ -1,8 +1,10 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using WorldPinball.Infrastructure.Security.Authentification;
 using WorldPinball.Infrastructure.Security.Authorization;
 
 namespace WorldPinball.Api.Extensions;
@@ -72,7 +74,9 @@ public static class SecurityExtensions
                     },
                     OnCertificateValidated = ValidateMachineCertificateAsync
                 };
-            });
+            })
+            .AddScheme<AuthenticationSchemeOptions, OperatorTokenAuthenticationHandler>(
+                OperatorTokenAuthenticationHandler.SchemeName, _ => { });
 
         // 2. Authorization policies
         services.AddAuthorization(options =>
@@ -81,6 +85,18 @@ public static class SecurityExtensions
             {
                 policy.AddAuthenticationSchemes(CertificateAuthenticationDefaults.AuthenticationScheme);
                 policy.Requirements.Add(new ActiveMachineRequirement());
+            });
+
+            options.AddPolicy("Operator:Enroll", policy =>
+            {
+                policy.AddAuthenticationSchemes(OperatorTokenAuthenticationHandler.SchemeName);
+                policy.Requirements.Add(new OperatorScopeRequirement("enroll"));
+            });
+
+            options.AddPolicy("Operator:Sessions", policy =>
+            {
+                policy.AddAuthenticationSchemes(OperatorTokenAuthenticationHandler.SchemeName);
+                policy.Requirements.Add(new OperatorScopeRequirement("sessions"));
             });
         });
 

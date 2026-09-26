@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Api.Contracts.Machine;
 using WorldPinball.Application.Features.Machines.Public;
@@ -13,6 +14,7 @@ public class MachinesController(
     IValidator<EnrollDeviceRequest> validator) : ControllerBase
 {
     [HttpPost("enroll")]
+    [Authorize(Policy = "Operator:Enroll")]
     [EndpointSummary("Enrolls a new physical device onto a provisioned machine")]
     [ProducesResponseType(typeof(EnrollDeviceResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

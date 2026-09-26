@@ -14,6 +14,7 @@ public static class DevelopmentDataSeeder
     private const int Seed = 20260903;
 
     private const string DevelopmentUserId = "development-seeder";
+    public const string DevOperatorToken = "wpt_dev_9f8e7d6c5b4a32109876543210fedcba";
 
     //event below are for seq log
     //seed start event
@@ -116,6 +117,17 @@ public static class DevelopmentDataSeeder
             {
                 var enrollmentTokens = CreateEnrollmentTokens(machines, devices, now);
                 await context.EnrollmentTokens.AddRangeAsync(enrollmentTokens, cancellationToken);
+            }
+
+            if (!await context.OperatorTokens.AnyAsync(cancellationToken))
+            {
+                var devOperatorToken = new OperatorToken(
+                    name: "Local Dev Operator",
+                    rawToken: DevOperatorToken,
+                    scopes: "*",
+                    issuedByUserId: DevelopmentUserId,
+                    nowUtc: now);
+                await context.OperatorTokens.AddAsync(devOperatorToken, cancellationToken);
             }
 
             var missions = await context.Missions.ToListAsync(cancellationToken);

@@ -1,4 +1,4 @@
-﻿using Confluent.Kafka;
+using Confluent.Kafka;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -11,12 +11,14 @@ using WorldPinball.Infrastructure.Persistence.Seed;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using WorldPinball.Application.Interfaces.Services;
+using WorldPinball.Application.Security;
 using WorldPinball.Application.Security.CA;
 using WorldPinball.Application.Security.Secrets;
 using WorldPinball.Infrastructure.Persistence.Interceptors;
 using WorldPinball.Infrastructure.Security.Authentification;
 using WorldPinball.Infrastructure.Security.Authorization;
 using WorldPinball.Infrastructure.Security.CA;
+using WorldPinball.Infrastructure.Security.OperatorTokens;
 using WorldPinball.Infrastructure.Security.Secrets;
 using WorldPinball.Infrastructure.Services;
 using WorldPinball.Infrastructure.Services.Outbox;
@@ -92,6 +94,7 @@ public static class DependencyInjection
         
         // Auth policies handler
         services.AddSingleton<IAuthorizationHandler, ActiveMachineAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationHandler, OperatorScopeAuthorizationHandler>();
 
         
         // -------------------- Kafka & Outbox --------------------
@@ -131,7 +134,8 @@ public static class DependencyInjection
         
         services.AddScoped<IMachineStatusCacheService, RedisMachineStatusCacheService>();
         
-        
+        services.AddMemoryCache();
+        services.AddScoped<IOperatorTokenValidator, OperatorTokenValidator>();
         
         
         // End Return service

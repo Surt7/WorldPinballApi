@@ -34,7 +34,6 @@ public class SessionsController(
 
 
     [HttpPost("create")]
-    [HttpPost("start")]
     [EndpointSummary("Create a game session")]
     [EndpointDescription("POST to create new game session")]
     [ProducesResponseType(typeof(CreateGameSessionResponse), StatusCodes.Status200OK)]
