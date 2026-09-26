@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Domain.Common;
@@ -13,20 +13,17 @@ public sealed class ConvertDomainEventsToOutboxMessagesInterceptor(
     ) 
     : SaveChangesInterceptor
 {
-    
- 
+    private static readonly AsyncLocal<bool> HasNewMessages = new();
+
     public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
         DbContextEventData eventData,
         InterceptionResult<int> result,
         CancellationToken cancellationToken = default)
     {
-
- 
-        await channel.TryNotifyAsync(cancellationToken);
-
         var dbContext = eventData.Context;
         if (dbContext is null)
         {
+            HasNewMessages.Value = false;
             return await base.SavingChangesAsync(eventData, result, cancellationToken);
         }
         
@@ -48,19 +45,27 @@ public sealed class ConvertDomainEventsToOutboxMessagesInterceptor(
         if (outboxMessages.Count > 0)
         {
             dbContext.Set<OutboxMessage>().AddRange(outboxMessages);
+            HasNewMessages.Value = true;
+        }
+        else
+        {
+            HasNewMessages.Value = false;
         }
             
         return await base.SavingChangesAsync(eventData, result, cancellationToken);
     }
     
-  
     public override async ValueTask<int> SavedChangesAsync(
         SaveChangesCompletedEventData eventData,
         int result,
         CancellationToken cancellationToken = default)
     {
-        await channel.TryNotifyAsync(cancellationToken);
+        if (HasNewMessages.Value)
+        {
+            HasNewMessages.Value = false;
+            await channel.TryNotifyAsync(cancellationToken);
+        }
+
         return await base.SavedChangesAsync(eventData, result, cancellationToken);
     }
-    
 }

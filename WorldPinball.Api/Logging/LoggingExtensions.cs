@@ -17,6 +17,9 @@ public static class LoggingExtensions
                 .MinimumLevel.Override(
                     "Microsoft.AspNetCore",
                     LogEventLevel.Warning)
+                .MinimumLevel.Override(
+                    "Microsoft.EntityFrameworkCore",
+                    LogEventLevel.Warning)
                 .ReadFrom.Configuration(builder.Configuration)
                 .ReadFrom.Services(services)
                 .Enrich.FromLogContext()

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Infrastructure.Persistence;
 
@@ -44,6 +44,11 @@ public class OutboxProcessor(
                 .OrderBy(m => m.OccurredAtUtc)
                 .Take(20)
                 .ToListAsync(ct);
+
+        if (messages.Count == 0)
+        {
+            return;
+        }
 
         var now = timeProvider.GetUtcNow().UtcDateTime;
 
