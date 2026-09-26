@@ -54,10 +54,22 @@ message SessionLobbyResponse {
   repeated PlayerSlotInfo slots = 3;
 }
 
+message LaunchSessionRequest {
+  string session_id = 1;
+}
+
+message LaunchSessionResponse {
+  bool success = 1;
+  string session_id = 2;
+  string message = 3;
+}
+
 service GameSessionService{
   rpc AddPlayer(AddPlayerRequest) returns (AddPlayerResponse);
   
   rpc KickPlayer(KickPlayerRequest) returns(KickPlayerResponse);
+
+  rpc LaunchSession(LaunchSessionRequest) returns (LaunchSessionResponse);
 
   rpc WatchLobby(WatchLobbyRequest) returns (stream SessionLobbyResponse);
 

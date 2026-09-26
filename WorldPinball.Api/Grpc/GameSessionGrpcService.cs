@@ -8,6 +8,8 @@ using WorldPinball.Application.Features.GameSessions.Public.GetLobby.Dtos;
 using WorldPinball.Application.Features.GameSessions.Public.GetLobby.Queries;
 using WorldPinball.Application.Features.GameSessions.Public.KickPlayer;
 using WorldPinball.Application.Features.GameSessions.Public.KickPlayer.Commands;
+using WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
+using WorldPinball.Application.Features.GameSessions.Public.LaunchSession.Commands;
 using WorldPinball.Application.Interfaces.Services;
 
 namespace WorldPinball.Api.Grpc;
@@ -16,6 +18,7 @@ public sealed class GameSessionGrpcService(
     IAddPlayerHandler addPlayerHandler,
     IKickPlayerHandler kickPlayerHandler,
     IGetLobbyHandler getLobbyHandler,
+    ILaunchSessionHandler launchSessionHandler,
     ILobbyNotificationService lobbyNotifier,
     ILogger<GameSessionGrpcService> logger
 ) : GameSessionService.GameSessionServiceBase
@@ -110,6 +113,34 @@ public sealed class GameSessionGrpcService(
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "Slot number must be between 1 and 4.")),
             
             //Default
+            _ => throw new RpcException(new Status(StatusCode.Internal, "Unexpected error."))
+        };
+    }
+    
+    public override async Task<LaunchSessionResponse> LaunchSession(LaunchSessionRequest request, ServerCallContext context)
+    {
+        if (!Guid.TryParse(request.SessionId, out var sessionId))
+            throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid session ID format"));
+
+        var command = new LaunchSessionCommand(sessionId);
+        var result = await launchSessionHandler.HandleAsync(command, context.CancellationToken);
+
+        if (result is LaunchSessionResult.Success)
+        {
+            lobbyNotifier.NotifyLobbyUpdated(sessionId);
+        }
+
+        return result switch
+        {
+            LaunchSessionResult.Success s =>
+                new LaunchSessionResponse { Success = true, SessionId = s.SessionId.ToString(), Message = "Session launched." },
+
+            LaunchSessionResult.SessionNotFound =>
+                throw new RpcException(new Status(StatusCode.NotFound, "Session not found.")),
+
+            LaunchSessionResult.CannotStartSession e =>
+                throw new RpcException(new Status(StatusCode.FailedPrecondition, e.Message)),
+
             _ => throw new RpcException(new Status(StatusCode.Internal, "Unexpected error."))
         };
     }

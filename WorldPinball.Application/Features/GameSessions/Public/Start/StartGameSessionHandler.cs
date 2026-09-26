@@ -80,8 +80,6 @@ public sealed class StartGameSessionHandler(
             nowUtc
         );
 
-        session.Start(nowUtc);
-
         await writeRepository.SaveSessionAsync(session, cancellationToken);
 
         return new StartGameSessionResult.Success(session.SessionId, nonce, nowUtc);
