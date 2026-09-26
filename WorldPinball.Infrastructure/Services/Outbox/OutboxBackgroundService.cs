@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Interfaces.Services;
@@ -42,7 +42,7 @@ public sealed class OutboxBackgroundService(
                     var processor = scope.ServiceProvider.GetRequiredService<IOutboxProcessor>();
                     await processor.ProcessBatchAsync(stoppingToken);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
                 {
                     logger.LogError(ex, "Error while processing outbox batch.");
                 }
