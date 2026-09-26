@@ -39,4 +39,16 @@ public class GameSessionReadRepository : IGameSessionReadRepository
     {
         return await _db.GameModes.AsNoTracking().Where(m => m.Code == modeCode).FirstOrDefaultAsync(ct);
     }
+
+    public async Task<GameSession?> GetSessionForLobbyAsync(
+        Guid sessionId,
+        CancellationToken ct = default
+    )
+    {
+        return await _db.GameSessions
+            .AsNoTracking()
+            .Where(gs => gs.SessionId == sessionId)
+            .Include(gs => gs.Players)
+            .FirstOrDefaultAsync(ct);
+    }
 }

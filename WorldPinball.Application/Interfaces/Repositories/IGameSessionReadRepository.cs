@@ -15,4 +15,9 @@ public interface IGameSessionReadRepository
         string modeCode,
         CancellationToken cancellationToken = default
     );
+
+    Task<GameSession?> GetSessionForLobbyAsync(
+        Guid sessionId,
+        CancellationToken cancellationToken = default
+    );
 }

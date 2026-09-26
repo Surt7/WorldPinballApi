@@ -10,7 +10,7 @@ namespace WorldPinball.Tests.Application.Features.GameSessions.Public;
 
 public class GetLobbyHandlerTests
 {
-    private readonly IGameSessionWriteRepository _writeRepo = Substitute.For<IGameSessionWriteRepository>();
+    private readonly IGameSessionReadRepository _readRepo = Substitute.For<IGameSessionReadRepository>();
     private readonly NullLogger<GetLobbyHandler> _logger = NullLogger<GetLobbyHandler>.Instance;
 
     [Fact]
@@ -18,10 +18,10 @@ public class GetLobbyHandlerTests
     {
         // Arrange
         var sessionId = Guid.NewGuid();
-        _writeRepo.GetSessionWithMachineAsync(sessionId, Arg.Any<CancellationToken>())
+        _readRepo.GetSessionForLobbyAsync(sessionId, Arg.Any<CancellationToken>())
             .Returns((GameSession?)null);
 
-        var sut = new GetLobbyHandler(_writeRepo, _logger);
+        var sut = new GetLobbyHandler(_readRepo, _logger);
         var query = new GetLobbyQuery(sessionId);
 
         // Act
@@ -38,10 +38,10 @@ public class GetLobbyHandlerTests
         // Arrange
         var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0.0", "nonce", DateTime.UtcNow);
 
-        _writeRepo.GetSessionWithMachineAsync(session.SessionId, Arg.Any<CancellationToken>())
+        _readRepo.GetSessionForLobbyAsync(session.SessionId, Arg.Any<CancellationToken>())
             .Returns(session);
 
-        var sut = new GetLobbyHandler(_writeRepo, _logger);
+        var sut = new GetLobbyHandler(_readRepo, _logger);
         var query = new GetLobbyQuery(session.SessionId);
 
         // Act
@@ -72,10 +72,10 @@ public class GetLobbyHandlerTests
         session.AddPlayer(slotNumber: 1, userId: user1Id, guestInitials: null, requiresRegisteredUser: true);
         session.AddPlayer(slotNumber: 2, userId: null, guestInitials: "BOB", requiresRegisteredUser: false);
 
-        _writeRepo.GetSessionWithMachineAsync(session.SessionId, Arg.Any<CancellationToken>())
+        _readRepo.GetSessionForLobbyAsync(session.SessionId, Arg.Any<CancellationToken>())
             .Returns(session);
 
-        var sut = new GetLobbyHandler(_writeRepo, _logger);
+        var sut = new GetLobbyHandler(_readRepo, _logger);
         var query = new GetLobbyQuery(session.SessionId);
 
         // Act
@@ -114,13 +114,13 @@ public class GetLobbyHandlerTests
         using var cts = new CancellationTokenSource();
         var token = cts.Token;
 
-        var sut = new GetLobbyHandler(_writeRepo, _logger);
+        var sut = new GetLobbyHandler(_readRepo, _logger);
         var query = new GetLobbyQuery(sessionId);
 
         // Act
         await sut.HandleAsync(query, token);
 
         // Assert
-        await _writeRepo.Received(1).GetSessionWithMachineAsync(sessionId, token);
+        await _readRepo.Received(1).GetSessionForLobbyAsync(sessionId, token);
     }
 }

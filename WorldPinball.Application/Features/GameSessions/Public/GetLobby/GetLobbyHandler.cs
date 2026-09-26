@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Features.GameSessions.Public.GetLobby.Dtos;
 using WorldPinball.Application.Features.GameSessions.Public.GetLobby.Queries;
 using WorldPinball.Application.Interfaces.Repositories;
@@ -6,7 +6,7 @@ using WorldPinball.Application.Interfaces.Repositories;
 namespace WorldPinball.Application.Features.GameSessions.Public.GetLobby;
 
 public sealed class GetLobbyHandler(
-    IGameSessionWriteRepository writeRepository,
+    IGameSessionReadRepository readRepository,
     ILogger<GetLobbyHandler> logger
     ):IGetLobbyHandler
 {
@@ -15,7 +15,7 @@ public sealed class GetLobbyHandler(
     
     public async Task<GetLobbyResult> HandleAsync(GetLobbyQuery query, CancellationToken cancellationToken = default)
     {
-        var session = await writeRepository.GetSessionWithMachineAsync(
+        var session = await readRepository.GetSessionForLobbyAsync(
             query.SessionId,
             cancellationToken);
 
