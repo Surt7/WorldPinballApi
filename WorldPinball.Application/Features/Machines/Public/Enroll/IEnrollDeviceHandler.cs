@@ -1,4 +1,4 @@
-using WorldPinball.Application.Features.Machines.Public.Enroll.Commands;
+using WorldPinball.Application.Features.Machines.Public.Commands;
 
 namespace WorldPinball.Application.Features.Machines.Public;
 

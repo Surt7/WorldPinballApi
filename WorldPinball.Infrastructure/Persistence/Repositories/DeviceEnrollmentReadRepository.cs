@@ -1,7 +1,6 @@
 ﻿using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using WorldPinball.Application.Features.Machines.Public.Enroll.Dto;
 
 namespace WorldPinball.Infrastructure.Persistence.Repositories;
 

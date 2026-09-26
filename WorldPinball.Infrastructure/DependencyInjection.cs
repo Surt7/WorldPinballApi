@@ -96,6 +96,7 @@ public static class DependencyInjection
         services.AddSingleton<IAuthorizationHandler, ActiveMachineAuthorizationHandler>();
         services.AddSingleton<IAuthorizationHandler, OperatorScopeAuthorizationHandler>();
 
+        services.AddScoped<IOperatorTokenWriteRepository, OperatorTokenWriteRepository>();
         
         // -------------------- Kafka & Outbox --------------------
         services.AddSingleton<IProducer<string, string>>(_ =>

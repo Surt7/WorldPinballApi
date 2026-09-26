@@ -1,6 +1,6 @@
 
 using Microsoft.Extensions.Logging;
-using WorldPinball.Application.Features.Machines.Public.Enroll.Commands;
+using WorldPinball.Application.Features.Machines.Public.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Security.CA;
 using WorldPinball.Domain.Entities;

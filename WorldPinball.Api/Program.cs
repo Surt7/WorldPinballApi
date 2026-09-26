@@ -24,6 +24,7 @@ using WorldPinball.Application.Features.GameSessions.Public.KickPlayer;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Queries;
+using WorldPinball.Application.Features.Machines.Admin.CreateOperatorToken;
 
 
 // -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
@@ -72,9 +73,7 @@ try
     builder.Services.AddScoped<IKickPlayerHandler, KickPlayerHandler>();
     builder.Services.AddScoped<IGetLobbyHandler, GetLobbyHandler>();
     builder.Services.AddScoped<ILaunchSessionHandler, LaunchSessionHandler>();
-
     
-// ----------------------------------------
 
     //Handlers
     builder.Services.AddScoped<IEnrollDeviceHandler,
@@ -88,6 +87,9 @@ try
         CreateGameSessionHandler>();
     builder.Services.AddScoped<ISubmitScoreHandler,
         SubmitScoreHandler>();
+    
+    builder.Services.AddScoped<ICreateOperatorTokenHandler,
+        CreateOperatorTokenHandler>();
     
     builder.Services.AddScoped<IGetMachineDashboardHandler, GetMachineDashboardHandler>();
     

@@ -1,4 +1,4 @@
-﻿using WorldPinball.Application.Features.Machines.Public.Enroll.Dto;
+﻿using WorldPinball.Application.Features.Machines.Public.Dto;
 using WorldPinball.Domain.Entities;
 
 namespace WorldPinball.Application.Features.Machines.Public.Enroll.Profile;
