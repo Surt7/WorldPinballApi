@@ -104,6 +104,7 @@ public class GameSession : Entity
         if (State is not (GameSessionState.Created 
             or GameSessionState.Pending
             or  GameSessionState.SearchingPlayer
+            or GameSessionState.Joined
             ))
             throw new InvalidOperationException(ErrorMessages.CannotCancelSession);
 
@@ -128,7 +129,7 @@ public class GameSession : Entity
     
     public void Pause()
     {
-        if (State is not (GameSessionState.Started or GameSessionState.Resumed))
+        if (State is not (GameSessionState.Started or GameSessionState.InGame or GameSessionState.Resumed))
             throw new InvalidOperationException(ErrorMessages.PauseSession);
 
         State = GameSessionState.Paused;
@@ -157,7 +158,8 @@ public class GameSession : Entity
         if (State is not (GameSessionState.Created 
             or GameSessionState.Pending 
             or GameSessionState.SearchingPlayer 
-            or GameSessionState.MatchFound))
+            or GameSessionState.MatchFound
+            or GameSessionState.Joined))
         {
             throw new InvalidOperationException(ErrorMessages.CannotRemovePlayerActiveSession);
         }
@@ -171,11 +173,16 @@ public class GameSession : Entity
         {
             State = GameSessionState.Pending; 
         }
+        
+        if (_players.Count == 0 && State is GameSessionState.Joined)
+        {
+            State = GameSessionState.Created;
+        }
     }
     
     public void End(DateTime endedAtUtc)
     {
-        if (State is not (GameSessionState.Started or GameSessionState.Resumed or GameSessionState.Paused))
+        if (State is not (GameSessionState.Started or GameSessionState.InGame or GameSessionState.Resumed or GameSessionState.Paused))
             throw new InvalidOperationException(ErrorMessages.EndSession);
         if (endedAtUtc < StartedAtUtc)
             throw new ArgumentException(ErrorMessages.Earlier, nameof(endedAtUtc));
@@ -211,8 +218,21 @@ public class GameSession : Entity
         string? guestInitials = null,
         bool requiresRegisteredUser = true)
     {
-        if (State is not (GameSessionState.Created or GameSessionState.Pending or GameSessionState.SearchingPlayer or GameSessionState.Started or GameSessionState.Resumed))
+        
+      
+        
+        if (State is not (
+            GameSessionState.Created
+            or GameSessionState.Pending 
+            or GameSessionState.SearchingPlayer 
+            or GameSessionState.Started 
+            or GameSessionState.Resumed
+            or GameSessionState.Joined
+            ))
             throw new InvalidOperationException(ErrorMessages.AddPlayerNotStarted);
+        
+ 
+        
         
         if (slotNumber is < 1 or > 4)
             throw new ArgumentOutOfRangeException(nameof(slotNumber), ErrorMessages.InvalidSlotNumber);
@@ -231,6 +251,8 @@ public class GameSession : Entity
         if (userId.HasValue && _players.Any(p => p.UserId == userId.Value))
             throw new InvalidOperationException(ErrorMessages.UserAlreadyRegistered);
 
+  
+        
         _players.Add(new GameSessionPlayer
         {
             SessionId = SessionId,
@@ -239,5 +261,10 @@ public class GameSession : Entity
             GuestInitials = guestInitials,
             JoinedAtUtc = DateTime.UtcNow
         });
+        
+        if (State is GameSessionState.Created or GameSessionState.Pending)
+        {
+            State = GameSessionState.Joined;
+        }
     }
 }

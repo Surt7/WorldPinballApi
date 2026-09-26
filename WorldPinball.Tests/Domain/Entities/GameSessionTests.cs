@@ -6,9 +6,9 @@ namespace WorldPinball.Tests.Domain.Entities;
 
 public class GameSessionTests
 {
-    private static GameSession CreateValidSession(DateTime? startedAt = null)
+    private static GameSession CreateCreatedSession(DateTime? startedAt = null)
     {
-        var session = new GameSession(
+        return new GameSession(
             machineId: Guid.NewGuid(),
             deviceId: Guid.NewGuid(),
             modeId: Guid.NewGuid(),
@@ -16,6 +16,11 @@ public class GameSessionTests
             nonce: "nonce-random-xyz",
             startedAtUtc: startedAt ?? DateTime.UtcNow
         );
+    }
+
+    private static GameSession CreateValidSession(DateTime? startedAt = null)
+    {
+        var session = CreateCreatedSession(startedAt);
         session.Start(startedAt ?? DateTime.UtcNow);
         return session;
     }
@@ -539,5 +544,49 @@ public class GameSessionTests
 
         // Assert
         act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void AddPlayer_WhenSessionIsCreated_TransitionsStateToJoined()
+    {
+        // Arrange
+        var session = CreateCreatedSession();
+        session.State.Should().Be(GameSessionState.Created);
+
+        // Act
+        session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
+
+        // Assert
+        session.State.Should().Be(GameSessionState.Joined);
+    }
+
+    [Fact]
+    public void RemovePlayer_WhenLastPlayerRemoved_TransitionsStateBackToCreated()
+    {
+        // Arrange
+        var session = CreateCreatedSession();
+        session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
+        session.State.Should().Be(GameSessionState.Joined);
+
+        // Act
+        session.RemovePlayer(slotNumber: 1);
+
+        // Assert
+        session.State.Should().Be(GameSessionState.Created);
+    }
+
+    [Fact]
+    public void Start_WhenSessionIsJoined_TransitionsStateToStarted()
+    {
+        // Arrange
+        var session = CreateCreatedSession();
+        session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
+        session.State.Should().Be(GameSessionState.Joined);
+
+        // Act
+        session.Start(DateTime.UtcNow);
+
+        // Assert
+        session.State.Should().Be(GameSessionState.Started);
     }
 }

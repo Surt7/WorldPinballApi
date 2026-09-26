@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Features.GameSessions.Public.KickPlayer.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Domain.Enums;
@@ -50,7 +50,8 @@ public sealed class KickPlayerHandler(
             GameSessionState.Created
             or GameSessionState.Pending
             or GameSessionState.SearchingPlayer
-            or GameSessionState.MatchFound))
+            or GameSessionState.MatchFound
+            or GameSessionState.Joined))
         {
             logger.LogWarning(
                 CannotRemovePlayerActiveSession,

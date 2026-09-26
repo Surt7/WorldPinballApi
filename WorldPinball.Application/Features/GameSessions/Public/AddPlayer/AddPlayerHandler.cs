@@ -23,7 +23,7 @@ public sealed class AddPlayerHandler(
         CancellationToken cancellationToken = default
         )
     {
-
+        
         var session = await writeRepository
             .GetSessionWithMachineAsync(
                 command.SessionId,
@@ -46,6 +46,7 @@ public sealed class AddPlayerHandler(
             (GameSessionState.Created 
             or GameSessionState.Pending
             or GameSessionState.SearchingPlayer
+            or GameSessionState.Joined
             or GameSessionState.Started
             or GameSessionState.Resumed
             )
