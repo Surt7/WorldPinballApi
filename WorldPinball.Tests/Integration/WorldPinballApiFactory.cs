@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.TestHost;
@@ -26,6 +26,10 @@ public sealed class WorldPinballApiFactory:WebApplicationFactory<Program>
             // Replace the production handler to keep authorization tests deterministic and database-free.
             services.RemoveAll<IProvisionMachineHandler>();
             services.AddSingleton(ProvisionMachineHandler);
+
+            services.RemoveAll<WorldPinball.Application.Interfaces.Services.IMachineStatusCacheService>();
+            var cacheMock = Substitute.For<WorldPinball.Application.Interfaces.Services.IMachineStatusCacheService>();
+            services.AddSingleton(cacheMock);
 
             // Replace JWT/Keycloak authentication only; ASP.NET Core authorization remains real.
             services

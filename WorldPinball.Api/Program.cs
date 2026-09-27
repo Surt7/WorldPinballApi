@@ -19,12 +19,14 @@ using WorldPinball.Application.Features.Machines.Public.Enroll.Profile;
 using WorldPinball.Application.Security.Cryptography;
 using WorldPinball.Infrastructure.Security.Cryptography;
 using WorldPinball.Api.Grpc;
+using WorldPinball.Api.Hubs;
 using WorldPinball.Application.Features.GameSessions.Public.GetLobby;
 using WorldPinball.Application.Features.GameSessions.Public.KickPlayer;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Queries;
 using WorldPinball.Application.Features.Machines.Admin.CreateOperatorToken;
+using WorldPinball.Application.Interfaces.Services;
 
 
 // -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
@@ -105,6 +107,10 @@ try
     //Validators
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
     
+    //SignalR
+    builder.Services.AddSignalR();
+    builder.Services.AddSingleton<ILobbyNotificationService, SignalRLobbyNotificationService>();
+    
 // -------------------- AuthN & Z --------------------
 
     builder.Services.AddApiSecurity(builder.Configuration, builder.Environment);
@@ -161,6 +167,8 @@ try
     app.MapControllers();
     app.MapGrpcService<GameSessionGrpcService>();
 
+    app.MapHub<LobbyHub>("/hubs/lobby");
+    
     app.Run();
 }
 catch (Exception ex)
