@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Timeouts;
 using WorldPinball.Bff.Extensions;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using WorldPinball.Bff.Endpoints;
+using Yarp.ReverseProxy.Transforms;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +19,7 @@ builder.Services.AddRequestTimeouts(options => {
         Timeout = TimeSpan.FromSeconds(5) 
     };
 });
-builder.Services.AddBffSecurity(); 
+builder.Services.AddBffSecurity(builder.Configuration); 
 builder.Services.AddBffRateLimiting();
 builder.Services.AddHealthChecks();
 
@@ -28,7 +31,22 @@ builder.Services.ConfigureHttpClientDefaults(http =>
 builder.AddObservability();
 
 builder.Services.AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"))
+    .AddTransforms(builderContext =>
+    {
+        builderContext.AddRequestTransform(async transformContext =>
+        {
+            
+            // we have to inject the JWT
+            var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                transformContext.ProxyRequest.Headers.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+            }
+        });
+    });
+    ;
 
 var app = builder.Build();
 
@@ -47,7 +65,9 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 // Health check endpoint for Docker / K8s
+
 app.MapHealthChecks("/health");
+app.MapAuthEndpoints();
 
 app.MapReverseProxy().RequireRateLimiting("public-ip-limit");
 

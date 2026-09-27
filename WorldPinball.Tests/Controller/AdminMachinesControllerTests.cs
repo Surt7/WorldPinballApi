@@ -14,6 +14,10 @@ using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Queries;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
 using WorldPinball.Application.Features.Machines.Admin.ReissueToken;
+using WorldPinball.Application.Features.Machines.Admin.GetAllMachines;
+using WorldPinball.Application.Features.Machines.Admin.GetAllMachines.Queries;
+using WorldPinball.Application.Features.Machines.Admin.Provision.Dtos;
+using WorldPinball.Domain.Enums;
 
 namespace WorldPinball.Tests.Controller;
 
@@ -142,5 +146,61 @@ public class AdminMachinesControllerTests
 
         result.Result.Should().BeOfType<NotFoundObjectResult>();
 
+    }
+
+    [Fact]
+    public async Task GetAllMachines_WhenCalled_ShouldReturnOkWithListOfMachines()
+    {
+        // Arrange
+        var controller = new AdminMachinesController(
+            Substitute.For<IProvisionMachineHandler>(),
+            Substitute.For<IReissueEnrollmentTokenHandler>(),
+            Substitute.For<IValidator<ProvisionMachineRequest>>());
+
+        var handler = Substitute.For<IGetAllMachinesHandler>();
+        var machines = new List<MachineRowDto>
+        {
+            new(
+                Guid.NewGuid(),
+                "Medieval Madness",
+                "MM-01",
+                MachineStatus.Active,
+                "Main hall",
+                DateTime.UtcNow,
+                null,
+                "WP-SN-001")
+        };
+
+        handler.HandleAsync(Arg.Any<GetAllMachinesQuery>(), Arg.Any<CancellationToken>())
+            .Returns(new GetAllMachinesResult.Success(machines));
+
+        // Act
+        var result = await controller.GetAllMachines(handler, CancellationToken.None);
+
+        // Assert
+        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Which;
+        var returnedMachines = okResult.Value.Should().BeAssignableTo<IReadOnlyList<MachineRowDto>>().Which;
+        returnedMachines.Should().HaveCount(1);
+        returnedMachines.First().MachineName.Should().Be("Medieval Madness");
+    }
+
+    [Fact]
+    public async Task GetAllMachines_WhenNoMachinesFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var controller = new AdminMachinesController(
+            Substitute.For<IProvisionMachineHandler>(),
+            Substitute.For<IReissueEnrollmentTokenHandler>(),
+            Substitute.For<IValidator<ProvisionMachineRequest>>());
+
+        var handler = Substitute.For<IGetAllMachinesHandler>();
+        handler.HandleAsync(Arg.Any<GetAllMachinesQuery>(), Arg.Any<CancellationToken>())
+            .Returns(new GetAllMachinesResult.NotFound());
+
+        // Act
+        var result = await controller.GetAllMachines(handler, CancellationToken.None);
+
+        // Assert
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
     }
 }

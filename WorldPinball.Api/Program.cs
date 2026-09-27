@@ -12,6 +12,7 @@ using WorldPinball.Application.Features.GameSessions.Public.AddPlayer;
 using WorldPinball.Application.Features.GameSessions.Public.CreateGameSession;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
+using WorldPinball.Application.Features.Machines.Admin.GetAllMachines;
 using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Features.Machines.Admin.ReissueToken;
 using WorldPinball.Application.Features.Machines.Public;
@@ -95,6 +96,7 @@ try
         CreateOperatorTokenHandler>();
     
     builder.Services.AddScoped<IGetMachineDashboardHandler, GetMachineDashboardHandler>();
+    builder.Services.AddScoped<IGetAllMachinesHandler, GetAllMachinesHandler>();
     
     // Security
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();

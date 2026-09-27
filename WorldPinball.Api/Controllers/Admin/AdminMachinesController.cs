@@ -1,11 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Application.Contracts.Admin.Machine;
-using WorldPinball.Application.Features.Machines.Admin;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using Microsoft.AspNetCore.WebUtilities;
 using WorldPinball.Api.Contracts.Machine;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Dtos;
@@ -14,6 +11,9 @@ using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
 using WorldPinball.Application.Features.Machines.Admin.ReissueToken;
 using WorldPinball.Application.Features.Machines.Admin.ReissueToken.Commands;
+using WorldPinball.Application.Features.Machines.Admin.Provision.Dtos;
+using WorldPinball.Application.Features.Machines.Admin.GetAllMachines;
+using WorldPinball.Application.Features.Machines.Admin.GetAllMachines.Queries;
 
 namespace WorldPinball.Api.Controllers.Admin;
 
@@ -159,10 +159,10 @@ public sealed class AdminMachinesController(
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MachineDashboardDto>> GetDashboard(
         [FromRoute] Guid machineId,
-        [FromServices] IGetMachineDashboardHandler handler,
+        [FromServices] IGetMachineDashboardHandler handlerDash,
         CancellationToken ct)
     {
-        var result = await handler.HandleAsync(new GetMachineDashboardQuery(machineId), ct);
+        var result = await handlerDash.HandleAsync(new GetMachineDashboardQuery(machineId), ct);
         return result switch
         {
             GetMachineDashboardResult.Success s => Ok(s.Stats),
@@ -170,9 +170,21 @@ public sealed class AdminMachinesController(
             _ => throw new InvalidOperationException($"Unsupported result: {result.GetType().Name}")
         };
     }
-    
-    
-    
-    
-    
+    [HttpGet]
+    [EndpointSummary("Retrieves all registered machines")]
+    [EndpointDescription("GET to list all machines for administration.")]
+    [ProducesResponseType(typeof(IReadOnlyList<MachineRowDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IReadOnlyList<MachineRowDto>>> GetAllMachines(
+        [FromServices] IGetAllMachinesHandler handlerAllMachines,
+        CancellationToken ct)
+    {
+        var result = await handlerAllMachines.HandleAsync(new GetAllMachinesQuery(), ct);
+        return result switch
+        {
+            GetAllMachinesResult.Success success => Ok(success.Machines),
+            GetAllMachinesResult.NotFound => NotFound(new { message = "No machines found." }),
+            _ => throw new InvalidOperationException($"Unsupported result: {result.GetType().Name}")
+        };
+    }
 }
