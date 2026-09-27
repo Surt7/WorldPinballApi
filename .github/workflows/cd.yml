@@ -1,4 +1,4 @@
-﻿name: CD Publish Docker Images
+name: CD Publish Docker Images
 
 on:
   push:
@@ -24,6 +24,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Convert repository name to lowercase
+        run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       - name: Build and Push API Image
         uses: docker/build-push-action@v5
         with:
@@ -31,8 +34,8 @@ jobs:
           file: WorldPinball.Api/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/api:latest
-            ghcr.io/${{ github.repository }}/api:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LC }}/api:latest
+            ghcr.io/${{ env.REPO_LC }}/api:${{ github.sha }}
 
       - name: Build and Push BFF Image
         uses: docker/build-push-action@v5
@@ -41,5 +44,5 @@ jobs:
           file: WorldPinball.Bff/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/bff:latest
-            ghcr.io/${{ github.repository }}/bff:${{ github.sha }}
+            ghcr.io/${{ env.REPO_LC }}/bff:latest
+            ghcr.io/${{ env.REPO_LC }}/bff:${{ github.sha }}
