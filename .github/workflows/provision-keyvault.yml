@@ -1,0 +1,75 @@
+name: Provision Azure KeyVault Secrets
+
+on:
+  workflow_dispatch:
+    inputs:
+      vault_name:
+        description: 'Azure Keyvault name'
+        required: true
+        default: 'Tronic'
+        type: string
+      environment:
+        description: 'Target environment (staging or production)'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  provision-secrets:
+    name: Provision KeyVault Secrets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Log in to Azure (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Generate & Set Secrets in Azure KeyVault
+        run: |
+          ENV="${{ inputs.environment }}"
+          VAULT_NAME="${{ inputs.vault_name }}"
+          DOMAIN_SUFFIX="$ENV.worldpinball.com"
+          if [ "$ENV" = "production" ]; then
+            DOMAIN_SUFFIX="worldpinball.com"
+          fi
+
+          echo "Provisioning secrets for environment: $ENV into KeyVault: $VAULT_NAME"
+
+          # Helper function for generating random secure password
+          generate_password() {
+            openssl rand -base64 24 | tr -dc 'a-zA-Z0-9' | head -c 24
+          }
+
+          POSTGRES_PASSWORD=$(generate_password)
+          REDIS_PASSWORD=$(generate_password)
+          RABBITMQ_DEFAULT_PASS=$(generate_password)
+          KEYCLOAK_DB_PASSWORD=$(generate_password)
+          KEYCLOAK_ADMIN_PASSWORD=$(generate_password)
+          SEQ_ADMIN_PASSWORD=$(generate_password)
+          STEP_CA_PASSWORD=$(generate_password)
+          POSTGRES_STAT_PASSWORD=$(generate_password)
+
+          # Push all 10 secrets into Azure KeyVault
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "ConnectionStrings--DefaultConnection" --value "Host=db.$DOMAIN_SUFFIX;Port=5432;Database=worldpinball;Username=postgres;Password=$POSTGRES_PASSWORD" --output none
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "ConnectionStrings--Redis" --value "redis.$DOMAIN_SUFFIX:6379,password=$REDIS_PASSWORD,abortConnect=false" --output none
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "RabbitMQ--User" --value "worldpinball" --output none
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "RabbitMQ--Password" --value "$RABBITMQ_DEFAULT_PASS" --output none
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "Keycloak--DbPassword" --value "$KEYCLOAK_DB_PASSWORD" --output none
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "Keycloak--Authority" --value "https://auth.$DOMAIN_SUFFIX/realms/worldpinball" --output none
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "Keycloak--AdminUser" --value "admin" --output none
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "Keycloak--AdminPassword" --value "$KEYCLOAK_ADMIN_PASSWORD" --output none
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "Seq--AdminPassword" --value "$SEQ_ADMIN_PASSWORD" --output none
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "StepCa--Password" --value "$STEP_CA_PASSWORD" --output none
+          az keyvault secret set --vault-name "$VAULT_NAME" --name "PostgresStat--Password" --value "$POSTGRES_STAT_PASSWORD" --output none
+
+          echo "Successfully provisioned all secrets into Azure KeyVault: $VAULT_NAME"

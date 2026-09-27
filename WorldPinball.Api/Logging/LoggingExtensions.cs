@@ -31,7 +31,9 @@ public static class LoggingExtensions
                 configuration.WriteTo.Seq(seqServerUrl);
             }
 
-            configuration.WriteTo.OpenTelemetry(options =>
+            if (!builder.Environment.IsEnvironment("Testing") && !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
+            {
+                configuration.WriteTo.OpenTelemetry(options =>
                 {
                     options.Endpoint = "http://localhost:4318/v1/logs";
                     options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.HttpProtobuf;
@@ -39,8 +41,8 @@ public static class LoggingExtensions
                     {
                         ["service.name"] = "WorldPinball.Api"
                     };
-                }
-            );
+                });
+            }
         });
         return builder;
     }

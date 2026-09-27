@@ -1,4 +1,4 @@
-﻿namespace WorldPinball.Infrastructure;
+namespace WorldPinball.Infrastructure;
 
 using Microsoft.Extensions.Configuration;
 using Npgsql;
@@ -10,11 +10,16 @@ public static class ConnectionStringExtensions
         var cs = config.GetConnectionString("DefaultConnection")
                  ?? throw new InvalidOperationException("Missing ConnectionStrings:DefaultConnection");
 
-        var password = config["PostGres:Password"] ?? config["POSTGRES_PASSWORD"];
-
-        return new NpgsqlConnectionStringBuilder(cs)
+        var builder = new NpgsqlConnectionStringBuilder(cs);
+        if (string.IsNullOrWhiteSpace(builder.Password))
         {
-            Password = string.IsNullOrWhiteSpace(password) ? null : password
-        }.ConnectionString;
+            var password = config["PostGres:Password"] ?? config["POSTGRES_PASSWORD"];
+            if (!string.IsNullOrWhiteSpace(password))
+            {
+                builder.Password = password;
+            }
+        }
+
+        return builder.ConnectionString;
     }
 }

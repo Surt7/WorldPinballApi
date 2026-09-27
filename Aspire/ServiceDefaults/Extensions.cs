@@ -1,5 +1,7 @@
+using Azure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
@@ -24,16 +26,20 @@ public static class Extensions
 
         builder.AddDefaultHealthChecks();
 
-        builder.Services.AddServiceDiscovery();
-
-        builder.Services.ConfigureHttpClientDefaults(http =>
+        builder.ConfigureKeyVault();
+        
+        
+        if (!builder.Environment.IsEnvironment("Testing"))
         {
-            // Turn on resilience by default
-            http.AddStandardResilienceHandler();
+            builder.Services.ConfigureHttpClientDefaults(http =>
+            {
+                // Turn on resilience by default
+                http.AddStandardResilienceHandler();
 
-            // Turn on service discovery by default
-            http.AddServiceDiscovery();
-        });
+                // Turn on service discovery by default
+                http.AddServiceDiscovery();
+            });
+        }
 
         // Uncomment the following to restrict the allowed schemes for service discovery.
         // builder.Services.Configure<ServiceDiscoveryOptions>(options =>
@@ -80,13 +86,19 @@ public static class Extensions
 
     private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        if (builder.Environment.IsEnvironment("Testing"))
+        {
+            return builder;
+        }
+
         var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
 
         if (useOtlpExporter)
         {
             builder.Services.AddOpenTelemetry().UseOtlpExporter();
         }
-
+        
+        
         // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
         //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
         //{
@@ -97,6 +109,21 @@ public static class Extensions
         return builder;
     }
 
+    public static TBuilder ConfigureKeyVault<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    {
+        var keyVaultUri = builder.Configuration["KeyVault:VaultUri"] 
+                          ?? builder.Configuration["KEYVAULT_URI"];
+
+        if (!string.IsNullOrWhiteSpace(keyVaultUri))
+        {
+            builder.Configuration.AddAzureKeyVault(
+                new Uri(keyVaultUri),
+                new DefaultAzureCredential());
+        }
+
+        return builder;
+    }
+    
     public static TBuilder AddDefaultHealthChecks<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.Services.AddHealthChecks()

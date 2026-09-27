@@ -33,6 +33,8 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    builder.AddServiceDefaults();
+
     builder.WebHost.ConfigureKestrel(options =>
     {
         options.AddServerHeader = false;
@@ -65,7 +67,6 @@ try
     
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
-    builder.AddObservability();
     
     // Grpc
     builder.Services.AddGrpc();
