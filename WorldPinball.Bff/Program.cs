@@ -37,7 +37,7 @@ builder.Services.AddReverseProxy()
         builderContext.AddRequestTransform(async transformContext =>
         {
             
-            // we have to inject the JWT
+            // we have to inject the JWT with YARP
             var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
             if (!string.IsNullOrEmpty(accessToken))
             {

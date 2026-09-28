@@ -134,6 +134,7 @@ public static class DependencyInjection
             ConnectionMultiplexer.Connect(configurationOptions));
         
         services.AddScoped<IMachineStatusCacheService, RedisMachineStatusCacheService>();
+        services.AddScoped<IMatchmakingQueueService, RedisMatchmakingQueueService>();
         
         services.AddMemoryCache();
         services.AddScoped<IOperatorTokenValidator, OperatorTokenValidator>();
