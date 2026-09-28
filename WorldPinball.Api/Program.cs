@@ -27,6 +27,8 @@ using WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Queries;
 using WorldPinball.Application.Features.Machines.Admin.CreateOperatorToken;
+using WorldPinball.Application.Features.GameModes.Public.GetAllGameModes;
+using WorldPinball.Application.Features.IpLicenses.Public.GetAllIpLicenses;
 using WorldPinball.Application.Features.Matchmaking.Public.JoinQueue;
 using WorldPinball.Application.Features.Matchmaking.Public.LeaveQueue;
 using WorldPinball.Application.Features.Matchmaking.Public.MatchNextPlayer;
@@ -100,6 +102,8 @@ try
     
     builder.Services.AddScoped<IGetMachineDashboardHandler, GetMachineDashboardHandler>();
     builder.Services.AddScoped<IGetAllMachinesHandler, GetAllMachinesHandler>();
+    builder.Services.AddScoped<IGetAllGameModesHandler, GetAllGameModesHandler>();
+    builder.Services.AddScoped<IGetAllIpLicensesHandler, GetAllIpLicensesHandler>();
     builder.Services.AddScoped<IJoinMatchmakingQueueHandler, JoinMatchmakingQueueHandler>();
     builder.Services.AddScoped<ILeaveMatchmakingQueueHandler, LeaveMatchmakingQueueHandler>();
     builder.Services.AddScoped<IMatchNextPlayerHandler, MatchNextPlayerHandler>();
