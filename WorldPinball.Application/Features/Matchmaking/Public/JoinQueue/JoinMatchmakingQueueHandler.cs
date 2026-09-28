@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using WorldPinball.Application.Features.Machines.Public;
 using WorldPinball.Application.Features.Matchmaking.Public.JoinQueue.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Interfaces.Services;

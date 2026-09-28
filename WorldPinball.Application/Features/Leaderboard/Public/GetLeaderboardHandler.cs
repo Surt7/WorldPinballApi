@@ -1,14 +1,13 @@
-using WorldPinball.Application.Interfaces.Repositories;
-using WorldPinball.Application.Features.Leaderboard.Public.Dtos;
 using WorldPinball.Application.Features.Leaderboard.Public.Queries;
+using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Interfaces.Services;
 
-namespace WorldPinball.Application.Features.Leaderboard.Public.Handlers;
+namespace WorldPinball.Application.Features.Leaderboard.Public;
 
 public sealed class GetLeaderboardHandler(
     ILeaderboardReadRepository repository,
     IRealtimeLeaderboardService realTimeService
-)
+):IGetLeaderboardHandler
 {
 public async Task<GetLeaderboardResult> HandleAsync(
         GetLeaderboardQuery query,
@@ -28,7 +27,7 @@ public async Task<GetLeaderboardResult> HandleAsync(
         }
         
         
-        if (query.IpId is Guid ipId && query.ModeId is Guid modeId)
+        if (query is { IpId: { } ipId, ModeId: { } modeId })
         {
             var cached = await realTimeService.GetCachedLeaderboardAsync(
                 ipId, modeId, limit, ct);
@@ -41,7 +40,7 @@ public async Task<GetLeaderboardResult> HandleAsync(
         
         var dbResults = await repository.GetLeaderboardAsync(
             query.IpId, query.ModeId, query.IpSlug, query.ModeCode, limit, ct);
-        if (query.IpId is Guid ip && query.ModeId is Guid mode)
+        if (query is { IpId: { } ip, ModeId: { } mode })
         {
             await realTimeService.SetCachedLeaderboardAsync(
                 ip, mode, limit, dbResults, ttl, ct);

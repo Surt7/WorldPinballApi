@@ -2,7 +2,6 @@ using FluentAssertions;
 using NSubstitute;
 using WorldPinball.Application.Features.Leaderboard.Public;
 using WorldPinball.Application.Features.Leaderboard.Public.Dtos;
-using WorldPinball.Application.Features.Leaderboard.Public.Handlers;
 using WorldPinball.Application.Features.Leaderboard.Public.Queries;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Interfaces.Services;
