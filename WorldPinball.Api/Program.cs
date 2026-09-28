@@ -29,6 +29,7 @@ using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Queries;
 using WorldPinball.Application.Features.Machines.Admin.CreateOperatorToken;
 using WorldPinball.Application.Features.Matchmaking.Public.JoinQueue;
 using WorldPinball.Application.Features.Matchmaking.Public.LeaveQueue;
+using WorldPinball.Application.Features.Matchmaking.Public.MatchNextPlayer;
 using WorldPinball.Application.Interfaces.Services;
 
 
@@ -101,6 +102,7 @@ try
     builder.Services.AddScoped<IGetAllMachinesHandler, GetAllMachinesHandler>();
     builder.Services.AddScoped<IJoinMatchmakingQueueHandler, JoinMatchmakingQueueHandler>();
     builder.Services.AddScoped<ILeaveMatchmakingQueueHandler, LeaveMatchmakingQueueHandler>();
+    builder.Services.AddScoped<IMatchNextPlayerHandler, MatchNextPlayerHandler>();
     
     // Security
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();
