@@ -32,6 +32,8 @@ public class GameSession : Entity
         public const string PlayerNotFound = "Player not found in the specified slot.";
         public const string CannotStartSession = "Can only start a session that is in Created or MatchFound state.";
         public const string CannotCancelSession = "Cannot cancel a session that is already active or closed.";
+        public const string CannotLaunchSession = "Cannot launch a session that is not in a valid joinable state.";
+        
     }
     private GameSession() { }
 
@@ -94,33 +96,37 @@ public class GameSession : Entity
         ModeId = modeId;
         ClientVersion = clientVersion;
         Nonce = nonce;
-        // StartedAtUtc is initially set to the creation time, can be updated on Start
+        // StartedAtUtc is initially set to the creation time, can be updated on Launch
         StartedAtUtc = startedAtUtc;
         State = GameSessionState.Created;
-    }
 
-    public void Launch(DateTime launchedAtUtc) => Start(launchedAtUtc);
-
-    public void Start(DateTime startedAtUtc)
-    {
-        if (State is not (GameSessionState.Created 
-            or GameSessionState.Pending
-            or  GameSessionState.SearchingPlayer
-            or GameSessionState.Joined
-            ))
-            throw new InvalidOperationException(ErrorMessages.CannotCancelSession);
-
-        StartedAtUtc = startedAtUtc;
-        State = GameSessionState.Started;
-
-        AddDomainEvent(new GameSessionStartedDomainEvent(
+        AddDomainEvent(new GameSessionCreatedDomainEvent(
             SessionId,
             MachineId,
             DeviceId,
             ModeId,
-            StartedAtUtc));
+            startedAtUtc));
     }
 
+    public void Launch(DateTime launchedAtUtc)
+    {
+        if (State is not (GameSessionState.Created 
+            or GameSessionState.Pending
+            or GameSessionState.SearchingPlayer
+            or GameSessionState.Joined))
+            throw new InvalidOperationException(ErrorMessages.CannotLaunchSession);
+
+        StartedAtUtc = launchedAtUtc;
+        State = GameSessionState.Started;
+
+        AddDomainEvent(new GameSessionLaunchedDomainEvent(
+            SessionId,
+            MachineId,
+            launchedAtUtc
+            ));
+    }
+
+    
     public void SearchPlayers()
     {
         if (State is not (GameSessionState.Created or GameSessionState.Pending or GameSessionState.MatchFound))
@@ -145,7 +151,7 @@ public class GameSession : Entity
         State = GameSessionState.Resumed;
     }
     
-    public void SetMatchFound()
+    public void SetMatchFound(DateTime matchFoundAtUtc)
     {
         if (State is not GameSessionState.SearchingPlayer)
             throw new InvalidOperationException(ErrorMessages.MatchFoundNotSearching);
@@ -153,6 +159,11 @@ public class GameSession : Entity
             throw new InvalidOperationException(ErrorMessages.NotEnoughPlayersForMatch);
 
         State = GameSessionState.MatchFound;
+        AddDomainEvent(new GameSessionMatchFoundDomainEvent(
+            SessionId,
+            MachineId,
+            _players.Count,
+            matchFoundAtUtc));
     }
 
     public void RemovePlayer(int slotNumber)
@@ -202,6 +213,7 @@ public class GameSession : Entity
             throw new ArgumentException(ErrorMessages.Earlier, nameof(abandonedAtUtc));
         EndedAtUtc = abandonedAtUtc;
         State = GameSessionState.Abandoned;
+        AddDomainEvent(new GameSessionAbortedDomainEvent(SessionId, MachineId, abandonedAtUtc));
     }
 
     public void Abort(DateTime abortedAtUtc)
@@ -212,6 +224,7 @@ public class GameSession : Entity
             throw new ArgumentException(ErrorMessages.Earlier, nameof(abortedAtUtc));
         EndedAtUtc = abortedAtUtc;
         State = GameSessionState.Aborted;
+        AddDomainEvent(new GameSessionAbortedDomainEvent(SessionId, MachineId, abortedAtUtc));
     }
 
     public void AddPlayer(
@@ -221,20 +234,13 @@ public class GameSession : Entity
         bool requiresRegisteredUser = true)
     {
         
-      
-        
         if (State is not (
             GameSessionState.Created
             or GameSessionState.Pending 
             or GameSessionState.SearchingPlayer 
-            or GameSessionState.Started 
-            or GameSessionState.Resumed
             or GameSessionState.Joined
             ))
             throw new InvalidOperationException(ErrorMessages.AddPlayerNotStarted);
-        
- 
-        
         
         if (slotNumber is < 1 or > 4)
             throw new ArgumentOutOfRangeException(nameof(slotNumber), ErrorMessages.InvalidSlotNumber);

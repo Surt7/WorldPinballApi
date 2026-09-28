@@ -97,7 +97,7 @@ public class AddPlayerHandlerTests
             DateTime.UtcNow
         );
         
-        session.Start(DateTime.UtcNow);
+        session.Launch(DateTime.UtcNow);
         session.End(DateTime.UtcNow); // GameSessionState.Ended
         
         _writeRepo.GetSessionWithMachineAsync(

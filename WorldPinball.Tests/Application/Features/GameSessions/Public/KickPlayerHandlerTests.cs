@@ -57,7 +57,7 @@ public class KickPlayerHandlerTests
         // Arrange
         var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0.0", "nonce", DateTime.UtcNow);
         session.AddPlayer(1, Guid.NewGuid(), "AAA", requiresRegisteredUser: false);
-        session.Start(DateTime.UtcNow);
+        session.Launch(DateTime.UtcNow);
 
         _writeRepo.GetSessionWithMachineAsync(session.SessionId, Arg.Any<CancellationToken>())
             .Returns(session);

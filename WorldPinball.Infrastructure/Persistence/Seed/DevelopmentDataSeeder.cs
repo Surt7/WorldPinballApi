@@ -435,7 +435,7 @@ public static class DevelopmentDataSeeder
                     nonce,
                     startedAt);
 
-                session.Start(startedAt);
+                session.Launch(startedAt);
                 session.End(startedAt.AddMinutes(f.Random.Int(3, 45)));
 
                 return session;

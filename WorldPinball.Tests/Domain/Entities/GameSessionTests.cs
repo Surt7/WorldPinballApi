@@ -6,22 +6,13 @@ namespace WorldPinball.Tests.Domain.Entities;
 
 public class GameSessionTests
 {
-    private static GameSession CreateCreatedSession(DateTime? startedAt = null)
+    private static GameSession CreateSession(DateTime? startedAt = null) =>
+        new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0.0", "nonce", startedAt ?? DateTime.UtcNow);
+    private static GameSession LaunchSession(DateTime? startedAt = null)
     {
-        return new GameSession(
-            machineId: Guid.NewGuid(),
-            deviceId: Guid.NewGuid(),
-            modeId: Guid.NewGuid(),
-            clientVersion: "1.0.0",
-            nonce: "nonce-random-xyz",
-            startedAtUtc: startedAt ?? DateTime.UtcNow
-        );
-    }
-
-    private static GameSession CreateValidSession(DateTime? startedAt = null)
-    {
-        var session = CreateCreatedSession(startedAt);
-        session.Start(startedAt ?? DateTime.UtcNow);
+        var date = startedAt ?? DateTime.UtcNow;
+        var session = CreateSession(date);
+        session.Launch(date);
         return session;
     }
 
@@ -172,7 +163,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
         var endedAt = startedAt.AddMinutes(10);
 
         // Act
@@ -188,7 +179,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
         session.Pause();
         session.Resume();
         var endedAt = startedAt.AddMinutes(15);
@@ -206,7 +197,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
         session.Pause();
         var endedAt = startedAt.AddMinutes(10);
 
@@ -223,7 +214,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
 
         // Act
         session.End(startedAt);
@@ -238,7 +229,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
         session.End(startedAt.AddMinutes(5));
 
         // Act: Attempt to close an already ended session
@@ -253,7 +244,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
 
         // Act: End date earlier than start date
         Action act = () => session.End(startedAt.AddMinutes(-5));
@@ -266,7 +257,7 @@ public class GameSessionTests
     public void Pause_WhenSessionIsStarted_ShouldTransitionToPausedState()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = LaunchSession();
 
         // Act
         session.Pause();
@@ -279,7 +270,7 @@ public class GameSessionTests
     public void Pause_WhenSessionIsResumed_ShouldTransitionToPausedState()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = LaunchSession();
         session.Pause();
         session.Resume();
 
@@ -294,7 +285,7 @@ public class GameSessionTests
     public void Pause_WhenSessionIsNotActive_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = LaunchSession();
         session.Pause(); // Already paused
 
         // Act: Attempt to pause again
@@ -308,7 +299,7 @@ public class GameSessionTests
     public void Resume_WhenSessionIsPaused_ShouldTransitionToResumedState()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = LaunchSession();
         session.Pause();
 
         // Act
@@ -322,7 +313,7 @@ public class GameSessionTests
     public void Resume_WhenSessionIsNotPaused_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateValidSession(); // Started state
+        var session = LaunchSession(); // Started state
 
         // Act: Attempt to resume without pausing first
         Action act = () => session.Resume();
@@ -336,7 +327,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
         var abandonedAt = startedAt.AddMinutes(3);
 
         // Act
@@ -352,7 +343,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
         session.Abandon(startedAt.AddMinutes(5));
 
         // Act: Attempt to abandon an already closed session
@@ -367,7 +358,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
 
         // Act: Abandon date earlier than start date
         Action act = () => session.Abandon(startedAt.AddMinutes(-5));
@@ -381,7 +372,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
         var abortedAt = startedAt.AddMinutes(2);
 
         // Act
@@ -397,7 +388,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
         session.Abort(startedAt.AddMinutes(5));
 
         // Act: Attempt to abort an already closed session
@@ -412,7 +403,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateValidSession(startedAt);
+        var session = LaunchSession(startedAt);
 
         // Act: Abort date earlier than start date
         Action act = () => session.Abort(startedAt.AddMinutes(-5));
@@ -425,7 +416,7 @@ public class GameSessionTests
     public void AddPlayer_WhenPlayerIsValid_ShouldAddToPlayersCollection()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = CreateSession();
         var userId = Guid.NewGuid();
 
         // Act
@@ -444,7 +435,7 @@ public class GameSessionTests
     public void AddPlayer_WhenAnonymousGuest_ShouldAddToPlayersCollection()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = CreateSession();
 
         // Act
         session.AddPlayer(slotNumber: 2, userId: null, guestInitials: "AAA", requiresRegisteredUser: false);
@@ -464,7 +455,7 @@ public class GameSessionTests
     public void AddPlayer_WhenSlotNumberIsOutOfRange_ShouldThrowArgumentOutOfRangeException(int invalidSlotNumber)
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = CreateSession();
 
         // Act
         Action act = () => session.AddPlayer(slotNumber: invalidSlotNumber);
@@ -477,7 +468,7 @@ public class GameSessionTests
     public void AddPlayer_WhenRegistredUserRequieredAndUserIdIsNull_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = CreateSession();
 
         // Act
         Action act = () => session.AddPlayer(slotNumber: 1, userId: null, requiresRegisteredUser: true);
@@ -490,7 +481,7 @@ public class GameSessionTests
     public void AddPlayer_WhenSlotIsAlreadyOccupied_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = CreateSession();
         session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
 
         // Act: Attempt to add another player on slot 1
@@ -504,7 +495,7 @@ public class GameSessionTests
     public void AddPlayer_WhenSessionHas4Players_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = CreateSession();
         session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
         session.AddPlayer(slotNumber: 2, userId: Guid.NewGuid());
         session.AddPlayer(slotNumber: 3, userId: Guid.NewGuid());
@@ -521,7 +512,7 @@ public class GameSessionTests
     public void AddPlayer_WhenSameUserRegisteredTwice_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = CreateSession();
         var userId = Guid.NewGuid();
         session.AddPlayer(slotNumber: 1, userId: userId);
 
@@ -536,7 +527,7 @@ public class GameSessionTests
     public void AddPlayer_WhenSessionIsEnded_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateValidSession();
+        var session = LaunchSession();
         session.End(DateTime.UtcNow.AddMinutes(5));
 
         // Act
@@ -550,7 +541,7 @@ public class GameSessionTests
     public void AddPlayer_WhenSessionIsCreated_TransitionsStateToJoined()
     {
         // Arrange
-        var session = CreateCreatedSession();
+        var session = CreateSession();
         session.State.Should().Be(GameSessionState.Created);
 
         // Act
@@ -564,7 +555,7 @@ public class GameSessionTests
     public void RemovePlayer_WhenLastPlayerRemoved_TransitionsStateBackToCreated()
     {
         // Arrange
-        var session = CreateCreatedSession();
+        var session = CreateSession();
         session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
         session.State.Should().Be(GameSessionState.Joined);
 
@@ -576,15 +567,15 @@ public class GameSessionTests
     }
 
     [Fact]
-    public void Start_WhenSessionIsJoined_TransitionsStateToStarted()
+    public void Launch_WhenSessionIsJoined_TransitionsStateToStarted()
     {
         // Arrange
-        var session = CreateCreatedSession();
+        var session = CreateSession();
         session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
         session.State.Should().Be(GameSessionState.Joined);
 
         // Act
-        session.Start(DateTime.UtcNow);
+        session.Launch(DateTime.UtcNow);
 
         // Assert
         session.State.Should().Be(GameSessionState.Started);

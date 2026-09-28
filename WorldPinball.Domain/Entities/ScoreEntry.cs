@@ -1,6 +1,9 @@
-﻿namespace WorldPinball.Domain.Entities;
+﻿using WorldPinball.Domain.Common;
+using WorldPinball.Domain.Events;
 
-public class ScoreEntry
+namespace WorldPinball.Domain.Entities;
+
+public class ScoreEntry:Entity
 {
     private static class ErrorMessages
     {
@@ -72,6 +75,17 @@ public class ScoreEntry
         AchievedAtUtc = achievedAtUtc;
         UserId = userId;
         IsValidated = true;
+        
+        AddDomainEvent(new ScoreSubmittedDomainEvent(
+            ScoreEntryId,
+            SessionId,
+            MachineId,
+            ModeId,
+            SlotNumber,
+            UserId,
+            Score,
+            AchievedAtUtc));
+        
     }
 
     public void Invalidate(string reason)

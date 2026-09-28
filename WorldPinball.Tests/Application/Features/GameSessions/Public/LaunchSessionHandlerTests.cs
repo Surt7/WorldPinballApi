@@ -64,7 +64,7 @@ public class LaunchSessionHandlerTests
     {
         // Arrange
         var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0.0", "nonce", DateTime.UtcNow);
-        session.Start(DateTime.UtcNow);
+        session.Launch(DateTime.UtcNow);
         session.End(DateTime.UtcNow.AddMinutes(5));
 
         _writeRepo.GetSessionWithMachineAsync(session.SessionId, Arg.Any<CancellationToken>())

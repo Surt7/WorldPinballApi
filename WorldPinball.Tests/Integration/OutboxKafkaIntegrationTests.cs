@@ -29,8 +29,9 @@ public class OutboxKafkaIntegrationTests
         
         var message = new OutboxMessage(
             Guid.NewGuid(), 
-            "GameSessionStartedDomainEvent", 
-            "{}", DateTime.UtcNow);
+            "IntegrationTestEvent", 
+            """{"description": "test integration"}""", 
+            DateTime.UtcNow);
         
         
         var options = new DbContextOptionsBuilder<AppDbContext>()

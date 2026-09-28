@@ -53,7 +53,7 @@ public class SubmitScoreHandlerTests
             nonce,
             now.UtcDateTime
         );
-        gameSession.Start(start.UtcDateTime);
+        gameSession.Launch(start.UtcDateTime);
         gameSession.End(end.UtcDateTime);
         writeRepository
             .GetSessionWithMachineAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
@@ -95,8 +95,8 @@ public class SubmitScoreHandlerTests
             nonce,
             now.UtcDateTime
         );
-        gameSession.Start(start.UtcDateTime);
         gameSession.AddPlayer(slotNumber, userId, "AAA");
+        gameSession.Launch(start.UtcDateTime);
         
         writeRepository
             .GetSessionWithMachineAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
@@ -137,8 +137,8 @@ public class SubmitScoreHandlerTests
             nonce,
             now.UtcDateTime
         );
-        gameSession.Start(start.UtcDateTime);
         gameSession.AddPlayer(slotNumber, userId, "AAA");
+        gameSession.Launch(start.UtcDateTime);
         
         writeRepository
             .GetSessionWithMachineAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
@@ -179,8 +179,8 @@ public class SubmitScoreHandlerTests
             nonce,
             now.UtcDateTime
         );
-        gameSession.Start(start.UtcDateTime);
         gameSession.AddPlayer(slotNumber, userId, "AAA");
+        gameSession.Launch(start.UtcDateTime);
         
         writeRepository
             .GetSessionWithMachineAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
@@ -214,9 +214,9 @@ public class SubmitScoreHandlerTests
         var now = DateTime.UtcNow;
 
         var gameSession = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0", "nonce", now);
-        gameSession.Start(now);
         gameSession.AddPlayer(1, Guid.NewGuid(), "AAA");
         gameSession.AddPlayer(2, Guid.NewGuid(), "BBB");
+        gameSession.Launch(now);
 
         writeRepository.GetSessionWithMachineAsync(gameSession.SessionId, Arg.Any<CancellationToken>())
             .Returns(gameSession);
