@@ -3,6 +3,8 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Api.Contracts.Sessions;
+using WorldPinball.Application.Features.GameSessions.Public.AbortSession;
+using WorldPinball.Application.Features.GameSessions.Public.AbortSession.Commands;
 using WorldPinball.Application.Features.GameSessions.Public.AddPlayer;
 using WorldPinball.Application.Features.GameSessions.Public.AddPlayer.Commands;
 using WorldPinball.Application.Features.GameSessions.Public.CreateGameSession;
@@ -26,6 +28,7 @@ public class SessionsController(
     IMachineAuthService authService,
     ICreateGameSessionHandler createGameSessionHandler,
     ISubmitScoreHandler submitScoreHandler,
+    IAbortSessionHandler abortSessionHandler,
     IGetLobbyHandler getLobbyHandler,
     IAddPlayerHandler addPlayerHandler,
     IKickPlayerHandler kickPlayerHandler,
@@ -288,4 +291,28 @@ public class SessionsController(
             _ => throw new InvalidOperationException($"Unsupported session result: {scoreResult.GetType().Name}")
         };
     }
+
+    [HttpPost("{sessionId:guid}/abort")]
+    [EndpointSummary("Abort game session")]
+    [EndpointDescription("POST to abort an active game session")]
+    [ProducesResponseType(typeof(AbortSessionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AbortSessionResponse>> AbortSession(
+        [FromRoute] Guid sessionId,
+        CancellationToken ct)
+    {
+        
+        var command = new AbortSessionCommand(sessionId);
+        var result = await abortSessionHandler.HandleAsync(command, ct);
+        return result switch
+        {
+            AbortSessionResult.Success s => Ok(new AbortSessionResponse(s.SessionId)),
+            AbortSessionResult.SessionNotFound s => NotFound(new { message = $"Session '{s.SessionId}' not found." }),
+            AbortSessionResult.CannotAbortSession s => BadRequest(new { message = s.Reason }),
+            _ => throw new InvalidOperationException($"Unsupported abort session result: {result.GetType().Name}")
+        };
+    }
+
+
 }

@@ -1,4 +1,4 @@
-﻿namespace WorldPinball.Api.Hubs;
+namespace WorldPinball.Api.Hubs;
 
 public interface ILobbyHubClient
 {
@@ -8,4 +8,5 @@ public interface ILobbyHubClient
     Task ScoreSubmitted(int slotNumber, long score);
     Task SessionEnded(Guid sessionId);
     Task SessionAborted(Guid sessionId);
+    Task MatchFound(Guid sessionId, Guid machineId);
 }

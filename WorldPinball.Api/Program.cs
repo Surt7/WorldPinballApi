@@ -27,6 +27,7 @@ using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Queries;
 using WorldPinball.Application.Features.Machines.Admin.CreateOperatorToken;
 using WorldPinball.Application.Features.GameModes.Public.GetAllGameModes;
+using WorldPinball.Application.Features.GameSessions.Public.AbortSession;
 using WorldPinball.Application.Features.IpLicenses.Public.GetAllIpLicenses;
 using WorldPinball.Application.Features.Leaderboard.Public;
 using WorldPinball.Application.Features.Matchmaking.Public.JoinQueue;
@@ -99,6 +100,8 @@ try
     
     builder.Services.AddScoped<ICreateOperatorTokenHandler,
         CreateOperatorTokenHandler>();
+    
+    builder.Services.AddScoped<IAbortSessionHandler, AbortSessionHandler>();
     
     builder.Services.AddScoped<IGetMachineDashboardHandler, GetMachineDashboardHandler>();
     builder.Services.AddScoped<IGetAllMachinesHandler, GetAllMachinesHandler>();

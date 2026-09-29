@@ -129,7 +129,7 @@ public class GameSession : Entity
     
     public void SearchPlayers()
     {
-        if (State is not (GameSessionState.Created or GameSessionState.Pending or GameSessionState.MatchFound))
+        if (State is not (GameSessionState.Created or GameSessionState.Pending or GameSessionState.Joined or GameSessionState.MatchFound))
             throw new InvalidOperationException(ErrorMessages.CannotSearchPlayers);
 
         State = GameSessionState.SearchingPlayer;

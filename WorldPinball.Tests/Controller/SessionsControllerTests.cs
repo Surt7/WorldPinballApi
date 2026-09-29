@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using WorldPinball.Api.Contracts.Sessions;
 using WorldPinball.Api.Controllers.Public;
+using WorldPinball.Application.Features.GameSessions.Public.AbortSession;
+using WorldPinball.Application.Features.GameSessions.Public.AbortSession.Commands;
 using WorldPinball.Application.Features.GameSessions.Public.AddPlayer;
 using WorldPinball.Application.Features.GameSessions.Public.AddPlayer.Commands;
 using WorldPinball.Application.Features.GameSessions.Public.CreateGameSession;
@@ -29,6 +31,7 @@ public class SessionsControllerTests
     private readonly IMachineAuthService _authService = Substitute.For<IMachineAuthService>();
     private readonly ICreateGameSessionHandler _createSessionHandler = Substitute.For<ICreateGameSessionHandler>();
     private readonly ISubmitScoreHandler _submitScoreHandler = Substitute.For<ISubmitScoreHandler>();
+    private readonly IAbortSessionHandler _abortSessionHandler = Substitute.For<IAbortSessionHandler>();
     private readonly IGetLobbyHandler _getLobbyHandler = Substitute.For<IGetLobbyHandler>();
     private readonly IAddPlayerHandler _addPlayerHandler = Substitute.For<IAddPlayerHandler>();
     private readonly IKickPlayerHandler _kickPlayerHandler = Substitute.For<IKickPlayerHandler>();
@@ -50,6 +53,7 @@ public class SessionsControllerTests
             _authService,
             _createSessionHandler,
             _submitScoreHandler,
+            _abortSessionHandler,
             _getLobbyHandler,
             _addPlayerHandler,
             _kickPlayerHandler,
@@ -199,6 +203,25 @@ public class SessionsControllerTests
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Which;
         var response = okResult.Value.Should().BeOfType<LaunchSessionResponse>().Which;
+        response.SessionId.Should().Be(sessionId);
+    }
+
+    [Fact]
+    public async Task AbortSession_WhenSessionAborted_ShouldReturnOk()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid();
+        _abortSessionHandler.HandleAsync(Arg.Is<AbortSessionCommand>(c => c.SessionId == sessionId), Arg.Any<CancellationToken>())
+            .Returns(new AbortSessionResult.Success(sessionId));
+
+        var controller = CreateController();
+
+        // Act
+        var result = await controller.AbortSession(sessionId, CancellationToken.None);
+
+        // Assert
+        var okResult = result.Result.Should().BeOfType<OkObjectResult>().Which;
+        var response = okResult.Value.Should().BeOfType<AbortSessionResponse>().Which;
         response.SessionId.Should().Be(sessionId);
     }
 }

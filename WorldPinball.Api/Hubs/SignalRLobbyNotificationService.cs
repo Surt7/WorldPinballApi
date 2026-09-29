@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using WorldPinball.Application.Interfaces.Services;
 
 namespace WorldPinball.Api.Hubs;
@@ -34,5 +34,9 @@ public sealed class SignalRLobbyNotificationService(
     public async Task NotifySessionAbortedAsync(Guid sessionId, CancellationToken ct = default)
     {
         await hubContext.Clients.Group(sessionId.ToString()).SessionAborted(sessionId);
+    }
+    public async Task NotifyMatchFoundAsync(Guid sessionId, Guid machineId, CancellationToken ct = default)
+    {
+        await hubContext.Clients.Group(sessionId.ToString()).MatchFound(sessionId, machineId);
     }
 }

@@ -84,4 +84,10 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
         NotifyLobbyUpdated(sessionId);
         return Task.CompletedTask;
     }
+
+    public Task NotifyMatchFoundAsync(Guid sessionId, Guid machineId, CancellationToken ct = default)
+    {
+        NotifyLobbyUpdated(sessionId);
+        return Task.CompletedTask;
+    }
 }

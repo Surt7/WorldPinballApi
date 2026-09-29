@@ -18,6 +18,7 @@ public interface ILobbyNotificationService
     
     Task NotifySessionAbortedAsync(Guid sessionId,
         CancellationToken ct = default);
-    
-    
+
+    Task NotifyMatchFoundAsync(Guid sessionId, Guid machineId,
+        CancellationToken ct = default);
 }
