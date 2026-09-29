@@ -21,7 +21,7 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
         }
     }
 
-    // the call attribute [EnumeratorCancellation] create an instance, because with extension meo 
+    // the call attribute [EnumeratorCancellation] create an instance, because of extension 
     public async IAsyncEnumerable<Guid> SubscribeAsync(
         Guid sessionId, 
         [EnumeratorCancellation] CancellationToken cancellationToken = default
@@ -36,7 +36,6 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
         var sessionChannels = _subscribers.GetOrAdd(
             sessionId, _ => new ConcurrentDictionary<Channel<Guid>, byte>());
         sessionChannels.TryAdd(channel, 0);
-        
         
         try
         {
@@ -60,8 +59,29 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
                 _subscribers.TryRemove(sessionId, out _);
             }
         }
-        
-        
-        
+    }
+    
+    
+    public Task NotifyScoreSubmittedAsync(Guid sessionId, int slotNumber, long score, CancellationToken ct = default)
+    {
+        NotifyLobbyUpdated(sessionId);
+        return Task.CompletedTask;
+    }
+    
+    
+    public Task NotifySessionLaunchedAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        NotifyLobbyUpdated(sessionId);
+        return Task.CompletedTask;
+    }
+    public Task NotifySessionEndedAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        NotifyLobbyUpdated(sessionId);
+        return Task.CompletedTask;
+    }
+    public Task NotifySessionAbortedAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        NotifyLobbyUpdated(sessionId);
+        return Task.CompletedTask;
     }
 }

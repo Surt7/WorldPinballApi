@@ -30,7 +30,7 @@ public class OutboxKafkaIntegrationTests
         var message = new OutboxMessage(
             Guid.NewGuid(), 
             "IntegrationTestEvent", 
-            """{"description": "test integration"}""", 
+            """{"description": "integration test"}""", 
             DateTime.UtcNow);
         
         

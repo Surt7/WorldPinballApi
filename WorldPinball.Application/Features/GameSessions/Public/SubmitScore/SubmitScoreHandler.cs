@@ -10,6 +10,7 @@ namespace WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 public sealed class SubmitScoreHandler(
     IGameSessionWriteRepository writeRepository,
     IRealtimeLeaderboardService realtimeLeaderboardService,
+    ILobbyNotificationService lobbyNotifier,
     ILogger<SubmitScoreHandler> logger,
     TimeProvider timeProvider
     ) : ISubmitScoreHandler
@@ -91,7 +92,7 @@ public sealed class SubmitScoreHandler(
         gameSession.End(nowUtc);
 
         await writeRepository.SaveScoreEntriesAsync(gameSession, scoreEntries, token);
-
+        
         foreach (var scoreEntry in scoreEntries)
         {
             await realtimeLeaderboardService.AddScoreAsync(
@@ -101,7 +102,16 @@ public sealed class SubmitScoreHandler(
                 scoreEntry.Score,
                 token
             );
+            
+            await lobbyNotifier.NotifyScoreSubmittedAsync(
+                gameSession.SessionId,
+                scoreEntry.SlotNumber,
+                scoreEntry.Score,
+                token
+            );
         }
+
+        await lobbyNotifier.NotifySessionEndedAsync(gameSession.SessionId, token);
 
         return new SubmitScoreResult.Success(scoreEntries.Select(s => s.ScoreEntryId).ToList());
     }

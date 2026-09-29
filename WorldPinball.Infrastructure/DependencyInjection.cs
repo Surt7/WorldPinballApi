@@ -112,9 +112,15 @@ public static class DependencyInjection
         
         services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
         services.AddScoped<IOutboxProcessor, OutboxProcessor>();
+        
+        // Outbox Services
         services.AddHostedService<OutboxBackgroundService>();
         services.AddSingleton<IOutboxNotificationChannel, OutboxNotificationChannel>();
         
+        // Outbox Cleanup Services
+        services.AddScoped<IOutboxCleaner, OutboxCleaner>();
+        services.AddSingleton<IOutboxCleanupChannel, OutboxCleanupChannel>();
+        services.AddHostedService<OutboxCleanupBackgroundService>();
        
         // -------------------- Redis --------------------
        

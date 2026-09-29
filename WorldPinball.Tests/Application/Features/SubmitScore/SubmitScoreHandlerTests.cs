@@ -15,6 +15,7 @@ public class SubmitScoreHandlerTests
     [Fact]
     public async Task HandleAsync_WhenSessionDoesNotExist_ShouldReturnSessionNotFound()
     {
+        var lobbyNotifier = Substitute.For<ILobbyNotificationService>();
         var logger = new FakeLogger<SubmitScoreHandler>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
         var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
@@ -23,7 +24,12 @@ public class SubmitScoreHandlerTests
             .Returns((GameSession?)null);
         
         var command = new SubmitScoreCommand(Guid.NewGuid(), Guid.NewGuid(), [new SlotScoreDto(1, 50000)]);
-        var sut = new SubmitScoreHandler(writeRepository, realtimeLeaderboardService, logger, TimeProvider.System);
+        var sut = new SubmitScoreHandler(
+            writeRepository,
+            realtimeLeaderboardService,
+            lobbyNotifier,
+            logger,
+            TimeProvider.System);
         
         var result = await sut.HandleAsync(command, CancellationToken.None);
         
@@ -34,6 +40,7 @@ public class SubmitScoreHandlerTests
     public async Task HandleAsync_WhenSessionIsEnded_ShouldReturnResultSessionAlreadyEnded()
     {
         var logger = new FakeLogger<SubmitScoreHandler>();
+        var lobbyNotifier = Substitute.For<ILobbyNotificationService>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
         var timeProvider = TimeProvider.System;
         var now = timeProvider.GetUtcNow();
@@ -61,7 +68,12 @@ public class SubmitScoreHandlerTests
         var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
         var command = new SubmitScoreCommand(Guid.NewGuid(), deviceId, [new SlotScoreDto(1, 50000)]);
         
-        var sut = new SubmitScoreHandler(writeRepository, realtimeLeaderboardService, logger, TimeProvider.System);
+        var sut = new SubmitScoreHandler(
+            writeRepository,
+            realtimeLeaderboardService,
+            lobbyNotifier,
+            logger,
+            TimeProvider.System);
         
         var result = await sut.HandleAsync(command, CancellationToken.None);
         
@@ -74,7 +86,8 @@ public class SubmitScoreHandlerTests
         var logger = new FakeLogger<SubmitScoreHandler>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
         var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
-
+        var lobbyNotifier = Substitute.For<ILobbyNotificationService>();
+        
         var timeProvider = TimeProvider.System;
         var now = timeProvider.GetUtcNow();
         var start = now.AddMinutes(-10);
@@ -104,7 +117,12 @@ public class SubmitScoreHandlerTests
 
         var command = new SubmitScoreCommand(Guid.NewGuid(), Guid.NewGuid(), [new SlotScoreDto(slotNumber, 50000)]);
         
-        var sut = new SubmitScoreHandler(writeRepository, realtimeLeaderboardService, logger, TimeProvider.System);
+        var sut = new SubmitScoreHandler(
+            writeRepository,
+            realtimeLeaderboardService,
+            lobbyNotifier,
+            logger,
+            TimeProvider.System);
         
         var result = await sut.HandleAsync(command, CancellationToken.None);
  
@@ -117,7 +135,8 @@ public class SubmitScoreHandlerTests
         var logger = new FakeLogger<SubmitScoreHandler>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
         var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
-
+        var lobbyNotifier = Substitute.For<ILobbyNotificationService>();
+        
         var timeProvider = TimeProvider.System;
         var now = timeProvider.GetUtcNow();
         var start = now.AddMinutes(-10);
@@ -146,7 +165,12 @@ public class SubmitScoreHandlerTests
 
         var command = new SubmitScoreCommand(gameSession.SessionId, deviceId, [new SlotScoreDto(4, 50000)]);
         
-        var sut = new SubmitScoreHandler(writeRepository, realtimeLeaderboardService, logger, TimeProvider.System);
+        var sut = new SubmitScoreHandler(
+            writeRepository,
+            realtimeLeaderboardService,
+            lobbyNotifier,
+            logger,
+            TimeProvider.System);
      
         var result = await sut.HandleAsync(command, CancellationToken.None);
 
@@ -159,7 +183,8 @@ public class SubmitScoreHandlerTests
         var logger = new FakeLogger<SubmitScoreHandler>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
         var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
-
+        var lobbyNotifier = Substitute.For<ILobbyNotificationService>();
+        
         var timeProvider = TimeProvider.System;
         var now = timeProvider.GetUtcNow();
         var start = now.AddMinutes(-10);
@@ -188,7 +213,11 @@ public class SubmitScoreHandlerTests
 
         var command = new SubmitScoreCommand(gameSession.SessionId, deviceId, [new SlotScoreDto(slotNumber, 50000)]);
         
-        var sut = new SubmitScoreHandler(writeRepository, realtimeLeaderboardService, logger, TimeProvider.System);
+        var sut = new SubmitScoreHandler(writeRepository,
+            realtimeLeaderboardService, 
+            lobbyNotifier,
+            logger,
+            TimeProvider.System);
         
         var result = await sut.HandleAsync(command, CancellationToken.None);
         
@@ -208,6 +237,7 @@ public class SubmitScoreHandlerTests
     public async Task HandleAsync_WhenMultipleSlotsSubmitted_ShouldSaveAllScoresAndEndSession()
     {
         // Arrange
+        var lobbyNotifier = Substitute.For<ILobbyNotificationService>();
         var logger = new FakeLogger<SubmitScoreHandler>();
         var writeRepository = Substitute.For<IGameSessionWriteRepository>();
         var realtimeLeaderboardService = Substitute.For<IRealtimeLeaderboardService>();
@@ -218,7 +248,9 @@ public class SubmitScoreHandlerTests
         gameSession.AddPlayer(2, Guid.NewGuid(), "BBB");
         gameSession.Launch(now);
 
-        writeRepository.GetSessionWithMachineAsync(gameSession.SessionId, Arg.Any<CancellationToken>())
+        writeRepository.GetSessionWithMachineAsync(
+                gameSession.SessionId, 
+                Arg.Any<CancellationToken>())
             .Returns(gameSession);
 
         var scores = new List<SlotScoreDto>
@@ -227,7 +259,12 @@ public class SubmitScoreHandlerTests
             new(2, 850000)
         };
         var command = new SubmitScoreCommand(gameSession.SessionId, gameSession.DeviceId, scores);
-        var sut = new SubmitScoreHandler(writeRepository, realtimeLeaderboardService, logger, TimeProvider.System);
+        var sut = new SubmitScoreHandler(
+            writeRepository, 
+            realtimeLeaderboardService,
+            lobbyNotifier,
+            logger,
+            TimeProvider.System);
 
         // Act
         var result = await sut.HandleAsync(command, CancellationToken.None);
@@ -236,6 +273,15 @@ public class SubmitScoreHandlerTests
         result.Should().BeOfType<SubmitScoreResult.Success>();
         gameSession.State.Should().Be(GameSessionState.Ended);
         await realtimeLeaderboardService.Received(2).AddScoreAsync(
-            Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<long>(), Arg.Any<CancellationToken>());
+            Arg.Any<Guid>(), Arg.Any<Guid>(), 
+            Arg.Any<Guid>(), 
+            Arg.Any<long>(), Arg.Any<CancellationToken>());
+        
+        await lobbyNotifier.Received(1).NotifyScoreSubmittedAsync(
+            gameSession.SessionId, 1, 1500000, Arg.Any<CancellationToken>());
+        await lobbyNotifier.Received(1).NotifyScoreSubmittedAsync(
+            gameSession.SessionId, 2, 850000, Arg.Any<CancellationToken>());
+        await lobbyNotifier.Received(1).NotifySessionEndedAsync(
+            gameSession.SessionId, Arg.Any<CancellationToken>());
     }
 }

@@ -65,7 +65,7 @@ public class OutboxProcessorTests
         var message = new OutboxMessage(
             Guid.NewGuid(),
             "GameSessionEndedDomainEvent",
-            "{}",
+            """{"description": "test record failure"}""",
             _timeProvider.GetUtcNow().UtcDateTime
             );
 

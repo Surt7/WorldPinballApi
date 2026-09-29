@@ -5,6 +5,7 @@ using NSubstitute;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
+using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 
@@ -13,6 +14,7 @@ namespace WorldPinball.Tests.Application.Features.GameSessions.Public;
 public class LaunchSessionHandlerTests
 {
     private readonly IGameSessionWriteRepository _writeRepo = Substitute.For<IGameSessionWriteRepository>();
+    private readonly ILobbyNotificationService _lobbyNotifier = Substitute.For<ILobbyNotificationService>();
     private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 9, 26, 12, 0, 0, TimeSpan.Zero));
     private readonly NullLogger<LaunchSessionHandler> _logger = NullLogger<LaunchSessionHandler>.Instance;
 
@@ -24,7 +26,7 @@ public class LaunchSessionHandlerTests
         _writeRepo.GetSessionWithMachineAsync(sessionId, Arg.Any<CancellationToken>())
             .Returns((GameSession?)null);
 
-        var sut = new LaunchSessionHandler(_writeRepo, _timeProvider, _logger);
+        var sut = new LaunchSessionHandler(_writeRepo, _lobbyNotifier, _timeProvider, _logger);
         var command = new LaunchSessionCommand(sessionId);
 
         // Act
@@ -45,7 +47,7 @@ public class LaunchSessionHandlerTests
         _writeRepo.GetSessionWithMachineAsync(session.SessionId, Arg.Any<CancellationToken>())
             .Returns(session);
 
-        var sut = new LaunchSessionHandler(_writeRepo, _timeProvider, _logger);
+        var sut = new LaunchSessionHandler(_writeRepo, _lobbyNotifier, _timeProvider, _logger);
         var command = new LaunchSessionCommand(session.SessionId);
 
         // Act
@@ -57,6 +59,7 @@ public class LaunchSessionHandlerTests
 
         session.State.Should().Be(GameSessionState.Started);
         await _writeRepo.Received(1).UpdateSessionAsync(session, Arg.Any<CancellationToken>());
+        await _lobbyNotifier.Received(1).NotifySessionLaunchedAsync(session.SessionId, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -70,7 +73,7 @@ public class LaunchSessionHandlerTests
         _writeRepo.GetSessionWithMachineAsync(session.SessionId, Arg.Any<CancellationToken>())
             .Returns(session);
 
-        var sut = new LaunchSessionHandler(_writeRepo, _timeProvider, _logger);
+        var sut = new LaunchSessionHandler(_writeRepo, _lobbyNotifier, _timeProvider, _logger);
         var command = new LaunchSessionCommand(session.SessionId);
 
         // Act
