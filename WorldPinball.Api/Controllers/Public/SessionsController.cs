@@ -33,7 +33,7 @@ public class SessionsController(
     IAddPlayerHandler addPlayerHandler,
     IKickPlayerHandler kickPlayerHandler,
     ILaunchSessionHandler launchSessionHandler,
-    IValidator<StartSessionRequest> requestValidator,
+    IValidator<CreateGameSessionRequest> requestValidator,
     IValidator<SubmitScoreRequest> reqValidator,
     IValidator<AddPlayerRequest> addPlayerValidator
 ) : ControllerBase
@@ -53,7 +53,7 @@ public class SessionsController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CreateGameSessionResponse>> CreateGameSession(
-        [FromBody] StartSessionRequest request,
+        [FromBody] CreateGameSessionRequest request,
         [FromHeader(Name = "X-Device-Id")] string? deviceId,
         [FromHeader(Name = "X-Timestamp")] string? timestamp,
         [FromHeader(Name = "X-Nonce")] string? nonce,

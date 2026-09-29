@@ -25,4 +25,4 @@ public class CreateGameSessionRequestValidator<T> : AbstractValidator<T> where T
 
 public sealed class CreateGameSessionRequestValidator : CreateGameSessionRequestValidator<CreateGameSessionRequest>;
 
-public sealed class StartSessionRequestValidator : CreateGameSessionRequestValidator<StartSessionRequest>;
+public sealed class CreateSessionRequestValidator : CreateGameSessionRequestValidator<CreateGameSessionRequest>;

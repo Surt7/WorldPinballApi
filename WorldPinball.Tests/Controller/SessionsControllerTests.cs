@@ -36,13 +36,13 @@ public class SessionsControllerTests
     private readonly IAddPlayerHandler _addPlayerHandler = Substitute.For<IAddPlayerHandler>();
     private readonly IKickPlayerHandler _kickPlayerHandler = Substitute.For<IKickPlayerHandler>();
     private readonly ILaunchSessionHandler _launchSessionHandler = Substitute.For<ILaunchSessionHandler>();
-    private readonly IValidator<StartSessionRequest> _validatorStartSession = Substitute.For<IValidator<StartSessionRequest>>();
+    private readonly IValidator<CreateGameSessionRequest> _validatorCreateSession = Substitute.For<IValidator<CreateGameSessionRequest>>();
     private readonly IValidator<SubmitScoreRequest> _validatorSubmitScore = Substitute.For<IValidator<SubmitScoreRequest>>();
     private readonly IValidator<AddPlayerRequest> _validatorAddPlayer = Substitute.For<IValidator<AddPlayerRequest>>();
 
     private SessionsController CreateController()
     {
-        _validatorStartSession.ValidateAsync(Arg.Any<StartSessionRequest>(), Arg.Any<CancellationToken>())
+        _validatorCreateSession.ValidateAsync(Arg.Any<CreateGameSessionRequest>(), Arg.Any<CancellationToken>())
             .Returns(new ValidationResult());
         _validatorSubmitScore.ValidateAsync(Arg.Any<SubmitScoreRequest>(), Arg.Any<CancellationToken>())
             .Returns(new ValidationResult());
@@ -58,7 +58,7 @@ public class SessionsControllerTests
             _addPlayerHandler,
             _kickPlayerHandler,
             _launchSessionHandler,
-            _validatorStartSession,
+            _validatorCreateSession,
             _validatorSubmitScore,
             _validatorAddPlayer);
 
@@ -92,7 +92,7 @@ public class SessionsControllerTests
         controller.HttpContext.Request.Method = "POST";
         controller.HttpContext.Request.Path = "/api/v1/sessions/create";
 
-        var request = new StartSessionRequest("STORY", "1.02.12");
+        var request = new CreateGameSessionRequest("STORY", "1.02.12");
 
         // Act
         var result = await controller.CreateGameSession(request, deviceId.ToString(), timestamp.ToString(), nonce, fakeSignature, CancellationToken.None);

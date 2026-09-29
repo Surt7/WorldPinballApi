@@ -5,11 +5,11 @@ using WorldPinball.Api.Validation.Public;
 
 namespace WorldPinball.Tests.Validation.Public;
 
-public sealed class StartSessionRequestValidatorTests
+public sealed class CreateSessionRequestValidatorTests
 {
-    private readonly StartSessionRequestValidator _validator = new();
+    private readonly CreateSessionRequestValidator _validator = new();
 
-    private static readonly StartSessionRequest ValidRequest = new(
+    private static readonly CreateGameSessionRequest ValidRequest = new(
         ModeCode: "classic",
         ClientVersion: "1.0.0"
     );
@@ -33,7 +33,7 @@ public sealed class StartSessionRequestValidatorTests
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => e.PropertyName == nameof(StartSessionRequest.ModeCode));
+        result.Errors.Should().ContainSingle(e => e.PropertyName == nameof(CreateGameSessionRequest.ModeCode));
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public sealed class StartSessionRequestValidatorTests
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => e.PropertyName == nameof(StartSessionRequest.ModeCode));
+        result.Errors.Should().ContainSingle(e => e.PropertyName == nameof(CreateGameSessionRequest.ModeCode));
     }
 
     [Theory]
@@ -62,6 +62,6 @@ public sealed class StartSessionRequestValidatorTests
         var result = _validator.Validate(request);
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => e.PropertyName == nameof(StartSessionRequest.ClientVersion));
+        result.Errors.Should().ContainSingle(e => e.PropertyName == nameof(CreateGameSessionRequest.ClientVersion));
     }
 }
