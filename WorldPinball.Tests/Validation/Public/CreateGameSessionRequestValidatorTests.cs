@@ -1,13 +1,12 @@
 using FluentAssertions;
 using WorldPinball.Api.Contracts.Sessions;
-using WorldPinball.Api.Validation.Admin;
 using WorldPinball.Api.Validation.Public;
 
 namespace WorldPinball.Tests.Validation.Public;
 
-public sealed class CreateSessionRequestValidatorTests
+public sealed class CreateGameSessionRequestValidatorTests
 {
-    private readonly CreateSessionRequestValidator _validator = new();
+    private readonly CreateGameSessionRequestValidator _validator = new();
 
     private static readonly CreateGameSessionRequest ValidRequest = new(
         ModeCode: "classic",

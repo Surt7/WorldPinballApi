@@ -3,7 +3,7 @@ using WorldPinball.Api.Contracts.Sessions;
 
 namespace WorldPinball.Api.Validation.Public;
 
-public class CreateGameSessionRequestValidator<T> : AbstractValidator<T> where T : CreateGameSessionRequest
+public sealed class CreateGameSessionRequestValidator : AbstractValidator<CreateGameSessionRequest>
 {
     public CreateGameSessionRequestValidator()
     {
@@ -22,7 +22,3 @@ public class CreateGameSessionRequestValidator<T> : AbstractValidator<T> where T
             .WithMessage("The client version must follow semantic versioning format (e.g. 1.0.0).");
     }
 }
-
-public sealed class CreateGameSessionRequestValidator : CreateGameSessionRequestValidator<CreateGameSessionRequest>;
-
-public sealed class CreateSessionRequestValidator : CreateGameSessionRequestValidator<CreateGameSessionRequest>;
