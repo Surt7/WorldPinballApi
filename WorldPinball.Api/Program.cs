@@ -50,12 +50,14 @@ try
     builder.WebHost.ConfigureKestrel(options =>
     {
         options.AddServerHeader = false;
+        options.Limits.Http2.KeepAlivePingDelay = TimeSpan.FromSeconds(60);
+        options.Limits.Http2.KeepAlivePingTimeout = TimeSpan.FromSeconds(30);
+
         options.ConfigureHttpsDefaults(httpsOptions =>
         {
             httpsOptions.ClientCertificateMode = ClientCertificateMode.AllowCertificate;
-            
-            // Allow custom CA (Step-CA) certificates during TLS handshake
-            httpsOptions.ClientCertificateValidation = (certificate, chain, sslPolicyErrors) => true;
+            httpsOptions.ClientCertificateValidation =
+                (certificate, chain, sslPolicyErrors) => true;
         });
     });
 
