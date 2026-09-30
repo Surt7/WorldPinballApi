@@ -297,13 +297,15 @@ public sealed class GameSessionGrpcService(
                 Message = "Ball score recorded." 
                 },
 
-            RecordBallScoreResult.SessionNotFound => throw new RpcException(new Status(StatusCode.NotFound, 
-                "Session not found.")),
+            RecordBallScoreResult.SessionNotFound => throw new RpcException(
+                new Status(StatusCode.NotFound, "Session not found.")),
             
-            RecordBallScoreResult.DeviceMisMatch => throw new RpcException(new Status(StatusCode.PermissionDenied,
-                "Device mismatch.")),
+            RecordBallScoreResult.DeviceMisMatch => throw new RpcException(
+                new Status(StatusCode.PermissionDenied, "Device mismatch.")),
+            
             RecordBallScoreResult.CannotRecordBallScore c => throw 
                 new RpcException(new Status(StatusCode.FailedPrecondition, c.Reason)),
+            
             _ => throw new RpcException(new Status(
                 StatusCode.Internal, "Unexpected error."))
         };

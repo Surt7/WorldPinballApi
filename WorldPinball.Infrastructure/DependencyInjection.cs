@@ -21,6 +21,7 @@ using WorldPinball.Infrastructure.Security.CA;
 using WorldPinball.Infrastructure.Security.OperatorTokens;
 using WorldPinball.Infrastructure.Security.Secrets;
 using WorldPinball.Infrastructure.Services;
+using WorldPinball.Infrastructure.Services.Authorization;
 using WorldPinball.Infrastructure.Services.Outbox;
 using WorldPinball.Infrastructure.Services.Redis;
 
@@ -88,6 +89,11 @@ public static class DependencyInjection
         services.AddScoped<IGameSessionReadRepository, GameSessionReadRepository>();
         services.AddScoped<IGameSessionWriteRepository, GameSessionWriteRepository>();
         services.AddScoped<ICertificateAuthorityService, StepCaCertificateAuthorityService>();
+        
+        services.AddScoped<IStreamingPartnerRepository, StreamingPartnerRepository>();
+        services.AddScoped<IStreamingAccessRequestRepository, StreamingAccessRequestRepository>();
+        services.AddScoped<IStreamingAuthorizationService, StreamingAuthorizationService>();
+        
         
         // For Auth policies check
         services.AddTransient<IClaimsTransformation, MachineClaimsTransformation>();

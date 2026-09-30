@@ -26,7 +26,9 @@ public class AppDbContext : DbContext
     public DbSet<OperatorToken> OperatorTokens => Set<OperatorToken>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<GameSessionPlayer> GameSessionPlayers => Set<GameSessionPlayer>();
-
+    public DbSet<StreamingPartner> StreamingPartners => Set<StreamingPartner>();
+    public DbSet<StreamingAccessRequest> StreamingAccessRequests => Set<StreamingAccessRequest>();
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
