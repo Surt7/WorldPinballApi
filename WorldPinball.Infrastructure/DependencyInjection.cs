@@ -59,13 +59,7 @@ public static class DependencyInjection
         services.AddScoped<IMachineDashboardReadRepository, MachineDashboardReadRepository>();
         
         
-        // -------------------- health check --------------------
-        //Database health check
-        services
-            .AddHealthChecks()
-            .AddDbContextCheck<AppDbContext>(
-                name: "Database",
-                tags: ["database"]);
+    
         
         
         // -------------------- Repositories registering --------------------
@@ -152,6 +146,22 @@ public static class DependencyInjection
         
         services.AddMemoryCache();
         services.AddScoped<IOperatorTokenValidator, OperatorTokenValidator>();
+        
+        
+        // -------------------- health check --------------------
+        //Database health check
+
+        services.AddHealthChecks()
+            .AddDbContextCheck<AppDbContext>(
+                name: "PostgreSQL",
+                tags: ["ready", "db"])
+            .AddRedis(
+                redisHost,
+                name: "Redis",
+                tags: ["ready", "cache"])
+            .AddKafka(new ProducerConfig 
+                { BootstrapServers = config["Kafka:BootstrapServers"] ??
+                                     "localhost:9092" }, tags: ["ready", "kafka"]);
         
         
         // End Return service

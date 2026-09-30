@@ -9,4 +9,6 @@ public interface IStreamingAccessRequestRepository
     Task AddAsync(StreamingAccessRequest request, CancellationToken token = default);
     
     Task UpdateAsync(StreamingAccessRequest request, CancellationToken token = default);
+    
+    Task<StreamingAccessRequest?> GetByIdAsync(Guid requestId, CancellationToken token = default);
 }

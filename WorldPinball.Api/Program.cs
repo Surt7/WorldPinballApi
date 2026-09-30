@@ -34,6 +34,8 @@ using WorldPinball.Application.Features.Leaderboard.Public;
 using WorldPinball.Application.Features.Matchmaking.Public.JoinQueue;
 using WorldPinball.Application.Features.Matchmaking.Public.LeaveQueue;
 using WorldPinball.Application.Features.Matchmaking.Public.MatchNextPlayer;
+using WorldPinball.Application.Features.StreamingAccess.Admin;
+using WorldPinball.Application.Features.StreamingAccess.Public;
 using WorldPinball.Application.Interfaces.Services;
 
 
@@ -112,6 +114,9 @@ try
     builder.Services.AddScoped<ILeaveMatchmakingQueueHandler, LeaveMatchmakingQueueHandler>();
     builder.Services.AddScoped<IMatchNextPlayerHandler, MatchNextPlayerHandler>();
     builder.Services.AddScoped<IRecordBallScoreHandler, RecordBallScoreHandler>();
+    
+    builder.Services.AddScoped<IRequestStreamingAccessHandler, RequestStreamingAccessHandler>();
+    builder.Services.AddScoped<IApproveStreamingAccessHandler, ApproveStreamingAccessHandler>();
     
     // Security
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();

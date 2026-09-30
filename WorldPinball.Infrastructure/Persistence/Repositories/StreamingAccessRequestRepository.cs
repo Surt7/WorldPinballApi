@@ -19,4 +19,7 @@ public class StreamingAccessRequestRepository(AppDbContext context) : IStreaming
         context.StreamingAccessRequests.Update(request);
         return Task.CompletedTask;
     }
+    
+    public async Task<StreamingAccessRequest?> GetByIdAsync(Guid requestId, CancellationToken token = default) =>
+        await context.StreamingAccessRequests.FirstOrDefaultAsync(r => r.RequestId == requestId, token);
 }

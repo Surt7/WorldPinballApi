@@ -21,7 +21,15 @@ builder.Services.AddRequestTimeouts(options => {
 });
 builder.Services.AddBffSecurity(builder.Configuration); 
 builder.Services.AddBffRateLimiting();
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddCheck("self", 
+        () => Microsoft
+            .Extensions
+            .Diagnostics
+            .HealthChecks
+            .HealthCheckResult
+            .Healthy(), 
+        ["live"]);
 
 builder.Services.ConfigureHttpClientDefaults(http =>
 {
@@ -59,6 +67,11 @@ if (!app.Environment.IsDevelopment())
 app.UseRequestTimeouts();
 app.UseHttpsRedirection();
 app.UseCors("AngularDevPolicy");
+app.MapHealthChecks("/alive", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = r => r.Tags.Contains("live")
+});
+
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
