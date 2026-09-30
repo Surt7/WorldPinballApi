@@ -94,6 +94,8 @@ public static class DependencyInjection
         services.AddScoped<IStreamingAccessRequestRepository, StreamingAccessRequestRepository>();
         services.AddScoped<IStreamingAuthorizationService, StreamingAuthorizationService>();
         
+        services.AddScoped<ILiveTelemetryService, RedisLiveTelemetryService>();
+        
         
         // For Auth policies check
         services.AddTransient<IClaimsTransformation, MachineClaimsTransformation>();

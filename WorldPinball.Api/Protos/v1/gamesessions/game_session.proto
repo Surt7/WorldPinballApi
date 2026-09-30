@@ -81,6 +81,27 @@ message RecordBallScoreResponse {
   string message = 6;
 }
 
+// High-frequency telemetry streaming messages
+message ScoreDeltaRequest {
+  string session_id = 1;
+  string device_id = 2;
+  int32 slot_number = 3;
+  int64 points_delta = 4;
+  string trigger_event = 5; // e.g. "BUMPER", "RAMP", "TARGET", "SPINNER"
+  int64 timestamp_utc_ms = 6;
+}
+
+message StreamingSummaryResponse {
+  bool success = 1;
+  string session_id = 2;
+  int32 slot_number = 3;
+  int64 total_streamed_score = 4;
+  int32 total_events_processed = 5;
+  string message = 6;
+}
+
+
+
 service GameSessionService{
   rpc AddPlayer(AddPlayerRequest) returns (AddPlayerResponse);
   
@@ -93,4 +114,6 @@ service GameSessionService{
   rpc GetLobby(GetLobbyRequest) returns (SessionLobbyResponse);
 
   rpc RecordBallScore(RecordBallScoreRequest) returns (RecordBallScoreResponse);
+  // In GameSessionService:
+  rpc StreamLiveTelemetry(stream ScoreDeltaRequest) returns (StreamingSummaryResponse);
 }

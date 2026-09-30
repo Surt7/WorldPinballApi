@@ -26,7 +26,8 @@ public sealed class GameSessionGrpcService(
     IRecordBallScoreHandler recordBallScoreHandler,
     ILaunchSessionHandler launchSessionHandler,
     ILobbyNotificationService lobbyNotifier,
-    ILogger<GameSessionGrpcService> logger
+    ILogger<GameSessionGrpcService> logger,
+    ILiveTelemetryService liveTelemetryService
 ) : GameSessionService.GameSessionServiceBase
 {
     public override async Task<AddPlayerResponse> AddPlayer(
@@ -310,4 +311,41 @@ public sealed class GameSessionGrpcService(
                 StatusCode.Internal, "Unexpected error."))
         };
     }
+    
+    
+    public override async Task<StreamingSummaryResponse> StreamLiveTelemetry(
+        IAsyncStreamReader<ScoreDeltaRequest> requestStream,
+        ServerCallContext context)
+    {
+        long totalScore = 0;
+        int eventsProcessed = 0;
+        Guid sessionId = Guid.Empty;
+        int slotNumber = 0;
+
+        // Read incoming deltas continuously from the HTTP/2 stream
+        while (await requestStream.MoveNext(context.CancellationToken))
+        {
+            var delta = requestStream.Current;
+            if (!Guid.TryParse(delta.SessionId, out sessionId))
+                throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid SessionId format."));
+
+            slotNumber = delta.SlotNumber;
+            totalScore = await liveTelemetryService.IngestDeltaAsync(sessionId, delta.SlotNumber, delta.PointsDelta, delta.TriggerEvent, context.CancellationToken);
+            eventsProcessed++;
+        }
+
+        return new StreamingSummaryResponse
+        {
+            Success = true,
+            SessionId = sessionId.ToString(),
+            SlotNumber = slotNumber,
+            TotalStreamedScore = totalScore,
+            TotalEventsProcessed = eventsProcessed,
+            Message = "Live telemetry stream completed successfully."
+        };
+    }
+    
+    
 }
+
+
