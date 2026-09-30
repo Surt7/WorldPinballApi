@@ -15,8 +15,21 @@
         <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
         <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
         <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
+        <PackageReference Include="Grpc.Net.ClientFactory" Version="2.71.0" />
+        <PackageReference Include="Google.Protobuf" Version="3.30.0" />
+        <PackageReference Include="Grpc.Tools" Version="2.71.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+        <Protobuf Include="..\WorldPinball.Api\Protos\v1\gamesessions\game_session.proto"
+                  GrpcServices="Client" 
+                  Link="Protos\game_session.proto" />
+    </ItemGroup>
+    
+    
     <ItemGroup>
       <Content Include="..\.dockerignore">
         <Link>.dockerignore</Link>

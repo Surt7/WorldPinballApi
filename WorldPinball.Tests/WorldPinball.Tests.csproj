@@ -25,6 +25,7 @@
         <ProjectReference Include="..\Aspire\ServiceDefaults\ServiceDefaults.csproj" />
         <ProjectReference Include="..\WorldPinball.Api\WorldPinball.Api.csproj" />
         <ProjectReference Include="..\WorldPinball.Application\WorldPinball.Application.csproj" />
+        <ProjectReference Include="..\WorldPinball.Bff\WorldPinball.Bff.csproj" Aliases="BffApp" />
         <ProjectReference Include="..\WorldPinball.Domain\WorldPinball.Domain.csproj" />
     </ItemGroup>
 

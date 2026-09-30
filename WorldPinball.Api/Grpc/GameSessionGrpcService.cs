@@ -1,4 +1,4 @@
-using WorldPinball.Api.Protos.V1.GameSessions;
+using WorldPinball.Protos.V1.GameSessions;
 using WorldPinball.Application.Features.GameSessions.Public.AddPlayer.Commands;
 using Grpc.Core;
 using WorldPinball.Application.Features.GameSessions.Public.AddPlayer;
@@ -12,10 +12,10 @@ using WorldPinball.Application.Features.GameSessions.Public.LaunchSession.Comman
 using WorldPinball.Application.Features.GameSessions.Public.RecordBallScore;
 using WorldPinball.Application.Features.GameSessions.Public.RecordBallScore.Commands;
 using WorldPinball.Application.Interfaces.Services;
-using AddPlayerRequest = WorldPinball.Api.Protos.V1.GameSessions.AddPlayerRequest;
-using AddPlayerResponse = WorldPinball.Api.Protos.V1.GameSessions.AddPlayerResponse;
-using KickPlayerResponse = WorldPinball.Api.Protos.V1.GameSessions.KickPlayerResponse;
-using LaunchSessionResponse = WorldPinball.Api.Protos.V1.GameSessions.LaunchSessionResponse;
+using AddPlayerRequest = WorldPinball.Protos.V1.GameSessions.AddPlayerRequest;
+using AddPlayerResponse = WorldPinball.Protos.V1.GameSessions.AddPlayerResponse;
+using KickPlayerResponse = WorldPinball.Protos.V1.GameSessions.KickPlayerResponse;
+using LaunchSessionResponse = WorldPinball.Protos.V1.GameSessions.LaunchSessionResponse;
 
 namespace WorldPinball.Api.Grpc;
 

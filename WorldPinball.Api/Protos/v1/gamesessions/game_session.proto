@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package worldpinball.gamesessions.v1;
-option csharp_namespace = "WorldPinball.Api.Protos.V1.GameSessions";
+option csharp_namespace = "WorldPinball.Protos.V1.GameSessions";
 option go_package = "SetSecrets/internal/proto/gamesession";
 
 
