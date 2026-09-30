@@ -9,7 +9,13 @@ using WorldPinball.Application.Features.GameSessions.Public.KickPlayer;
 using WorldPinball.Application.Features.GameSessions.Public.KickPlayer.Commands;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession.Commands;
+using WorldPinball.Application.Features.GameSessions.Public.RecordBallScore;
+using WorldPinball.Application.Features.GameSessions.Public.RecordBallScore.Commands;
 using WorldPinball.Application.Interfaces.Services;
+using AddPlayerRequest = WorldPinball.Api.Protos.V1.GameSessions.AddPlayerRequest;
+using AddPlayerResponse = WorldPinball.Api.Protos.V1.GameSessions.AddPlayerResponse;
+using KickPlayerResponse = WorldPinball.Api.Protos.V1.GameSessions.KickPlayerResponse;
+using LaunchSessionResponse = WorldPinball.Api.Protos.V1.GameSessions.LaunchSessionResponse;
 
 namespace WorldPinball.Api.Grpc;
 
@@ -17,6 +23,7 @@ public sealed class GameSessionGrpcService(
     IAddPlayerHandler addPlayerHandler,
     IKickPlayerHandler kickPlayerHandler,
     IGetLobbyHandler getLobbyHandler,
+    IRecordBallScoreHandler recordBallScoreHandler,
     ILaunchSessionHandler launchSessionHandler,
     ILobbyNotificationService lobbyNotifier,
     ILogger<GameSessionGrpcService> logger
@@ -85,7 +92,8 @@ public sealed class GameSessionGrpcService(
     }
 
 
-    public override async Task<KickPlayerResponse> KickPlayer(KickPlayerRequest request, ServerCallContext context)
+    public override async Task<KickPlayerResponse> KickPlayer(KickPlayerRequest request,
+        ServerCallContext context)
     {
         if (!Guid.TryParse(request.SessionId, out var sessionId))
             throw new RpcException(new Status(StatusCode.InvalidArgument,
@@ -164,7 +172,8 @@ public sealed class GameSessionGrpcService(
         };
     }
 
-    public override async Task<SessionLobbyResponse> GetLobby(GetLobbyRequest request, ServerCallContext context)
+    public override async Task<SessionLobbyResponse> GetLobby(GetLobbyRequest request,
+        ServerCallContext context)
     {
         if (!Guid.TryParse(request.SessionId, out var sessionId))
             throw new RpcException(new Status(StatusCode.InvalidArgument,
@@ -261,5 +270,42 @@ public sealed class GameSessionGrpcService(
                     break;
             }
         }
+    }
+
+
+    public override async Task<RecordBallScoreResponse> RecordBallScore(RecordBallScoreRequest request,
+        ServerCallContext context)
+    {
+        if (!Guid.TryParse(request.SessionId, out var sessionId) ||
+            !Guid.TryParse(request.DeviceId, out var deviceId))
+            throw new RpcException(new Status(StatusCode.InvalidArgument,
+                "Invalid SessionId or DeviceId format."));
+        var command = new RecordBallScoreCommand(sessionId, deviceId,
+            request.SlotNumber, request.BallNumber, request.Score);
+        
+        var result = await recordBallScoreHandler.HandleAsync(command, context.CancellationToken);
+        
+        return result switch
+        {
+            RecordBallScoreResult.Success s => 
+                new RecordBallScoreResponse {
+                    Success = true, 
+                SessionId = s.SessionId.ToString(),
+                SlotNumber = s.SlotNumber,
+                BallNumber = s.BallNumber,
+                Score = s.Score,
+                Message = "Ball score recorded." 
+                },
+
+            RecordBallScoreResult.SessionNotFound => throw new RpcException(new Status(StatusCode.NotFound, 
+                "Session not found.")),
+            
+            RecordBallScoreResult.DeviceMisMatch => throw new RpcException(new Status(StatusCode.PermissionDenied,
+                "Device mismatch.")),
+            RecordBallScoreResult.CannotRecordBallScore c => throw 
+                new RpcException(new Status(StatusCode.FailedPrecondition, c.Reason)),
+            _ => throw new RpcException(new Status(
+                StatusCode.Internal, "Unexpected error."))
+        };
     }
 }

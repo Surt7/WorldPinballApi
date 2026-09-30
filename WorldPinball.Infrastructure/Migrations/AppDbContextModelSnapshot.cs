@@ -513,6 +513,10 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("state");
 
+                    b.Property<int>("TelemetryMode")
+                        .HasColumnType("integer")
+                        .HasColumnName("telemetry_mode");
+
                     b.HasKey("SessionId")
                         .HasName("pk_game_sessions");
 

@@ -65,6 +65,22 @@ message LaunchSessionResponse {
   string message = 3;
 }
 
+message RecordBallScoreRequest {
+  string session_id = 1;
+  string device_id = 2;
+  int32 slot_number = 3;
+  int32 ball_number = 4;
+  int64 score = 5;
+}
+message RecordBallScoreResponse {
+  bool success = 1;
+  string session_id = 2;
+  int32 slot_number = 3;
+  int32 ball_number = 4;
+  int64 score = 5;
+  string message = 6;
+}
+
 service GameSessionService{
   rpc AddPlayer(AddPlayerRequest) returns (AddPlayerResponse);
   
@@ -75,4 +91,6 @@ service GameSessionService{
   rpc WatchLobby(WatchLobbyRequest) returns (stream SessionLobbyResponse);
 
   rpc GetLobby(GetLobbyRequest) returns (SessionLobbyResponse);
+
+  rpc RecordBallScore(RecordBallScoreRequest) returns (RecordBallScoreResponse);
 }
