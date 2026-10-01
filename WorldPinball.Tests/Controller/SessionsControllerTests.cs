@@ -22,6 +22,7 @@ using WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession.Commands;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore.Commands;
+using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Application.Security.Cryptography;
 
 namespace WorldPinball.Tests.Controller;
@@ -39,6 +40,7 @@ public class SessionsControllerTests
     private readonly IValidator<CreateGameSessionRequest> _validatorCreateSession = Substitute.For<IValidator<CreateGameSessionRequest>>();
     private readonly IValidator<SubmitScoreRequest> _validatorSubmitScore = Substitute.For<IValidator<SubmitScoreRequest>>();
     private readonly IValidator<AddPlayerRequest> _validatorAddPlayer = Substitute.For<IValidator<AddPlayerRequest>>();
+    private readonly ILobbyNotificationService _lobbyNotifier = Substitute.For<ILobbyNotificationService>();
 
     private SessionsController CreateController()
     {
@@ -60,7 +62,8 @@ public class SessionsControllerTests
             _launchSessionHandler,
             _validatorCreateSession,
             _validatorSubmitScore,
-            _validatorAddPlayer);
+            _validatorAddPlayer,
+            _lobbyNotifier);
 
         controller.ControllerContext = new ControllerContext
         {

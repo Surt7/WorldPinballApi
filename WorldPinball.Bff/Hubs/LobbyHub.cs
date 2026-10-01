@@ -18,4 +18,29 @@ public sealed class LobbyHub(ILobbyRelayService relayService) : Hub
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, sessionId);
     }
+    
+    
+    public async Task JoinAdminSupervision()
+    {
+       
+        if (Context.User?.IsInRole("Admin") != true)
+        {
+            throw new HubException("Forbidden: Only Administrators can join supervision.");
+        }
+     
+        await Groups.AddToGroupAsync(Context.ConnectionId, "AdminSupervision");
+        await relayService.EnsureWatchingAllLobbiesAsync(Context.ConnectionAborted);
+        
+        foreach (var lobby in relayService.GetCurrentLobbies())
+        {
+            await Clients.Caller.SendAsync("LobbyStateUpdated", lobby);
+        }
+    }
+    public async Task LeaveAdminSupervision()
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "AdminSupervision");
+    }
+    
+    
+    
 }

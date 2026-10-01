@@ -48,6 +48,7 @@ public class LobbyRelayServiceTests
         var sut = new LobbyRelayService(_grpcClient, _hubContext, _logger);
 
         await sut.EnsureWatchingLobbyAsync(sessionId, CancellationToken.None);
+        await Task.Delay(50);
 
         _grpcClient.Received(1).WatchLobby(
             Arg.Is<WatchLobbyRequest>(r =>
@@ -58,21 +59,17 @@ public class LobbyRelayServiceTests
     [Fact]
     public async Task EnsureWatchingLobbyAsync_WhenSessionAlreadyBeingWatched_DoesNotInitiateDuplicateGrpcStream()
     {
-
-      
         _grpcClient.WatchLobby(Arg.Any<WatchLobbyRequest>(), cancellationToken: Arg.Any<CancellationToken>())
             .Returns(CreateFakeStreamingCall());
-        
-
 
         // Arrange
         var sessionId = Guid.NewGuid();
         var sut = new LobbyRelayService(_grpcClient, _hubContext, _logger);
 
-
         // Act 
         await sut.EnsureWatchingLobbyAsync(sessionId, CancellationToken.None);
         await sut.EnsureWatchingLobbyAsync(sessionId, CancellationToken.None);
+        await Task.Delay(50);
 
         // Assert  
         _grpcClient.Received(1).WatchLobby(

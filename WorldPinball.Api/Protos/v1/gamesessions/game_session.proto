@@ -100,7 +100,8 @@ message StreamingSummaryResponse {
   string message = 6;
 }
 
-
+message WatchAllLobbiesRequest {
+}
 
 service GameSessionService{
   rpc AddPlayer(AddPlayerRequest) returns (AddPlayerResponse);
@@ -113,6 +114,8 @@ service GameSessionService{
 
   rpc GetLobby(GetLobbyRequest) returns (SessionLobbyResponse);
 
+  rpc WatchAllLobbies(WatchAllLobbiesRequest) returns (stream SessionLobbyResponse);
+  
   rpc RecordBallScore(RecordBallScoreRequest) returns (RecordBallScoreResponse);
   // In GameSessionService:
   rpc StreamLiveTelemetry(stream ScoreDeltaRequest) returns (StreamingSummaryResponse);

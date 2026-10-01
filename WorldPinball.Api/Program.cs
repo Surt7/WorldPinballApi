@@ -34,6 +34,9 @@ using WorldPinball.Application.Features.Matchmaking.Public.JoinQueue;
 using WorldPinball.Application.Features.Matchmaking.Public.LeaveQueue;
 using WorldPinball.Application.Features.Matchmaking.Public.MatchNextPlayer;
 using WorldPinball.Application.Features.StreamingAccess.Admin;
+using WorldPinball.Application.Features.StreamingAccess.Admin.CreateStreamAccessGrant;
+using WorldPinball.Application.Features.StreamingAccess.Admin.GetStreamAccessGrants;
+using WorldPinball.Application.Features.StreamingAccess.Admin.RevokeStreamAccessGrant;
 using WorldPinball.Application.Features.StreamingAccess.Public;
 using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Infrastructure.Services;
@@ -119,6 +122,10 @@ try
     
     builder.Services.AddScoped<IRequestStreamingAccessHandler, RequestStreamingAccessHandler>();
     builder.Services.AddScoped<IApproveStreamingAccessHandler, ApproveStreamingAccessHandler>();
+    builder.Services.AddScoped<IGetStreamAccessGrantsHandler, GetStreamAccessGrantsHandler>();
+    builder.Services.AddScoped<IRevokeStreamAccessGrantHandler, RevokeStreamAccessGrantHandler>();
+    builder.Services.AddScoped<ICreateStreamAccessGrantHandler, CreateStreamAccessGrantHandler>();
+    
     
     // Security
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();

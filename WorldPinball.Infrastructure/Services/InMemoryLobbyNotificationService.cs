@@ -9,6 +9,8 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
 {
     
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Channel<Guid>, byte>> _subscribers = new();
+    private readonly ConcurrentDictionary<Channel<Guid>, byte> _globalSubscribers = new();
+    
     
     public void NotifyLobbyUpdated(Guid sessionId)
     {
@@ -18,7 +20,14 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
             {
                 channel.Writer.TryWrite(sessionId);
             }
+            
         }
+        
+            // Notify global admin subscribers
+            foreach (var globalChannel in _globalSubscribers.Keys)
+            {
+                globalChannel.Writer.TryWrite(sessionId);
+            }
     }
 
     // the call attribute [EnumeratorCancellation] create an instance, because of extension 
@@ -90,4 +99,34 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
         NotifyLobbyUpdated(sessionId);
         return Task.CompletedTask;
     }
+
+    public async IAsyncEnumerable<Guid> SubscribeAllAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+
+        var channel = Channel.CreateUnbounded<Guid>(new UnboundedChannelOptions
+        {
+            SingleWriter = false,
+            SingleReader = true
+        });
+        
+        _globalSubscribers.TryAdd(channel, 0);
+        
+        
+        try
+        {
+            while (await channel.Reader.WaitToReadAsync(cancellationToken))
+            {
+                while (channel.Reader.TryRead(out var id))
+                {
+                    yield return id;
+                }
+            }
+        }
+        finally
+        {
+            _globalSubscribers.TryRemove(channel, out _);
+        }
+    }
+    
 }

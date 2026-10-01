@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
 using WorldPinball.Bff.Hubs;
 
@@ -13,8 +13,15 @@ public sealed class LobbyRelayService(
     ) :
     ILobbyRelayService
 {
+    
+    private readonly ConcurrentDictionary<string, SessionLobbyResponse> _cachedLobbies = new();
     private readonly ConcurrentDictionary<Guid, byte> _activeSessions = new();
-
+    private int _isWatchingAll;
+    
+    public IReadOnlyCollection<SessionLobbyResponse> GetCurrentLobbies() =>
+        _cachedLobbies.Values.ToList();
+    
+    
     public async Task EnsureWatchingLobbyAsync(Guid sessionId, CancellationToken cancellationToken)
     {
         
@@ -37,7 +44,12 @@ public sealed class LobbyRelayService(
                 while (await call.ResponseStream.MoveNext(cancellationToken))
                 {
                     var lobby = call.ResponseStream.Current;
+                    _cachedLobbies[lobby.SessionId] = lobby;
+
                     await hubContext.Clients.Group(sessionId.ToString())
+                        .SendAsync("LobbyStateUpdated", lobby, cancellationToken);
+                    
+                    await hubContext.Clients.Group("AdminSupervision")
                         .SendAsync("LobbyStateUpdated", lobby, cancellationToken);
                 }
 
@@ -57,5 +69,43 @@ public sealed class LobbyRelayService(
 
 
         await Task.CompletedTask;
+    }
+
+    public async Task EnsureWatchingAllLobbiesAsync(CancellationToken cancellationToken)
+    {
+        // Atomic check: ensure only one background stream runs for the entire server
+        if (Interlocked.CompareExchange(ref _isWatchingAll, 1, 0) != 0)
+            return;
+        
+        _ = Task.Run(async () =>
+        {
+
+            try
+            {
+                var request = new WatchAllLobbiesRequest();
+                using var call = grpcClient.WatchAllLobbies(request , 
+                    cancellationToken: cancellationToken);
+
+                while (await call.ResponseStream.MoveNext(cancellationToken))
+                {
+                    var lobby = call.ResponseStream.Current;
+                    _cachedLobbies[lobby.SessionId] = lobby;
+
+                    await hubContext.Clients.Group("AdminSupervision")
+                        .SendAsync("LobbyStateUpdated", lobby, cancellationToken);
+                }
+
+            }
+            catch (Exception ex)  when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex, "Error while watching all lobbies stream");
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _isWatchingAll, 0);
+            }
+        }, cancellationToken);
+        await Task.CompletedTask;
+        
     }
 }

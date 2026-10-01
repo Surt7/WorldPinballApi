@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Features.StreamingAccess.Public.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 
@@ -11,12 +11,16 @@ public sealed class RequestStreamingAccessHandler(
     ILogger<RequestStreamingAccessHandler> logger
 ) : IRequestStreamingAccessHandler
 {
+    private static readonly EventId AccessRequested = new(3440, nameof(AccessRequested));
+    private static readonly EventId SessionNotFound = new(3441, nameof(SessionNotFound));
+    private static readonly EventId RequestAlreadyPending = new(3442, nameof(RequestAlreadyPending));
+
     public async Task<RequestStreamingAccessResult> HandleAsync(RequestStreamingAccessCommand command, CancellationToken token = default)
     {
         var session = await sessionRepository.GetSessionWithMachineAsync(command.SessionId, token);
         if (session is null)
         {
-            logger.LogWarning("Session {SessionId} not found for streaming request.", command.SessionId);
+            logger.LogWarning(SessionNotFound, "Session {SessionId} not found for streaming request.", command.SessionId);
             return new RequestStreamingAccessResult.SessionNotFound(command.SessionId);
         }
 
@@ -25,6 +29,8 @@ public sealed class RequestStreamingAccessHandler(
         
         if (existingRequest?.Status is Domain.Enums.StreamingRequestStatus.Pending)
         {
+            logger.LogWarning(RequestAlreadyPending, "Streaming access request for session {SessionId} is already pending (RequestId: {RequestId}).",
+                command.SessionId, existingRequest.RequestId);
             return new RequestStreamingAccessResult.RequestAlreadyPending(
                 existingRequest.RequestId);
         }
@@ -36,7 +42,10 @@ public sealed class RequestStreamingAccessHandler(
             command.SessionId, command.RequestedByUserId, nowUtc);
         
         await requestRepository.AddAsync(request, token);
+
+        logger.LogInformation(AccessRequested, "Created streaming access request {RequestId} for session {SessionId} by user {UserId}.",
+            request.RequestId, command.SessionId, command.RequestedByUserId);
         
-        return new RequestStreamingAccessResult.Success(Guid.NewGuid(), command.SessionId);
+        return new RequestStreamingAccessResult.Success(request.RequestId, command.SessionId);
     }
 }

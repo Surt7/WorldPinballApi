@@ -29,6 +29,10 @@ public class AppDbContext : DbContext
     public DbSet<StreamingPartner> StreamingPartners => Set<StreamingPartner>();
     public DbSet<StreamingAccessRequest> StreamingAccessRequests => Set<StreamingAccessRequest>();
     
+    public DbSet<StreamAccessGrant> StreamAccessGrants => Set<StreamAccessGrant>();
+    
+    public DbSet<StreamSubscription> StreamSubscriptions => Set<StreamSubscription>();
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

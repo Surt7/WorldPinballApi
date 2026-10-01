@@ -11,6 +11,7 @@ using WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession.Commands;
 using WorldPinball.Application.Features.GameSessions.Public.RecordBallScore;
 using WorldPinball.Application.Features.GameSessions.Public.RecordBallScore.Commands;
+using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Interfaces.Services;
 using AddPlayerRequest = WorldPinball.Protos.V1.GameSessions.AddPlayerRequest;
 using AddPlayerResponse = WorldPinball.Protos.V1.GameSessions.AddPlayerResponse;
@@ -27,7 +28,8 @@ public sealed class GameSessionGrpcService(
     ILaunchSessionHandler launchSessionHandler,
     ILobbyNotificationService lobbyNotifier,
     ILogger<GameSessionGrpcService> logger,
-    ILiveTelemetryService liveTelemetryService
+    ILiveTelemetryService liveTelemetryService,
+    IGameSessionReadRepository gameSessionReadRepository
 ) : GameSessionService.GameSessionServiceBase
 {
     public override async Task<AddPlayerResponse> AddPlayer(
@@ -283,36 +285,42 @@ public sealed class GameSessionGrpcService(
                 "Invalid SessionId or DeviceId format."));
         var command = new RecordBallScoreCommand(sessionId, deviceId,
             request.SlotNumber, request.BallNumber, request.Score);
-        
+
         var result = await recordBallScoreHandler.HandleAsync(command, context.CancellationToken);
+
+        if (result is RecordBallScoreResult.Success)
+        {
+            lobbyNotifier.NotifyLobbyUpdated(sessionId);
+        }
         
         return result switch
         {
-            RecordBallScoreResult.Success s => 
-                new RecordBallScoreResponse {
-                    Success = true, 
-                SessionId = s.SessionId.ToString(),
-                SlotNumber = s.SlotNumber,
-                BallNumber = s.BallNumber,
-                Score = s.Score,
-                Message = "Ball score recorded." 
+            RecordBallScoreResult.Success s =>
+                new RecordBallScoreResponse
+                {
+                    Success = true,
+                    SessionId = s.SessionId.ToString(),
+                    SlotNumber = s.SlotNumber,
+                    BallNumber = s.BallNumber,
+                    Score = s.Score,
+                    Message = "Ball score recorded."
                 },
 
             RecordBallScoreResult.SessionNotFound => throw new RpcException(
                 new Status(StatusCode.NotFound, "Session not found.")),
-            
+
             RecordBallScoreResult.DeviceMisMatch => throw new RpcException(
                 new Status(StatusCode.PermissionDenied, "Device mismatch.")),
-            
-            RecordBallScoreResult.CannotRecordBallScore c => throw 
+
+            RecordBallScoreResult.CannotRecordBallScore c => throw
                 new RpcException(new Status(StatusCode.FailedPrecondition, c.Reason)),
-            
+
             _ => throw new RpcException(new Status(
                 StatusCode.Internal, "Unexpected error."))
         };
     }
-    
-    
+
+
     public override async Task<StreamingSummaryResponse> StreamLiveTelemetry(
         IAsyncStreamReader<ScoreDeltaRequest> requestStream,
         ServerCallContext context)
@@ -330,7 +338,8 @@ public sealed class GameSessionGrpcService(
                 throw new RpcException(new Status(StatusCode.InvalidArgument, "Invalid SessionId format."));
 
             slotNumber = delta.SlotNumber;
-            totalScore = await liveTelemetryService.IngestDeltaAsync(sessionId, delta.SlotNumber, delta.PointsDelta, delta.TriggerEvent, context.CancellationToken);
+            totalScore = await liveTelemetryService.IngestDeltaAsync(sessionId, delta.SlotNumber, delta.PointsDelta,
+                delta.TriggerEvent, context.CancellationToken);
             eventsProcessed++;
         }
 
@@ -344,8 +353,39 @@ public sealed class GameSessionGrpcService(
             Message = "Live telemetry stream completed successfully."
         };
     }
-    
-    
+
+
+    public override async Task WatchAllLobbies(
+        WatchAllLobbiesRequest request,
+        IServerStreamWriter<SessionLobbyResponse> responseStream,
+        ServerCallContext context)
+    {
+        // 1. Initial snapshot: send all currently active sessions
+        var activeSessionIds = await gameSessionReadRepository
+            .GetActiveSessionIdsAsync(context.CancellationToken);
+        
+        foreach (var sessionId in activeSessionIds)
+        {
+            var initialResult = await getLobbyHandler.HandleAsync(new GetLobbyQuery(sessionId), context.CancellationToken);
+            if (initialResult is GetLobbyResult.Success success)
+            {
+                await responseStream.WriteAsync(MapToLobbyResponse(success.Lobby));
+            }
+        }
+        
+        // 2. Real-time stream: broadcast every update emitted by any pinball machine
+        await foreach (var sessionId in lobbyNotifier.SubscribeAllAsync(context.CancellationToken))
+        {
+            var result = await getLobbyHandler.HandleAsync(new GetLobbyQuery(sessionId), context.CancellationToken);
+            if (result is GetLobbyResult.Success success)
+            {
+                await responseStream.WriteAsync(MapToLobbyResponse(success.Lobby));
+            }
+        }
+        
+    }
+
+
+
+
 }
-
-

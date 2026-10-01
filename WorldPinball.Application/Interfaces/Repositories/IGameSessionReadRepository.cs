@@ -20,4 +20,7 @@ public interface IGameSessionReadRepository
         Guid sessionId,
         CancellationToken cancellationToken = default
     );
+    
+    Task<IReadOnlyList<Guid>> GetActiveSessionIdsAsync(
+        CancellationToken cancellationToken = default);
 }

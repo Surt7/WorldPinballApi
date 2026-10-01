@@ -21,4 +21,7 @@ public interface ILobbyNotificationService
 
     Task NotifyMatchFoundAsync(Guid sessionId, Guid machineId,
         CancellationToken ct = default);
+    
+    IAsyncEnumerable<Guid> SubscribeAllAsync(
+        CancellationToken cancellationToken = default);
 }

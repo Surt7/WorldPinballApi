@@ -19,6 +19,7 @@ using WorldPinball.Application.Features.GameSessions.Public.LaunchSession.Comman
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore.Commands;
 using WorldPinball.Application.Security.Cryptography;
+using WorldPinball.Application.Interfaces.Services;
 
 namespace WorldPinball.Api.Controllers.Public;
 
@@ -35,7 +36,8 @@ public class SessionsController(
     ILaunchSessionHandler launchSessionHandler,
     IValidator<CreateGameSessionRequest> requestValidator,
     IValidator<SubmitScoreRequest> reqValidator,
-    IValidator<AddPlayerRequest> addPlayerValidator
+    IValidator<AddPlayerRequest> addPlayerValidator,
+    ILobbyNotificationService lobbyNotifier
 ) : ControllerBase
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
@@ -95,6 +97,11 @@ public class SessionsController(
         );
 
         var sessionResult = await createGameSessionHandler.HandleAsync(command, ct);
+
+        if (sessionResult is CreateGameSessionResult.Success successSession)
+        {
+            lobbyNotifier.NotifyLobbyUpdated(successSession.SessionId);
+        }
 
         return sessionResult switch
         {
@@ -170,6 +177,11 @@ public class SessionsController(
             request.RequiresRegisteredUser);
 
         var result = await addPlayerHandler.HandleAsync(command, ct);
+        if (result is AddPlayerResult.Success)
+        {
+            lobbyNotifier.NotifyLobbyUpdated(sessionId);
+        }
+
         return result switch
         {
             AddPlayerResult.Success s => Ok(new AddPlayerResponse(s.SessionId, s.SlotNumber)),
@@ -197,6 +209,10 @@ public class SessionsController(
     {
         var command = new KickPlayerCommand(sessionId, slotNumber);
         var result = await kickPlayerHandler.HandleAsync(command, ct);
+        if (result is KickPlayerResult.Success)
+        {
+            lobbyNotifier.NotifyLobbyUpdated(sessionId);
+        }
 
         return result switch
         {
@@ -221,6 +237,10 @@ public class SessionsController(
     {
         var command = new LaunchSessionCommand(sessionId);
         var result = await launchSessionHandler.HandleAsync(command, ct);
+        if (result is LaunchSessionResult.Success)
+        {
+            lobbyNotifier.NotifyLobbyUpdated(sessionId);
+        }
 
         return result switch
         {
@@ -264,6 +284,10 @@ public class SessionsController(
             request.Scores.Select(s => new SlotScoreDto(s.SlotNumber, s.Score)).ToList());
 
         var scoreResult = await submitScoreHandler.HandleAsync(command, ct);
+        if (scoreResult is SubmitScoreResult.Success)
+        {
+            lobbyNotifier.NotifyLobbyUpdated(sessionId);
+        }
 
         return scoreResult switch
         {
@@ -305,6 +329,11 @@ public class SessionsController(
         
         var command = new AbortSessionCommand(sessionId);
         var result = await abortSessionHandler.HandleAsync(command, ct);
+        if (result is AbortSessionResult.Success)
+        {
+            lobbyNotifier.NotifyLobbyUpdated(sessionId);
+        }
+
         return result switch
         {
             AbortSessionResult.Success s => Ok(new AbortSessionResponse(s.SessionId)),
