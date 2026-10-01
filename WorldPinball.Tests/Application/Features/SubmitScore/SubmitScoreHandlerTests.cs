@@ -60,6 +60,7 @@ public class SubmitScoreHandlerTests
             nonce,
             now.UtcDateTime
         );
+        gameSession.AddPlayer(1, Guid.NewGuid());
         gameSession.Launch(start.UtcDateTime);
         gameSession.End(end.UtcDateTime);
         writeRepository

@@ -42,7 +42,8 @@ public class LaunchSessionHandlerTests
     {
         // Arrange
         var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0.0", "nonce", DateTime.UtcNow);
-        session.State.Should().Be(GameSessionState.Created);
+        session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
+        session.State.Should().Be(GameSessionState.Joined);
 
         _writeRepo.GetSessionWithMachineAsync(session.SessionId, Arg.Any<CancellationToken>())
             .Returns(session);
@@ -63,10 +64,31 @@ public class LaunchSessionHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_WhenSessionHasNoPlayers_ShouldReturnCannotStartSession()
+    {
+        // Arrange
+        var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0.0", "nonce", DateTime.UtcNow);
+        _writeRepo.GetSessionWithMachineAsync(session.SessionId, Arg.Any<CancellationToken>())
+            .Returns(session);
+
+        var sut = new LaunchSessionHandler(_writeRepo, _lobbyNotifier, _timeProvider, _logger);
+        var command = new LaunchSessionCommand(session.SessionId);
+
+        // Act
+        var result = await sut.HandleAsync(command);
+
+        // Assert
+        result.Should().BeOfType<LaunchSessionResult.CannotStartSession>()
+            .Which.Message.Should().Contain("at least one player");
+        await _writeRepo.DidNotReceive().UpdateSessionAsync(session, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task HandleAsync_WhenSessionAlreadyEnded_ShouldReturnCannotStartSession()
     {
         // Arrange
         var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0.0", "nonce", DateTime.UtcNow);
+        session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
         session.Launch(DateTime.UtcNow);
         session.End(DateTime.UtcNow.AddMinutes(5));
 

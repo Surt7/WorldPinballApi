@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
@@ -46,6 +46,7 @@ public class AbortSessionHandlerTests
     {
         // Arrange: active started session
         var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0", "nonce", _timeProvider.GetUtcNow().UtcDateTime);
+        session.AddPlayer(1, Guid.NewGuid());
         session.Launch(_timeProvider.GetUtcNow().UtcDateTime);
         _writeRepo.GetSessionWithMachineAsync(session.SessionId, Arg.Any<CancellationToken>())
             .Returns(session);
@@ -67,6 +68,7 @@ public class AbortSessionHandlerTests
         // Arrange: session already ended
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0", "nonce", now);
+        session.AddPlayer(1, Guid.NewGuid());
         session.Launch(now);
         session.End(now.AddMinutes(5));
         _writeRepo.GetSessionWithMachineAsync(session.SessionId, Arg.Any<CancellationToken>())

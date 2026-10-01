@@ -33,6 +33,7 @@ public class GameSession : Entity
         public const string CannotStartSession = "Can only start a session that is in Created or MatchFound state.";
         public const string CannotCancelSession = "Cannot cancel a session that is already active or closed.";
         public const string CannotLaunchSession = "Cannot launch a session that is not in a valid joinable state.";
+        public const string AtLeastOnePlayerRequired = "Cannot launch a session without at least one player.";
         public const string CannotRecordBallInactiveSession = "Cannot record ball score on a session that is not active.";
         public const string InvalidBallNumber = "Ball number must be between 1 and 5.";
         public const string InvalidScore = "Score cannot be negative.";
@@ -226,6 +227,9 @@ public class GameSession : Entity
             or GameSessionState.SearchingPlayer
             or GameSessionState.Joined))
             throw new InvalidOperationException(ErrorMessages.CannotLaunchSession);
+
+        if (_players.Count == 0)
+            throw new InvalidOperationException(ErrorMessages.AtLeastOnePlayerRequired);
 
         StartedAtUtc = launchedAtUtc;
         State = GameSessionState.Started;

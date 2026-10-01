@@ -10,6 +10,13 @@ public class GameSessionTests
     private static GameSession CreateSession(DateTime? startedAt = null) =>
         new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0.0", "nonce", startedAt ?? DateTime.UtcNow);
 
+    private static GameSession CreateSessionWithPlayer(DateTime? startedAt = null)
+    {
+        var session = CreateSession(startedAt);
+        session.AddPlayer(slotNumber: 1, userId: Guid.NewGuid());
+        return session;
+    }
+
     
 // -------------------- Constructor --------------------
     #region Constructor
@@ -273,7 +280,7 @@ public class GameSessionTests
     public void AddPlayer_WhenSessionIsEnded_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateSession();
+        var session = CreateSessionWithPlayer();
         session.Launch(DateTime.UtcNow);
         session.End(DateTime.UtcNow.AddMinutes(5));
 
@@ -333,11 +340,25 @@ public class GameSessionTests
     }
 
     [Fact]
+    public void Launch_WhenNoPlayersInSession_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        var session = CreateSession();
+
+        // Act
+        Action act = () => session.Launch(DateTime.UtcNow);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("Cannot launch a session without at least one player.");
+    }
+
+    [Fact]
     public void End_WhenSessionIsStarted_ShouldSetEndedAtAndTransitionToEndedState()
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
         var endedAt = startedAt.AddMinutes(10);
 
@@ -354,7 +375,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
         session.Pause();
         session.Resume();
@@ -373,7 +394,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
         session.Pause();
         var endedAt = startedAt.AddMinutes(10);
@@ -391,7 +412,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
 
         // Act
@@ -407,7 +428,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
         session.End(startedAt.AddMinutes(5));
 
@@ -423,7 +444,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
 
         // Act: End date earlier than start date
@@ -437,7 +458,7 @@ public class GameSessionTests
     public void Pause_WhenSessionIsStarted_ShouldTransitionToPausedState()
     {
         // Arrange
-        var session = CreateSession();
+        var session = CreateSessionWithPlayer();
         session.Launch(DateTime.UtcNow);
 
         // Act
@@ -451,7 +472,7 @@ public class GameSessionTests
     public void Pause_WhenSessionIsResumed_ShouldTransitionToPausedState()
     {
         // Arrange
-        var session = CreateSession();
+        var session = CreateSessionWithPlayer();
         session.Launch(DateTime.UtcNow);
         session.Pause();
         session.Resume();
@@ -467,7 +488,7 @@ public class GameSessionTests
     public void Pause_WhenSessionIsNotActive_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateSession();
+        var session = CreateSessionWithPlayer();
         session.Launch(DateTime.UtcNow);
         session.Pause(); // Already paused
 
@@ -482,7 +503,7 @@ public class GameSessionTests
     public void Resume_WhenSessionIsPaused_ShouldTransitionToResumedState()
     {
         // Arrange
-        var session = CreateSession();
+        var session = CreateSessionWithPlayer();
         session.Launch(DateTime.UtcNow);
         session.Pause();
 
@@ -497,7 +518,7 @@ public class GameSessionTests
     public void Resume_WhenSessionIsNotPaused_ThrowsInvalidOperationException()
     {
         // Arrange
-        var session = CreateSession();
+        var session = CreateSessionWithPlayer();
         session.Launch(DateTime.UtcNow); // Started state
 
         // Act: Attempt to resume without pausing first
@@ -512,7 +533,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
         var abandonedAt = startedAt.AddMinutes(3);
 
@@ -529,7 +550,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
         session.Abandon(startedAt.AddMinutes(5));
 
@@ -545,7 +566,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
 
         // Act: Abandon date earlier than start date
@@ -560,7 +581,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
         var abortedAt = startedAt.AddMinutes(2);
 
@@ -577,7 +598,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
         session.Abort(startedAt.AddMinutes(5));
 
@@ -593,7 +614,7 @@ public class GameSessionTests
     {
         // Arrange
         var startedAt = DateTime.UtcNow;
-        var session = CreateSession(startedAt);
+        var session = CreateSessionWithPlayer(startedAt);
         session.Launch(startedAt);
 
         // Act: Abort date earlier than start date
@@ -626,7 +647,7 @@ public class GameSessionTests
     public void RecordBallScore_WhenPlayerNotInSlot_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var session = CreateSession();
+        var session = CreateSessionWithPlayer();
         session.Launch(DateTime.UtcNow);
 
         // Act
