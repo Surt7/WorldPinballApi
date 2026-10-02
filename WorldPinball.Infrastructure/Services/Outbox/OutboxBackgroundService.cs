@@ -30,7 +30,8 @@ public sealed class OutboxBackgroundService(
                 catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
                 {
                     // 5-second fallback reached
-                    
+                    // No action required: 5s timeout reached, proceed to batch polling
+                    logger.LogDebug("Outbox fallback: no signal received within 5s, running periodic check.");
                 }
                 
                 // Drain all pending signals from buffer

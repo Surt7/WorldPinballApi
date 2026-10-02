@@ -84,7 +84,7 @@ public static class DependencyInjection
         services.AddScoped<IGameSessionWriteRepository, GameSessionWriteRepository>();
         services.AddScoped<ICertificateAuthorityService, StepCaCertificateAuthorityService>();
         
-        // Stream broadcast livescore
+        // Stream broadcast live score
         services.AddScoped<IStreamingPartnerRepository, StreamingPartnerRepository>();
         services.AddScoped<IStreamingAccessRequestRepository, StreamingAccessRequestRepository>();
         services.AddScoped<IStreamingAuthorizationService, StreamingAuthorizationService>();

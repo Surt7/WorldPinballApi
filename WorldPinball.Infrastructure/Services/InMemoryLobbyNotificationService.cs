@@ -5,9 +5,10 @@ using WorldPinball.Application.Interfaces.Services;
 
 namespace WorldPinball.Infrastructure.Services;
 
-public class InMemoryLobbyNotificationService :ILobbyNotificationService
+public class InMemoryLobbyNotificationService(int capacity = 50) :ILobbyNotificationService
 {
-    
+
+    private readonly int _capacity = capacity;
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Channel<Guid>, byte>> _subscribers = new();
     private readonly ConcurrentDictionary<Channel<Guid>, byte> _globalSubscribers = new();
     
@@ -104,10 +105,11 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
 
-        var channel = Channel.CreateUnbounded<Guid>(new UnboundedChannelOptions
+        var channel = Channel.CreateBounded<Guid>(new BoundedChannelOptions(_capacity)
         {
             SingleWriter = false,
-            SingleReader = true
+            SingleReader = true,
+            FullMode = BoundedChannelFullMode.DropOldest
         });
         
         _globalSubscribers.TryAdd(channel, 0);
