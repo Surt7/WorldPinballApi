@@ -32,7 +32,7 @@ public class OutboxCleanupBackgroundServiceTests
         await _channel.RequestCleanupAsync(cts.Token);
         
         await _sut.StartAsync(cts.Token);
-        await Task.Delay(100);
+        await Task.Delay(100, cts.Token);
         await _sut.StopAsync(CancellationToken.None);
         
         
