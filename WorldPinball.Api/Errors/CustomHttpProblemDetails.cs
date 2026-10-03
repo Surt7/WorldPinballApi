@@ -4,7 +4,7 @@ namespace WorldPinball.Api.Errors;
 
 public class CustomHttpProblemDetails : ProblemDetails
 {
-    public CustomHttpProblemDetails(HttpContext context)
+    public CustomHttpProblemDetails(HttpContext context, IHostEnvironment env)
     {
         Title = "Bad Request";
         Status = StatusCodes.Status400BadRequest;
@@ -13,17 +13,21 @@ public class CustomHttpProblemDetails : ProblemDetails
         Instance =
             $"{context.Request.Path} ({context.TraceIdentifier})";
 
-        Dictionary<string, string?> additionalHeaders = new()
+        
+        
+        /* We send this only in dev only for two main reasons:
+        *This header is sensitive as it contains informatios for proxies and private ip...
+        *And Dictionnary is sensitive to DDOS attack (as one form is hashcode collision attack)
+        */ 
+        if (env.IsDevelopment())
         {
-            ["Host"] = context.Request.Headers["Host"],
-            ["User-Agent"] = context.Request.Headers["User-Agent"],
-            ["X-Forwarded-Proto"] =
-                context.Request.Headers["X-Forwarded-Proto"],
-            ["X-Forwarded-For"] =
-                context.Request.Headers["X-Forwarded-For"]
-        };
-         
-        // Foward is meant to be useful for proxy
-        Extensions["headers"] = additionalHeaders;
+            Extensions["headers"] = new Dictionary<string, string?>
+            {
+                ["Host"] = context.Request.Headers.Host,
+                ["User-Agent"] = context.Request.Headers.UserAgent,
+                ["X-Forwarded-Proto"] = context.Request.Headers["X-Forwarded-Proto"],
+                ["X-Forwarded-For"] = context.Request.Headers["X-Forwarded-For"]
+            };
+        }
     }
 }

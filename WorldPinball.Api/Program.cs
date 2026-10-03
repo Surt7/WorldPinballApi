@@ -1,4 +1,3 @@
-
 using Serilog;
 using WorldPinball.Api.Extensions;
 using WorldPinball.Api.Logging;
@@ -67,10 +66,12 @@ try
     builder.Services.AddProblemDetails();
 
     builder.AddWorldPinballLogging();
-    
-    builder.Services.AddRequestTimeouts(options => {
-        options.DefaultPolicy = new RequestTimeoutPolicy { 
-            Timeout = TimeSpan.FromSeconds(5) 
+
+    builder.Services.AddRequestTimeouts(options =>
+    {
+        options.DefaultPolicy = new RequestTimeoutPolicy
+        {
+            Timeout = TimeSpan.FromSeconds(5)
         };
     });
     builder.Services.AddAutoMapper(cfg => { cfg.AddMaps(typeof(EnrollmentMappingProfile).Assembly); });
@@ -80,18 +81,18 @@ try
 
     builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
     builder.Services.AddWorldPinballLocalization();
-    
-    
+
+
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
-    
+
     // Grpc
     builder.Services.AddGrpc();
     builder.Services.AddScoped<IAddPlayerHandler, AddPlayerHandler>();
     builder.Services.AddScoped<IKickPlayerHandler, KickPlayerHandler>();
     builder.Services.AddScoped<IGetLobbyHandler, GetLobbyHandler>();
     builder.Services.AddScoped<ILaunchSessionHandler, LaunchSessionHandler>();
-    
+
 
     //Handlers
     builder.Services.AddScoped<IEnrollDeviceHandler,
@@ -105,12 +106,12 @@ try
         CreateGameSessionHandler>();
     builder.Services.AddScoped<ISubmitScoreHandler,
         SubmitScoreHandler>();
-    
+
     builder.Services.AddScoped<ICreateOperatorTokenHandler,
         CreateOperatorTokenHandler>();
-    
+
     builder.Services.AddScoped<IAbortSessionHandler, AbortSessionHandler>();
-    
+
     builder.Services.AddScoped<IGetMachineDashboardHandler, GetMachineDashboardHandler>();
     builder.Services.AddScoped<IGetAllMachinesHandler, GetAllMachinesHandler>();
     builder.Services.AddScoped<IGetAllGameModesHandler, GetAllGameModesHandler>();
@@ -119,14 +120,14 @@ try
     builder.Services.AddScoped<ILeaveMatchmakingQueueHandler, LeaveMatchmakingQueueHandler>();
     builder.Services.AddScoped<IMatchNextPlayerHandler, MatchNextPlayerHandler>();
     builder.Services.AddScoped<IRecordBallScoreHandler, RecordBallScoreHandler>();
-    
+
     builder.Services.AddScoped<IRequestStreamingAccessHandler, RequestStreamingAccessHandler>();
     builder.Services.AddScoped<IApproveStreamingAccessHandler, ApproveStreamingAccessHandler>();
     builder.Services.AddScoped<IGetStreamAccessGrantsHandler, GetStreamAccessGrantsHandler>();
     builder.Services.AddScoped<IRevokeStreamAccessGrantHandler, RevokeStreamAccessGrantHandler>();
     builder.Services.AddScoped<ICreateStreamAccessGrantHandler, CreateStreamAccessGrantHandler>();
-    
-    
+
+
     // Security
     builder.Services.AddScoped<IMachineAuthService, MachineAuthService>();
     builder.Services.AddScoped<ICanonicalBuilder, CanonicalBuilder>();
@@ -134,14 +135,17 @@ try
     builder.Services.AddSingleton<ISignatureVerifier,
         EcdsaP256SignatureVerifier>();
     builder.Services.AddScoped<GetLeaderboardHandler>();
+    builder.Services.AddSingleton<SensitiveDataMasker>();
+
 
     //Validators
     builder.Services.AddValidatorsFromAssemblyContaining<Program>();
-    
+
     //SignalR
     builder.Services.AddSignalR();
-    builder.Services.AddSingleton<ILobbyNotificationService, InMemoryLobbyNotificationService>();;
-    
+    builder.Services.AddSingleton<ILobbyNotificationService, InMemoryLobbyNotificationService>();
+    ;
+
 // -------------------- AuthN & Z --------------------
 
     builder.Services.AddApiSecurity(builder.Configuration, builder.Environment);
@@ -154,7 +158,7 @@ try
 
     app.UseSerilogRequestLogging();
 
-    if (app.Environment.IsDevelopment() || app.Environment.IsStaging() )
+    if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
         await app.Services.MigrateDatabaseAsync();
         await app.Services.SeedDevelopmentDataAsync();
@@ -192,14 +196,17 @@ try
     app.UseRequestLocalization();
     app.UseRouting();
 
+    /* Must run after UseRouting so route parameters
+     *(e.g., sessionId) are resolved before opening the logging scope.
+     */
+    app.UseMiddleware<CorrelationContextLoggingMiddleware>();
     app.UseAuthentication();
     app.UseAuthorization();
 
     app.MapControllers();
     app.MapGrpcService<GameSessionGrpcService>();
 
-   
-    
+
     app.Run();
 }
 catch (Exception ex)
@@ -210,5 +217,7 @@ catch (Exception ex)
 
 namespace WorldPinball.Api
 {
-    public partial class Program { }
+    public partial class Program
+    {
+    }
 }

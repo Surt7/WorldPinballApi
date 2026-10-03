@@ -4,7 +4,9 @@ public sealed class RequireHttpsMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(
         HttpContext context,
-        IProblemDetailsService problemDetailsService)
+        IProblemDetailsService problemDetailsService,
+            IHostEnvironment env
+        )
     {
         if (!context.Request.IsHttps)
         {
@@ -16,7 +18,7 @@ public sealed class RequireHttpsMiddleware(RequestDelegate next)
                 {
                     HttpContext = context,
                     ProblemDetails =
-                        new CustomHttpProblemDetails(context)
+                        new CustomHttpProblemDetails(context, env)
                 });
 
             return;

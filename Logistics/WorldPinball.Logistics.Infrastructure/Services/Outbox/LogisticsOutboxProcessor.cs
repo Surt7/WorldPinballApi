@@ -37,7 +37,7 @@ public class LogisticsOutboxProcessor(
         {
             try
             {
-                // Write in kafka as producer
+                
                 await publisher.PublishAsync(
                     "logistics-shipments",
                     message.Id.ToString(),
