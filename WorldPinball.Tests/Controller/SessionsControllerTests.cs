@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using System.Security.Cryptography;
 using FluentAssertions;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
@@ -22,8 +24,10 @@ using WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession.Commands;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore.Commands;
+using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Application.Security.Cryptography;
+using WorldPinball.Domain.Entities;
 
 namespace WorldPinball.Tests.Controller;
 
@@ -37,17 +41,36 @@ public class SessionsControllerTests
     private readonly IAddPlayerHandler _addPlayerHandler = Substitute.For<IAddPlayerHandler>();
     private readonly IKickPlayerHandler _kickPlayerHandler = Substitute.For<IKickPlayerHandler>();
     private readonly ILaunchSessionHandler _launchSessionHandler = Substitute.For<ILaunchSessionHandler>();
-    private readonly IValidator<CreateGameSessionRequest> _validatorCreateSession = Substitute.For<IValidator<CreateGameSessionRequest>>();
-    private readonly IValidator<SubmitScoreRequest> _validatorSubmitScore = Substitute.For<IValidator<SubmitScoreRequest>>();
+
+    private readonly IValidator<CreateGameSessionRequest> _validatorCreateSession =
+        Substitute.For<IValidator<CreateGameSessionRequest>>();
+
+    private readonly IValidator<SubmitScoreRequest> _validatorSubmitScore =
+        Substitute.For<IValidator<SubmitScoreRequest>>();
+
     private readonly IValidator<AddPlayerRequest> _validatorAddPlayer = Substitute.For<IValidator<AddPlayerRequest>>();
     private readonly ILobbyNotificationService _lobbyNotifier = Substitute.For<ILobbyNotificationService>();
+    private readonly IGameSessionWriteRepository _sessionRepository = Substitute.For<IGameSessionWriteRepository>();
+    private readonly IAuthorizationService _authorization = Substitute.For<IAuthorizationService>();
+
 
     private SessionsController CreateController()
     {
+        var dummySession =
+            new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0", "nonce", DateTime.UtcNow);
+        _sessionRepository.GetSessionWithMachineAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(dummySession);
+
+        _authorization.AuthorizeAsync(Arg.Any<ClaimsPrincipal>(), Arg.Any<object>(),
+                Arg.Any<IEnumerable<IAuthorizationRequirement>>())
+            .Returns(AuthorizationResult.Success());
+
         _validatorCreateSession.ValidateAsync(Arg.Any<CreateGameSessionRequest>(), Arg.Any<CancellationToken>())
             .Returns(new ValidationResult());
+
         _validatorSubmitScore.ValidateAsync(Arg.Any<SubmitScoreRequest>(), Arg.Any<CancellationToken>())
             .Returns(new ValidationResult());
+
         _validatorAddPlayer.ValidateAsync(Arg.Any<AddPlayerRequest>(), Arg.Any<CancellationToken>())
             .Returns(new ValidationResult());
 
@@ -63,7 +86,10 @@ public class SessionsControllerTests
             _validatorCreateSession,
             _validatorSubmitScore,
             _validatorAddPlayer,
-            _lobbyNotifier);
+            _lobbyNotifier,
+            _sessionRepository,
+            _authorization
+        );
 
         controller.ControllerContext = new ControllerContext
         {
@@ -98,7 +124,8 @@ public class SessionsControllerTests
         var request = new CreateGameSessionRequest("STORY", "1.02.12");
 
         // Act
-        var result = await controller.CreateGameSession(request, deviceId.ToString(), timestamp.ToString(), nonce, fakeSignature, CancellationToken.None);
+        var result = await controller.CreateGameSession(request, deviceId.ToString(), timestamp.ToString(), nonce,
+            fakeSignature, CancellationToken.None);
 
         // Assert
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Which;
@@ -155,7 +182,8 @@ public class SessionsControllerTests
     {
         // Arrange
         var sessionId = Guid.NewGuid();
-        _addPlayerHandler.HandleAsync(Arg.Is<AddPlayerCommand>(c => c.SessionId == sessionId && c.SlotNumber == 1), Arg.Any<CancellationToken>())
+        _addPlayerHandler.HandleAsync(Arg.Is<AddPlayerCommand>(c => c.SessionId == sessionId && c.SlotNumber == 1),
+                Arg.Any<CancellationToken>())
             .Returns(new AddPlayerResult.Success(sessionId, 1));
 
         var controller = CreateController();
@@ -176,7 +204,8 @@ public class SessionsControllerTests
     {
         // Arrange
         var sessionId = Guid.NewGuid();
-        _kickPlayerHandler.HandleAsync(Arg.Is<KickPlayerCommand>(c => c.SessionId == sessionId && c.SlotNumber == 2), Arg.Any<CancellationToken>())
+        _kickPlayerHandler.HandleAsync(Arg.Is<KickPlayerCommand>(c => c.SessionId == sessionId && c.SlotNumber == 2),
+                Arg.Any<CancellationToken>())
             .Returns(new KickPlayerResult.Success(sessionId, 2));
 
         var controller = CreateController();
@@ -195,7 +224,8 @@ public class SessionsControllerTests
     {
         // Arrange
         var sessionId = Guid.NewGuid();
-        _launchSessionHandler.HandleAsync(Arg.Is<LaunchSessionCommand>(c => c.SessionId == sessionId), Arg.Any<CancellationToken>())
+        _launchSessionHandler.HandleAsync(Arg.Is<LaunchSessionCommand>(c => c.SessionId == sessionId),
+                Arg.Any<CancellationToken>())
             .Returns(new LaunchSessionResult.Success(sessionId));
 
         var controller = CreateController();
@@ -214,7 +244,8 @@ public class SessionsControllerTests
     {
         // Arrange
         var sessionId = Guid.NewGuid();
-        _abortSessionHandler.HandleAsync(Arg.Is<AbortSessionCommand>(c => c.SessionId == sessionId), Arg.Any<CancellationToken>())
+        _abortSessionHandler.HandleAsync(Arg.Is<AbortSessionCommand>(c => c.SessionId == sessionId),
+                Arg.Any<CancellationToken>())
             .Returns(new AbortSessionResult.Success(sessionId));
 
         var controller = CreateController();
@@ -226,5 +257,26 @@ public class SessionsControllerTests
         var okResult = result.Result.Should().BeOfType<OkObjectResult>().Which;
         var response = okResult.Value.Should().BeOfType<AbortSessionResponse>().Which;
         response.SessionId.Should().Be(sessionId);
+    }
+    
+    
+    [Fact]
+    public async Task AbortSession_WhenUserIsNotAuthorized_ShouldReturnForbid()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid();
+        var controller = CreateController();
+
+        _authorization.AuthorizeAsync(
+                Arg.Any<ClaimsPrincipal>(),
+                Arg.Any<object>(),
+                Arg.Any<IEnumerable<IAuthorizationRequirement>>())
+            .Returns(AuthorizationResult.Failed());
+
+        // Act
+        var result = await controller.AbortSession(sessionId, CancellationToken.None);
+
+        // Assert
+        result.Result.Should().BeOfType<ForbidResult>();
     }
 }

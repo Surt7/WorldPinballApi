@@ -6,6 +6,7 @@ using WorldPinball.Infrastructure;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
+using WorldPinball.Api.Errors;
 using WorldPinball.Api.Middleware;
 using WorldPinball.Application.Features.GameSessions.Public.AddPlayer;
 using WorldPinball.Application.Features.GameSessions.Public.CreateGameSession;
@@ -64,6 +65,10 @@ try
     });
 
     builder.Services.AddProblemDetails();
+    
+    // Registers our custom IExceptionHandler in the pipeline
+    builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+    
 
     builder.AddWorldPinballLogging();
 

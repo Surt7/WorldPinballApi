@@ -2,9 +2,11 @@
 
 namespace WorldPinball.Api.Errors;
 
-public class CustomHttpProblemDetails : ProblemDetails
+
+
+public class HttpsRequiredProblemDetails : ProblemDetails
 {
-    public CustomHttpProblemDetails(HttpContext context, IHostEnvironment env)
+    public HttpsRequiredProblemDetails(HttpContext context, IHostEnvironment env)
     {
         Title = "Bad Request";
         Status = StatusCodes.Status400BadRequest;

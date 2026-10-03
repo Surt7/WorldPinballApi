@@ -18,7 +18,7 @@ public sealed class RequireHttpsMiddleware(RequestDelegate next)
                 {
                     HttpContext = context,
                     ProblemDetails =
-                        new CustomHttpProblemDetails(context, env)
+                        new HttpsRequiredProblemDetails(context, env)
                 });
 
             return;

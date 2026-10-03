@@ -7,7 +7,7 @@ using Xunit;
 
 namespace WorldPinball.Tests.Errors;
 
-public class CustomHttpProblemDetailsTests
+public class HttpsRequiredProblemDetailsTests
 {
     [Fact]
     public void Constructor_WhenInProduction_ShouldNotIncludeHeadersInExtensions()
@@ -18,7 +18,7 @@ public class CustomHttpProblemDetailsTests
         env.EnvironmentName.Returns(Environments.Production);
 
         // Act
-        var problemDetails = new CustomHttpProblemDetails(httpContext, env);
+        var problemDetails = new HttpsRequiredProblemDetails(httpContext, env);
 
         // Assert
         problemDetails.Extensions.Should().NotContainKey("headers");
@@ -33,7 +33,7 @@ public class CustomHttpProblemDetailsTests
         env.EnvironmentName.Returns(Environments.Development);
 
         // Act
-        var problemDetails = new CustomHttpProblemDetails(httpContext, env);
+        var problemDetails = new HttpsRequiredProblemDetails(httpContext, env);
 
         // Assert
         problemDetails.Extensions.Should().ContainKey("headers");

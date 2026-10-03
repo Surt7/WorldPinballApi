@@ -18,8 +18,10 @@ using WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession.Commands;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 using WorldPinball.Application.Features.GameSessions.Public.SubmitScore.Commands;
+using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Security.Cryptography;
 using WorldPinball.Application.Interfaces.Services;
+using WorldPinball.Infrastructure.Security.Authorization;
 
 namespace WorldPinball.Api.Controllers.Public;
 
@@ -37,7 +39,9 @@ public class SessionsController(
     IValidator<CreateGameSessionRequest> requestValidator,
     IValidator<SubmitScoreRequest> reqValidator,
     IValidator<AddPlayerRequest> addPlayerValidator,
-    ILobbyNotificationService lobbyNotifier
+    ILobbyNotificationService lobbyNotifier,
+    IGameSessionWriteRepository sessionRepository,
+    IAuthorizationService authorization
 ) : ControllerBase
 {
     private static readonly JsonSerializerOptions JsonOpts = new()
@@ -47,6 +51,8 @@ public class SessionsController(
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+  
+    
     [HttpPost("create")]
     [EndpointSummary("Create a game session")]
     [EndpointDescription("POST to create new game session")]
@@ -196,6 +202,7 @@ public class SessionsController(
     }
 
     [HttpDelete("{sessionId:guid}/players/{slotNumber:int}")]
+    [Authorize]
     [EndpointSummary("Kick player from session")]
     [EndpointDescription("DELETE a player from a lobby slot")]
     [ProducesResponseType(typeof(KickPlayerResponse), StatusCodes.Status200OK)]
@@ -207,6 +214,15 @@ public class SessionsController(
         [FromRoute] int slotNumber,
         CancellationToken ct)
     {
+        // Check if player have requirement
+        var session = await sessionRepository.GetSessionWithMachineAsync(sessionId, ct);
+        if (session is null) return NotFound(new { message = $"Session '{sessionId}' not found." });
+        
+        var auth = await authorization.AuthorizeAsync(User, session, new GameSessionParticipantRequirement());
+        if (!auth.Succeeded) return Forbid();
+        
+        
+        
         var command = new KickPlayerCommand(sessionId, slotNumber);
         var result = await kickPlayerHandler.HandleAsync(command, ct);
         if (result is KickPlayerResult.Success)
@@ -224,8 +240,10 @@ public class SessionsController(
             _ => throw new InvalidOperationException($"Unsupported kick player result: {result.GetType().Name}")
         };
     }
-
+    
+    
     [HttpPost("{sessionId:guid}/launch")]
+    [Authorize]
     [EndpointSummary("Launch game session")]
     [EndpointDescription("POST to launch/start an existing lobby session")]
     [ProducesResponseType(typeof(LaunchSessionResponse), StatusCodes.Status200OK)]
@@ -235,6 +253,14 @@ public class SessionsController(
         [FromRoute] Guid sessionId,
         CancellationToken ct)
     {
+        
+        // Check if got the right with requirement
+        var session = await sessionRepository.GetSessionWithMachineAsync(sessionId, ct);
+        if (session is null) return NotFound(new { message = $"Session '{sessionId}' not found." });
+        var auth = await authorization.AuthorizeAsync(User, session, new GameSessionParticipantRequirement());
+        if (!auth.Succeeded) return Forbid();
+        
+        
         var command = new LaunchSessionCommand(sessionId);
         var result = await launchSessionHandler.HandleAsync(command, ct);
         if (result is LaunchSessionResult.Success)
@@ -317,6 +343,7 @@ public class SessionsController(
     }
 
     [HttpPost("{sessionId:guid}/abort")]
+    [Authorize]
     [EndpointSummary("Abort game session")]
     [EndpointDescription("POST to abort an active game session")]
     [ProducesResponseType(typeof(AbortSessionResponse), StatusCodes.Status200OK)]
@@ -326,6 +353,18 @@ public class SessionsController(
         [FromRoute] Guid sessionId,
         CancellationToken ct)
     {
+        var session = await sessionRepository.GetSessionWithMachineAsync(sessionId, ct);
+        if (session is null)
+        {
+            return NotFound(new { message = $"Session '{sessionId}' not found." });
+        }
+        
+        var auth = await authorization.AuthorizeAsync(
+            User, session, new GameSessionParticipantRequirement());
+        if (!auth.Succeeded)
+        {
+            return Forbid();
+        }
         
         var command = new AbortSessionCommand(sessionId);
         var result = await abortSessionHandler.HandleAsync(command, ct);

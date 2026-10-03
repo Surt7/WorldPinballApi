@@ -97,10 +97,16 @@ public static class DependencyInjection
         services.AddTransient<IClaimsTransformation, MachineClaimsTransformation>();
         
         // Auth policies handler
+        // Policy-Based
         services.AddSingleton<IAuthorizationHandler, ActiveMachineAuthorizationHandler>();
         services.AddSingleton<IAuthorizationHandler, OperatorScopeAuthorizationHandler>();
 
+        // Resources-Based
+        services.AddSingleton<IAuthorizationHandler, GameSessionParticipantAuthorizationHandler>();
+        
         services.AddScoped<IOperatorTokenWriteRepository, OperatorTokenWriteRepository>();
+        
+        
         
         // -------------------- Kafka & Outbox --------------------
         services.AddSingleton<IProducer<string, string>>(_ =>
