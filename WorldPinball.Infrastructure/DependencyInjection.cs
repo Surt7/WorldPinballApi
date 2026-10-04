@@ -22,6 +22,7 @@ using WorldPinball.Infrastructure.Security.OperatorTokens;
 using WorldPinball.Infrastructure.Security.Secrets;
 using WorldPinball.Infrastructure.Services;
 using WorldPinball.Infrastructure.Services.Authorization;
+using WorldPinball.Infrastructure.Services.KafkaConsumers;
 using WorldPinball.Infrastructure.Services.Outbox;
 using WorldPinball.Infrastructure.Services.Redis;
 
@@ -109,6 +110,8 @@ public static class DependencyInjection
         
         
         // -------------------- Kafka & Outbox --------------------
+        
+        // Kafka Producer
         services.AddSingleton<IProducer<string, string>>(_ =>
         {
             var producerConfig = new ProducerConfig
@@ -120,8 +123,27 @@ public static class DependencyInjection
             return new ProducerBuilder<string, string>(producerConfig).Build();
         });
         
+        // Kafka Consumer
+        services.AddSingleton<IConsumer<string, string>>(sp =>
+        {
+            var consumerConfig = new ConsumerConfig
+            {
+                BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092",
+                GroupId = "worldpinball-leaderboard-updater",
+                AutoOffsetReset = AutoOffsetReset.Earliest,
+                EnableAutoCommit = false
+
+            };
+            return new ConsumerBuilder<string, string>(consumerConfig).Build();
+        });
+        
+        // background service for update leaderboard
+        services.AddHostedService<LeaderboardKafkaConsumerBackgroundService>();
+        
         services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
         services.AddScoped<IOutboxProcessor, OutboxProcessor>();
+        services.AddScoped<ILeaderboardScoreEventProcessor, LeaderboardScoreEventProcessor>();
+        
         
         // Outbox Services
         services.AddHostedService<OutboxBackgroundService>();

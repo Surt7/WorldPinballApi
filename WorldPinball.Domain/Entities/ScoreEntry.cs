@@ -80,6 +80,7 @@ public class ScoreEntry:Entity
             ScoreEntryId,
             SessionId,
             MachineId,
+            IpId,
             ModeId,
             SlotNumber,
             UserId,
