@@ -1,7 +1,7 @@
 ﻿using Confluent.Kafka;
 using WorldPinball.Application.Interfaces.Services;
 
-namespace WorldPinball.Infrastructure.Services.Outbox;
+namespace WorldPinball.Infrastructure.Services.KafkaProducers;
 
 public class KafkaEventPublisher(IProducer<string, string> producer) :IEventPublisher
 {

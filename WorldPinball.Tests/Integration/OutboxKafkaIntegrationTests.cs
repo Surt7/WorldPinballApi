@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Infrastructure;
 using WorldPinball.Infrastructure.Persistence;
+using WorldPinball.Infrastructure.Services.KafkaProducers;
 using WorldPinball.Infrastructure.Services.Outbox;
 
 namespace WorldPinball.Tests.Integration;

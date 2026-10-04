@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WorldPinball.Application.Interfaces.Services;
 
-namespace WorldPinball.Infrastructure.Services.Outbox;
+namespace WorldPinball.Infrastructure.Services.KafkaProducers;
 
 public static class KafkaProducerExtensions
 {

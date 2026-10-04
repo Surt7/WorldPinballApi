@@ -23,6 +23,7 @@ using WorldPinball.Infrastructure.Security.Secrets;
 using WorldPinball.Infrastructure.Services;
 using WorldPinball.Infrastructure.Services.Authorization;
 using WorldPinball.Infrastructure.Services.KafkaConsumers;
+using WorldPinball.Infrastructure.Services.KafkaProducers;
 using WorldPinball.Infrastructure.Services.Outbox;
 using WorldPinball.Infrastructure.Services.Redis;
 
@@ -58,9 +59,6 @@ public static class DependencyInjection
         
         // -------------------- Dapper --------------------
         services.AddScoped<IMachineDashboardReadRepository, MachineDashboardReadRepository>();
-        
-        
-    
         
         
         // -------------------- Repositories registering --------------------
@@ -110,7 +108,7 @@ public static class DependencyInjection
         
         
         // -------------------- Kafka & Outbox --------------------
-        // Defined in Services/Outbox/KafkaProducerExtensions.cs
+        // Defined in Services/KafkaProducers/KafkaProducerExtensions.cs
         services.AddKafkaProducer(config);
 
         // Defined in Services/KafkaConsumers/KafkaConsumerExtensions.cs
