@@ -279,4 +279,62 @@ public class SessionsControllerTests
         // Assert
         result.Result.Should().BeOfType<ForbidResult>();
     }
+    
+    [Fact]
+    public async Task SubmitScore_WhenSessionNotStarted_ShouldReturnConflict()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid();
+        _submitScoreHandler.HandleAsync(Arg.Any<SubmitScoreCommand>(), Arg.Any<CancellationToken>())
+            .Returns(new SubmitScoreResult.SessionNotStarted(sessionId));
+
+        var controller = CreateController();
+        var request = new SubmitScoreRequest(Guid.NewGuid(), [new SlotScoreRequest(1, 5000)]);
+
+        // Act
+        var result = await controller.SubmitScore(sessionId, request, CancellationToken.None);
+
+        // Assert
+        result.Result.Should().BeOfType<ConflictObjectResult>();
+    }
+    
+    [Fact]
+    public async Task KickPlayer_WhenUserIsNotAuthorized_ShouldReturnForbid()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid();
+        var controller = CreateController();
+
+        _authorization.AuthorizeAsync(
+                Arg.Any<ClaimsPrincipal>(),
+                Arg.Any<object>(),
+                Arg.Any<IEnumerable<IAuthorizationRequirement>>())
+            .Returns(AuthorizationResult.Failed());
+
+        // Act
+        var result = await controller.KickPlayer(sessionId, 2, CancellationToken.None);
+
+        // Assert
+        result.Result.Should().BeOfType<ForbidResult>();
+    }
+    
+    [Fact]
+    public async Task LaunchSession_WhenUserIsNotAuthorized_ShouldReturnForbid()
+    {
+        // Arrange
+        var sessionId = Guid.NewGuid();
+        var controller = CreateController();
+
+        _authorization.AuthorizeAsync(
+                Arg.Any<ClaimsPrincipal>(),
+                Arg.Any<object>(),
+                Arg.Any<IEnumerable<IAuthorizationRequirement>>())
+            .Returns(AuthorizationResult.Failed());
+
+        // Act
+        var result = await controller.LaunchSession(sessionId, CancellationToken.None);
+
+        // Assert
+        result.Result.Should().BeOfType<ForbidResult>();
+    }
 }

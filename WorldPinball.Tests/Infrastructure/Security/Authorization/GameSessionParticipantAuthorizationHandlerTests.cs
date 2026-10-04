@@ -52,4 +52,23 @@ public class GameSessionParticipantAuthorizationHandlerTests
         // Assert
         context.HasSucceeded.Should().BeFalse();
     }
+    
+    
+    [Fact]
+    public async Task HandleRequirementAsync_WhenCallerIsMachine_ShouldSucceed()
+    {
+        // Arrange
+        var machineId = Guid.NewGuid();
+        var user = new ClaimsPrincipal(new ClaimsIdentity([
+            new Claim(ClaimTypes.NameIdentifier, machineId.ToString())
+        ]));
+        var session = new GameSession(machineId, Guid.NewGuid(), Guid.NewGuid(), "1.0", "nonce", DateTime.UtcNow);
+        var requirement = new GameSessionParticipantRequirement();
+        var context = new AuthorizationHandlerContext([requirement], user, session);
+        var sut = new GameSessionParticipantAuthorizationHandler();
+        // Act
+        await sut.HandleAsync(context);
+        // Assert
+        context.HasSucceeded.Should().BeTrue();
+    }
 }

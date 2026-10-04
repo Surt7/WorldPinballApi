@@ -326,6 +326,10 @@ public class SessionsController(
             {
                 message = $"Session '{s.GameSessionId}' already ended."
             }),
+            SubmitScoreResult.SessionNotStarted s => Conflict(new
+            {
+                message = $"Session '{s.GameSessionId}' not started."
+            }),
             SubmitScoreResult.DeviceMisMatch s => Conflict(new
             {
                 message = $"Device '{s.ActualDeviceId}' mismatch (expected '{s.ExpectedDeviceId}')."
