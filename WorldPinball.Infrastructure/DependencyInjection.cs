@@ -110,39 +110,13 @@ public static class DependencyInjection
         
         
         // -------------------- Kafka & Outbox --------------------
-        
-        // Kafka Producer
-        services.AddSingleton<IProducer<string, string>>(_ =>
-        {
-            var producerConfig = new ProducerConfig
-            {
-                BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092",
-                Acks = Acks.All,
-                EnableIdempotence = true
-            };
-            return new ProducerBuilder<string, string>(producerConfig).Build();
-        });
-        
-        // Kafka Consumer
-        services.AddSingleton<IConsumer<string, string>>(sp =>
-        {
-            var consumerConfig = new ConsumerConfig
-            {
-                BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092",
-                GroupId = "worldpinball-leaderboard-updater",
-                AutoOffsetReset = AutoOffsetReset.Earliest,
-                EnableAutoCommit = false
+        // Defined in Services/Outbox/KafkaProducerExtensions.cs
+        services.AddKafkaProducer(config);
 
-            };
-            return new ConsumerBuilder<string, string>(consumerConfig).Build();
-        });
-        
-        // background service for update leaderboard
-        services.AddHostedService<LeaderboardKafkaConsumerBackgroundService>();
-        
-        services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
+        // Defined in Services/KafkaConsumers/KafkaConsumerExtensions.cs
+        services.AddLeaderboardKafkaConsumer(config);
+
         services.AddScoped<IOutboxProcessor, OutboxProcessor>();
-        services.AddScoped<ILeaderboardScoreEventProcessor, LeaderboardScoreEventProcessor>();
         
         
         // Outbox Services
