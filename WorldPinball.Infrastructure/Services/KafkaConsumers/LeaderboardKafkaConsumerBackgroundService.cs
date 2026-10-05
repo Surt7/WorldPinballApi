@@ -22,21 +22,35 @@ public class LeaderboardKafkaConsumerBackgroundService(
         await Task.Yield();
 
 
-        try
+        try // cancellation 
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                var result = consumer.Consume(stoppingToken);
-                if (result?.Message?.Value is null) continue;
+                try // topic
+                {
+                    var result = consumer.Consume(stoppingToken);
+                    if (result?.Message?.Value is null) continue;
 
-                using var scope = scopeFactory.CreateScope();
-                var processor = scope.ServiceProvider.GetRequiredService<ILeaderboardScoreEventProcessor>();
-                await processor.ProcessMessageAsync(result.Message.Value, stoppingToken);
+                    using var scope = scopeFactory.CreateScope();
+                    var processor = scope.ServiceProvider.GetRequiredService<ILeaderboardScoreEventProcessor>();
+                    await processor.ProcessMessageAsync(result.Message.Value, stoppingToken);
 
-                consumer.Commit(result);
-                
-                logger.LogDebug("Offset {Offset} committed for partition {Partition}.",
-                    result.Offset.Value, result.Partition.Value);
+                    consumer.Commit(result);
+
+                    logger.LogDebug("Offset {Offset} committed for partition {Partition}.",
+                        result.Offset.Value, result.Partition.Value);
+                }
+                catch (ConsumeException ex) when (ex.Error.Code == ErrorCode.UnknownTopicOrPart)
+                {
+                    // Topic does not exist yet; wait for it to be auto-created
+                    logger.LogWarning("Kafka topic 'game-sessions' not available yet. Retrying in 2s...");
+                    await Task.Delay(2000, stoppingToken);
+                }
+                catch (ConsumeException ex)
+                {
+                    logger.LogError(ex, "Kafka consumption error: {Reason}", ex.Error.Reason);
+                    await Task.Delay(1000, stoppingToken);
+                }
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

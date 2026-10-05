@@ -17,7 +17,11 @@ public static class KafkaProducerExtensions
             {
                 BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092",
                 Acks = Acks.All,
-                EnableIdempotence = true
+                EnableIdempotence = true,
+                MaxInFlight = 5 ,// Preserves strict ordering while maximizing network pipelining
+                CompressionType = CompressionType.Lz4, // High compression speed with minimal CPU overhead
+                LingerMs = 20, // Wait up to 20ms to allow batch accumulation
+                BatchSize = 1024 * 1024 // 1MB batch size for high-throughput buffering
             };
             return new ProducerBuilder<string, string>(producerConfig).Build();
         });

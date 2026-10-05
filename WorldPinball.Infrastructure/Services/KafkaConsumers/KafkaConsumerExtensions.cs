@@ -18,8 +18,11 @@ public static class KafkaConsumerExtensions
                 GroupId = "worldpinball-leaderboard-updater",
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoCommit = false,
-                PartitionAssignmentStrategy = PartitionAssignmentStrategy.CooperativeSticky
                 // Cooperative Sticky prevent the rebalancing overhead
+                PartitionAssignmentStrategy = PartitionAssignmentStrategy.CooperativeSticky,
+                
+                // Only read committed messages up to Last Stable Offset
+                IsolationLevel = IsolationLevel.ReadCommitted 
             };
             return new ConsumerBuilder<string, string>(consumerConfig).Build();
         });
