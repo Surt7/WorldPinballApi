@@ -1,4 +1,4 @@
-﻿namespace WorldPinball.Bff.Extensions;
+namespace WorldPinball.Bff.Extensions;
 
 using Azure.Identity;
 using System.IO;
@@ -62,12 +62,13 @@ public static class SecurityAuthExtensions
                 dataProtection.PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys");
             }
 
-            var keyVaultKeyUri = config["KeyVault:DataProtectionKeyUri"];
+            var keyVaultUri = config["KeyVault:VaultUri"] ?? config["KEYVAULT_URI"];
             
-            if (!string.IsNullOrWhiteSpace(keyVaultKeyUri))
+            if (!string.IsNullOrWhiteSpace(keyVaultUri))
             {
+                var keyUri = new Uri(new Uri(keyVaultUri), "keys/dataprotection-key");
                 dataProtection.ProtectKeysWithAzureKeyVault(
-                    new Uri(keyVaultKeyUri),
+                    keyUri,
                     new DefaultAzureCredential());
             }
         }

@@ -58,7 +58,9 @@ jobs:
           SEQ_ADMIN_PASSWORD=$(generate_password)
           STEP_CA_PASSWORD=$(generate_password)
           POSTGRES_STAT_PASSWORD=$(generate_password)
-
+          
+          # Create DataProtection RSA Master Key
+          az keyvault key create --vault-name "$VAULT_NAME" --name "dataprotection-key" --kty RSA --size 2048 --output none
           # Push all 10 secrets into Azure KeyVault
           az keyvault secret set --vault-name "$VAULT_NAME" --name "ConnectionStrings--DefaultConnection" --value "Host=db.$DOMAIN_SUFFIX;Port=5432;Database=worldpinball;Username=postgres;Password=$POSTGRES_PASSWORD" --output none
           az keyvault secret set --vault-name "$VAULT_NAME" --name "ConnectionStrings--Redis" --value "redis.$DOMAIN_SUFFIX:6379,password=$REDIS_PASSWORD,abortConnect=false" --output none
