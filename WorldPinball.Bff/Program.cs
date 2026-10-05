@@ -28,7 +28,7 @@ builder.Services.AddRequestTimeouts(options => {
  *https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html
  */
 
-builder.Services.AddBffSecurity(builder.Configuration); 
+builder.Services.AddBffSecurity(builder.Configuration, builder.Environment); 
 builder.Services.AddBffRateLimiting();
 builder.Services.AddHealthChecks()
     .AddCheck("self", 

@@ -8,7 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Azure.Extensions.AspNetCore.DataProtection.Keys" Version="1.6.4" />
+        <PackageReference Include="Azure.Identity" Version="1.21.0" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.12" />
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="10.0.12" />
         <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.10.0" />
         <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
         <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.18.0" />
@@ -24,9 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Protobuf Include="..\WorldPinball.Api\Protos\v1\gamesessions\game_session.proto"
-                  GrpcServices="Client" 
-                  Link="Protos\game_session.proto" />
+        <Protobuf Include="..\WorldPinball.Api\Protos\v1\gamesessions\game_session.proto" GrpcServices="Client" Link="Protos\game_session.proto" />
     </ItemGroup>
     
     

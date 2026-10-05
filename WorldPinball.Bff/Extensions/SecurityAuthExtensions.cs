@@ -1,14 +1,19 @@
 ﻿namespace WorldPinball.Bff.Extensions;
 
+using Azure.Identity;
+using System.IO;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using StackExchange.Redis;
 
 public static class SecurityAuthExtensions
 {
     public static IServiceCollection AddBffSecurity(
         this IServiceCollection services,
-        IConfiguration config
+        IConfiguration config,
+        IHostEnvironment env 
     )
     {
         services.AddHttpsRedirection(options =>
@@ -16,22 +21,57 @@ public static class SecurityAuthExtensions
             options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
             options.HttpsPort = 7285;
         });
+        
+        
         services.AddHsts(options =>
         {
             options.Preload = true;
             options.IncludeSubDomains = true;
             options.MaxAge = TimeSpan.FromDays(730); // 2 years
         });
+        
+        
         services.AddCors(options =>
         {
             options.AddPolicy("AngularDevPolicy", policy =>
             {
-                policy.WithOrigins("http://localhost:4200", "https://localhost:4200")
+                policy.WithOrigins("https://localhost:4200")
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials(); // Mandatory for session and antiforgery cookies
             });
         });
+        
+        var dataProtection = services.AddDataProtection()
+            .SetApplicationName("worldpinball");
+        
+        if (env.IsDevelopment())
+        {
+            dataProtection.PersistKeysToFileSystem(new DirectoryInfo(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                    ".worldpinball-keys")));
+        }
+        else
+        {
+            var redisConnectionString = config.GetConnectionString("Redis")
+                ?? config["Redis:ConnectionString"];
+
+            if (!string.IsNullOrWhiteSpace(redisConnectionString))
+            {
+                var redis = ConnectionMultiplexer.Connect(redisConnectionString);
+                dataProtection.PersistKeysToStackExchangeRedis(redis, "DataProtection-Keys");
+            }
+
+            var keyVaultKeyUri = config["KeyVault:DataProtectionKeyUri"];
+            
+            if (!string.IsNullOrWhiteSpace(keyVaultKeyUri))
+            {
+                dataProtection.ProtectKeysWithAzureKeyVault(
+                    new Uri(keyVaultKeyUri),
+                    new DefaultAzureCredential());
+            }
+        }
+
         services.AddAuthentication(options =>
             {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
