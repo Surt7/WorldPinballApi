@@ -41,7 +41,7 @@ public static class SecurityAuthExtensions
             {
                 options.Cookie.Name = "__Host-worldpinball-session";
                 options.Cookie.HttpOnly = true;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.Cookie.SameSite = SameSiteMode.Lax; // Required for OIDC redirect flows
                 options.ExpireTimeSpan = TimeSpan.FromHours(8);
                 options.SlidingExpiration = true;
