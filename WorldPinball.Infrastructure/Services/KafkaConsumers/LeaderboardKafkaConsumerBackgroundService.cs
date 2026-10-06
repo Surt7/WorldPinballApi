@@ -17,7 +17,7 @@ public class LeaderboardKafkaConsumerBackgroundService(
         consumer.Subscribe("game-sessions");
         logger.LogInformation("Leaderboard Kafka consumer started on topic 'game-sessions'.");
         /* As we work on async we have to give back the hand to
-         server as Kafka method as it's synchronous
+         server as Kafka method are synchronous
           (by definition , blocking the thread)   */
         await Task.Yield();
 

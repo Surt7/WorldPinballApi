@@ -91,7 +91,7 @@ public static class SecurityAuthExtensions
             })
             .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
             {
-                // the pkce is enough to protect the url
+                // the pkce challenge is enough to protect the url
                 options.PushedAuthorizationBehavior = PushedAuthorizationBehavior.Disable;
                 options.Authority = config["Keycloak:Authority"] ?? "http://localhost:8081/realms/worldpinball";
                 options.ClientId = config["Keycloak:ClientId"] ?? "worldpinball-swagger";
@@ -99,7 +99,7 @@ public static class SecurityAuthExtensions
                 options.ResponseType = OpenIdConnectResponseType.Code;
                 options.SaveTokens = true;
                 options.GetClaimsFromUserInfoEndpoint = true;
-                options.RequireHttpsMetadata = false; // Dev local
+                options.RequireHttpsMetadata = false; // local dev
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
