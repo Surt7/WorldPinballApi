@@ -44,7 +44,8 @@ public sealed class AdminMachinesController(
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ProvisionMachineResponse>> Provision(
         [FromBody] ProvisionMachineRequest req,
-        CancellationToken ct)
+        CancellationToken ct = default,
+        [FromHeader(Name = "X-Idempotency-Key")] string? idempotencyHeader = null)
     {
         var issuedByUser = User.FindFirstValue("sub");
         if (string.IsNullOrWhiteSpace(issuedByUser))
