@@ -10,7 +10,7 @@ using WorldPinball.Application.Features.Machines.Admin.Provision;
 
 namespace WorldPinball.Tests.Integration;
 
-public sealed class WorldPinballApiFactory:WebApplicationFactory<Api.Program>
+public sealed class WorldPinballApiFactory:WebApplicationFactory<global::WorldPinball.Api.Program>
 {
     // Exposed so each test can configure the exact result returned by the instance used by the server.
     public IProvisionMachineHandler ProvisionMachineHandler { get; } =

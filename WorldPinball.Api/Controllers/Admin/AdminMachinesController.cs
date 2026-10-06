@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using WorldPinball.Api.Filters.Idempotency;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -29,6 +30,7 @@ public sealed class AdminMachinesController(
 {
     
     [HttpPost("provision")]
+    [Idempotent(ExpirationMinutes = 30)]
     [EndpointSummary("Creates a new machine and generates an enrollment token")]
     [EndpointDescription("POST to create a new machine.  Accepts a ProvisionMachineRequest.")]
     [ProducesResponseType(

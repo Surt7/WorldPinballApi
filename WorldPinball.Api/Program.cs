@@ -1,6 +1,7 @@
 using Serilog;
 using WorldPinball.Api.Extensions;
 using WorldPinball.Api.Logging;
+using WorldPinball.Api.Filters.Idempotency;
 using WorldPinball.Infrastructure.Security;
 using WorldPinball.Infrastructure;
 using FluentValidation;
@@ -149,7 +150,10 @@ try
     //SignalR
     builder.Services.AddSignalR();
     builder.Services.AddSingleton<ILobbyNotificationService, InMemoryLobbyNotificationService>();
-    ;
+
+    // Idempotency
+    builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>();
+    builder.Services.AddScoped<IdempotencyFilter>();
 
 // -------------------- AuthN & Z --------------------
 
