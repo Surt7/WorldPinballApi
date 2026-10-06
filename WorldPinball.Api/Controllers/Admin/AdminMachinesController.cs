@@ -69,7 +69,9 @@ public sealed class AdminMachinesController(
         var displayName = req.DisplayName;
         var serialNumber = req.WorldPinballSerialNumber;
         var ip = req.IpSlug;
-        var idempotencyKey = req.IdempotencyKey;
+        var idempotencyKey = Guid.TryParse(idempotencyHeader, out var parsedGuid) 
+            ? parsedGuid 
+            : Guid.NewGuid();
 
 
         var cmd = new ProvisionMachineCommand(

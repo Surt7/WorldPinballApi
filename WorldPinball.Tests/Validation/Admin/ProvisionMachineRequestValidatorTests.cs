@@ -12,7 +12,6 @@ public sealed class ProvisionMachineRequestValidatorTests
     private static readonly ProvisionMachineRequest ValidRequest = new(
         "WP-K7M4-9X2P-R8HD",
         "resident-evil",
-        Guid.NewGuid(),
         "Resident Evil",
         null,
         null);

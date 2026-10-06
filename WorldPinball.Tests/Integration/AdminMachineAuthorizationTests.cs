@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
@@ -91,13 +91,15 @@ public class AdminMachineAuthorizationTests : IClassFixture<WorldPinballApiFacto
         request.Headers.Add(
             TestAuthHandler.RoleHeaderName,
             "Admin");
+        request.Headers.Add(
+            "X-Idempotency-Key",
+            idempotencyKey.ToString());
         int? validityHour = 1;
         // Send a real JSON body so MVC model binding and request validation remain part of the test.
         request.Content = JsonContent.Create(
             new ProvisionMachineRequest(
                 "WP-INTEGRATION-001",
                 "resident-evil",
-                idempotencyKey,
                 "Integration machine",
                 null,
                 validityHour));

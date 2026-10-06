@@ -51,7 +51,6 @@ public class AdminMachinesControllerTests
         var request = new ProvisionMachineRequest(
             "WP-123",
             "resident-evil",
-            idempotencyKey,
             "Resident Evil",
             null,
             validityHour);
@@ -74,7 +73,8 @@ public class AdminMachinesControllerTests
 
         var result = await controller.Provision(
             request,
-            CancellationToken.None);
+            CancellationToken.None,
+            idempotencyHeader: idempotencyKey.ToString());
 
         var okResult = result
             .Result
