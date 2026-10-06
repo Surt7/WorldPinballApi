@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using WorldPinball.Api.Security.Permissions;
 using WorldPinball.Infrastructure.Security.Authentification;
 using WorldPinball.Infrastructure.Security.Authorization;
 
@@ -98,7 +99,18 @@ public static class SecurityExtensions
                 policy.AddAuthenticationSchemes(OperatorTokenAuthenticationHandler.SchemeName);
                 policy.Requirements.Add(new OperatorScopeRequirement("sessions"));
             });
+            
+            foreach (var permission in Enum.GetValues<Permission>())
+            {
+                options.AddPolicy(permission.ToString(), policy =>
+                    policy.RequireAssertion(ctx =>
+                        ctx.User.IsInRole("Admin") ||
+                        ctx.User.HasClaim("permission", permission.ToString()) ||
+                        ctx.User.HasClaim("permissions", permission.ToString())));
+            }
         });
+
+      
 
         return services;
     }
