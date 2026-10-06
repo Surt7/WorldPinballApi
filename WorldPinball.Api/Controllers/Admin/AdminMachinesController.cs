@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Api.Filters.Idempotency;
+using WorldPinball.Api.Security.Permissions;
 using WorldPinball.Application.Contracts.Admin.Machine;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +20,7 @@ using WorldPinball.Application.Features.Machines.Admin.GetAllMachines.Queries;
 namespace WorldPinball.Api.Controllers.Admin;
 
 
-[Authorize(Roles = "Admin")]
+[Authorize]
 [ApiController]
 [Route("api/v1/admin/machines")]
 public sealed class AdminMachinesController(
@@ -30,6 +31,7 @@ public sealed class AdminMachinesController(
 {
     
     [HttpPost("provision")]
+    [RequirePermission(Permission.MachinesProvision)]
     [Idempotent(ExpirationMinutes = 30)]
     [EndpointSummary("Creates a new machine and generates an enrollment token")]
     [EndpointDescription("POST to create a new machine.  Accepts a ProvisionMachineRequest.")]
@@ -108,6 +110,7 @@ public sealed class AdminMachinesController(
     }
 
     [HttpPost("{machineId:guid}/tokens")]
+    [RequirePermission(Permission.MachinesReissueToken)]
     [EndpointSummary("Reissues a new enrollment token for an existing machine")]
     [EndpointDescription("POST to reissue an enrollment token for a machine in PendingEnrollment status.")]
     [ProducesResponseType(typeof(ReissueEnrollmentTokenResponse), StatusCodes.Status200OK)]
@@ -156,6 +159,7 @@ public sealed class AdminMachinesController(
     
     
     [HttpGet("{machineId:guid}/dashboard")]
+    [Authorize(Roles = "Admin")]
     [EndpointSummary("Retrieves aggregate statistics for a machine dashboard")]
     [ProducesResponseType(typeof(MachineDashboardDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -173,6 +177,7 @@ public sealed class AdminMachinesController(
         };
     }
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     [EndpointSummary("Retrieves all registered machines")]
     [EndpointDescription("GET to list all machines for administration.")]
     [ProducesResponseType(typeof(IReadOnlyList<MachineRowDto>), StatusCodes.Status200OK)]
