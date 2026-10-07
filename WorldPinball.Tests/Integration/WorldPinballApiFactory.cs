@@ -31,6 +31,9 @@ public sealed class WorldPinballApiFactory:WebApplicationFactory<global::WorldPi
             var cacheMock = Substitute.For<WorldPinball.Application.Interfaces.Services.IMachineStatusCacheService>();
             services.AddSingleton(cacheMock);
 
+            services.RemoveAll<WorldPinball.Api.Filters.Idempotency.IIdempotencyStore>();
+            services.AddSingleton<WorldPinball.Api.Filters.Idempotency.IIdempotencyStore, WorldPinball.Api.Filters.Idempotency.InMemoryIdempotencyStore>();
+
             // Replace JWT/Keycloak authentication only; ASP.NET Core authorization remains real.
             services
                 .AddAuthentication(options =>

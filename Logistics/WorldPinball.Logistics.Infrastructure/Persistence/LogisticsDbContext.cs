@@ -1,7 +1,7 @@
-﻿namespace WorldPinball.Logistics.Infrastructure.Persistence;
-
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WorldPinball.Logistics.Domain.Entities;
+
+namespace WorldPinball.Logistics.Infrastructure.Persistence;
 
 public class LogisticsDbContext(DbContextOptions<LogisticsDbContext> options) : DbContext(options)
 {

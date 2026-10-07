@@ -9,6 +9,7 @@ using WorldPinball.Logistics.Application.Interfaces;
 using WorldPinball.Logistics.Infrastructure.Persistence;
 using WorldPinball.Logistics.Infrastructure.Services.Outbox;
 using WorldPinball.Logistics.Domain.Entities;
+using WorldPinball.Logistics.Infrastructure;
 
 namespace WorldPinball.Tests.Logistics.Infrastructure.Services.Outbox;
 

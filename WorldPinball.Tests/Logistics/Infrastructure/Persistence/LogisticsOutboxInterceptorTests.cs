@@ -1,4 +1,6 @@
-﻿namespace WorldPinball.Tests.Logistics.Persistence;
+﻿using WorldPinball.Logistics.Infrastructure;
+
+namespace WorldPinball.Tests.Logistics.Persistence;
 
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;

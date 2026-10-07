@@ -1,8 +1,10 @@
-﻿namespace WorldPinball.Logistics.Infrastructure.Services.Outbox;
+using WorldPinball.Logistics.Application.Interfaces;
+
+namespace WorldPinball.Logistics.Infrastructure.Services.Outbox;
 
 using System.Threading.Channels;
 
-public sealed class LogisticsOutboxChannel
+public sealed class LogisticsOutboxChannel : ILogisticsOutboxChannel
 {
 
     private readonly Channel<bool> _channel;
