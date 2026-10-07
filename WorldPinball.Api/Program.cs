@@ -151,8 +151,9 @@ try
     builder.Services.AddSignalR();
     builder.Services.AddSingleton<ILobbyNotificationService, InMemoryLobbyNotificationService>();
 
-    // Idempotency
-    builder.Services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>();
+    // Idempotency (L1 RAM + L2 Redis)
+    builder.Services.AddSingleton<InMemoryIdempotencyStore>();
+    builder.Services.AddSingleton<IIdempotencyStore, HybridIdempotencyStore>();
     builder.Services.AddScoped<IdempotencyFilter>();
 
 // -------------------- AuthN & Z --------------------
