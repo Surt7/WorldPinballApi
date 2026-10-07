@@ -39,6 +39,8 @@ using WorldPinball.Application.Features.StreamingAccess.Admin.CreateStreamAccess
 using WorldPinball.Application.Features.StreamingAccess.Admin.GetStreamAccessGrants;
 using WorldPinball.Application.Features.StreamingAccess.Admin.RevokeStreamAccessGrant;
 using WorldPinball.Application.Features.StreamingAccess.Public;
+using WorldPinball.Application.Features.Roles.Admin.GrantPermission;
+using WorldPinball.Application.Features.Roles.Admin.RevokePermission;
 using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Infrastructure.Services;
 
@@ -132,6 +134,8 @@ try
     builder.Services.AddScoped<IGetStreamAccessGrantsHandler, GetStreamAccessGrantsHandler>();
     builder.Services.AddScoped<IRevokeStreamAccessGrantHandler, RevokeStreamAccessGrantHandler>();
     builder.Services.AddScoped<ICreateStreamAccessGrantHandler, CreateStreamAccessGrantHandler>();
+    builder.Services.AddScoped<IGrantPermissionToRoleHandler, GrantPermissionToRoleHandler>();
+    builder.Services.AddScoped<IRevokePermissionFromRoleHandler, RevokePermissionFromRoleHandler>();
 
 
     // Security
@@ -216,6 +220,12 @@ try
     app.MapControllers();
     app.MapGrpcService<GameSessionGrpcService>();
 
+    // Warmup in-memory dynamic role permissions cache
+    using (var scope = app.Services.CreateScope())
+    {
+        var reloader = scope.ServiceProvider.GetRequiredService<IRolePermissionReloader>();
+        await reloader.ReloadFromDatabaseAsync();
+    }
 
     app.Run();
 }

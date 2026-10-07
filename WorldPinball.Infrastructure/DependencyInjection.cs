@@ -103,6 +103,13 @@ public static class DependencyInjection
         // Resources-Based
         services.AddSingleton<IAuthorizationHandler, GameSessionParticipantAuthorizationHandler>();
         
+        // Dynamic Role Permissions (Frozen L1 Cache)
+        services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
+        services.AddSingleton<DynamicRolePermissionStore>();
+        services.AddSingleton<IRolePermissionStore>(sp => sp.GetRequiredService<DynamicRolePermissionStore>());
+        services.AddSingleton<IRolePermissionReloader>(sp => sp.GetRequiredService<DynamicRolePermissionStore>());
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
         services.AddScoped<IOperatorTokenWriteRepository, OperatorTokenWriteRepository>();
         
         

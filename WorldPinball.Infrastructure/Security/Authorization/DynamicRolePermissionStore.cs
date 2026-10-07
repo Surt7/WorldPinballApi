@@ -30,21 +30,28 @@ public sealed class DynamicRolePermissionStore: IRolePermissionStore, IRolePermi
     public async Task ReloadFromDatabaseAsync(CancellationToken ct = default)
     {
         if (_scopeFactory is null) return;
-        using var scope = _scopeFactory.CreateScope();
-        /* reminder : we use createScope / factory and locator
-         for resolver because frozen are singleton while
-         AppDbContext is scoped, we have to be careful about dependence captivity 
-        */
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
-        var list = await db.RolePermissions.AsNoTracking().ToListAsync(ct);
-        
-        var grouped = list
-            .GroupBy(rp => rp.Role)
-            .ToDictionary(g => g.Key,
-                g => g.Select(rp => rp.Permission));
-        
-        Reload(grouped);
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            /* reminder : we use createScope / factory and locator
+             for resolver because frozen are singleton while
+             AppDbContext is scoped, we have to be careful about dependence captivity 
+            */
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            
+            var list = await db.RolePermissions.AsNoTracking().ToListAsync(ct);
+            
+            var grouped = list
+                .GroupBy(rp => rp.Role)
+                .ToDictionary(g => g.Key,
+                    g => g.Select(rp => rp.Permission));
+            
+            Reload(grouped);
+        }
+        catch
+        {
+            // Resilient fallback: If database is not ready or migrating, keep existing in-memory store
+        }
     }
 
     public bool HasPermission(string role, string permission) => 
