@@ -73,4 +73,25 @@ public class RolePermissionStoreTests
         // Assert
         result.Should().BeTrue();
     }
+
+    [Fact]
+    public void Reload_WhenPermissionsUpdated_ShouldReflectNewPermissionsAtomically()
+    {
+        // Arrange
+        var sut = new DynamicRolePermissionStore(new Dictionary<string, IEnumerable<string>>
+        {
+            ["Technician"] = ["MachinesProvision"]
+        });
+
+        sut.HasPermission("Technician", "ShipmentsDispatch").Should().BeFalse();
+
+        // Act
+        sut.Reload(new Dictionary<string, IEnumerable<string>>
+        {
+            ["Technician"] = ["MachinesProvision", "ShipmentsDispatch"]
+        });
+
+        // Assert
+        sut.HasPermission("Technician", "ShipmentsDispatch").Should().BeTrue();
+    }
 }

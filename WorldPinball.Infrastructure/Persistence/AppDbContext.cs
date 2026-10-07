@@ -32,6 +32,7 @@ public class AppDbContext : DbContext
     public DbSet<StreamAccessGrant> StreamAccessGrants => Set<StreamAccessGrant>();
     
     public DbSet<StreamSubscription> StreamSubscriptions => Set<StreamSubscription>();
+    public DbSet<WorldPinball.Infrastructure.Persistence.Entities.RolePermission> RolePermissions => Set<WorldPinball.Infrastructure.Persistence.Entities.RolePermission>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

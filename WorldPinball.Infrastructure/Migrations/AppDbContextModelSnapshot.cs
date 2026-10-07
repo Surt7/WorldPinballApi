@@ -1413,6 +1413,24 @@ namespace WorldPinball.Infrastructure.Migrations
                     b.ToTable("user_profiles", "public");
                 });
 
+            modelBuilder.Entity("WorldPinball.Infrastructure.Persistence.Entities.RolePermission", b =>
+                {
+                    b.Property<string>("Role")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("role");
+
+                    b.Property<string>("Permission")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("permission");
+
+                    b.HasKey("Role", "Permission")
+                        .HasName("pk_role_permissions");
+
+                    b.ToTable("role_permissions", "public");
+                });
+
             modelBuilder.Entity("ip_license_regions", b =>
                 {
                     b.Property<Guid>("ip_id")
