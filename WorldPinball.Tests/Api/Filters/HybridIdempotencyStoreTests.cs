@@ -8,6 +8,7 @@ using WorldPinball.Api.Filters.Idempotency;
 
 namespace WorldPinball.Tests.Filters;
 
+#pragma warning disable CS0618
 public class HybridIdempotencyStoreTests
 {
     private readonly InMemoryIdempotencyStore _localStore = new();

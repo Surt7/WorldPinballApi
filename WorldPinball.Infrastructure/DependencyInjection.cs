@@ -158,7 +158,7 @@ public static class DependencyInjection
                 name: "PostgreSQL",
                 tags: ["ready", "db"])
             .AddRedis(
-                redisHost,
+                sp => sp.GetRequiredService<IConnectionMultiplexer>(),
                 name: "Redis",
                 tags: ["ready", "cache"])
             .AddKafka(new ProducerConfig 

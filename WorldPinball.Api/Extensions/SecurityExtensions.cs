@@ -105,6 +105,7 @@ public static class SecurityExtensions
                 options.AddPolicy(permission.ToString(), policy =>
                     policy.RequireAssertion(ctx =>
                         ctx.User.IsInRole("Admin") ||
+                        ctx.User.IsInRole(permission.ToString()) ||
                         ctx.User.HasClaim("permission", permission.ToString()) ||
                         ctx.User.HasClaim("permissions", permission.ToString())));
             }
