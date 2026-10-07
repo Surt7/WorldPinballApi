@@ -101,9 +101,56 @@ services:
     networks:
       - worldpinball-network
 
+  # 6. Keycloak Database
+  keycloak-db:
+    image: postgres:16.15-alpine
+    container_name: worldpinball-prod-keycloak-db
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD must be set}
+    volumes:
+      - worldpinball_prod_keycloak_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+  # 7. Keycloak Production IAM
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.2
+    container_name: worldpinball-prod-keycloak
+    command: start --optimized --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:?KEYCLOAK_ADMIN must be set}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?KEYCLOAK_ADMIN_PASSWORD must be set}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD must be set}
+      KC_HOSTNAME: https://auth.${DOMAIN:?DOMAIN must be set}
+      KC_HOSTNAME_STRICT: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+    volumes:
+      - ./docker/keycloak/worldpinball-realm.prod.json:/opt/keycloak/data/import/worldpinball-realm.prod.json:ro
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
 volumes:
   worldpinball_prod_pgdata:
   worldpinball_prod_redisdata:
+  worldpinball_prod_keycloak_pgdata:
 
 networks:
   worldpinball-network:
