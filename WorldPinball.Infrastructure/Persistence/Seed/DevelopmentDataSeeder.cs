@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using WorldPinball.Domain.Entities;
 using WorldPinball.Domain.Enums;
 using Microsoft.AspNetCore.WebUtilities;
+using WorldPinball.Infrastructure.Persistence.Entities;
 
 namespace WorldPinball.Infrastructure.Persistence.Seed;
 
@@ -21,11 +22,11 @@ public static class DevelopmentDataSeeder
     private static readonly EventId SeedStarted =
         new(1000, nameof(SeedStarted));
 
-    // success event ..
+ 
     private static readonly EventId SeedCompleted =
         new(1001, nameof(SeedCompleted));
 
-    // fail event ..
+ 
     private static readonly EventId SeedFailed =
         new(1002, nameof(SeedFailed));
 
@@ -161,6 +162,13 @@ public static class DevelopmentDataSeeder
                 var revocations = CreateCertificateRevocations(deviceCertificates, now);
                 await context.CertificateRevocations.AddRangeAsync(revocations, cancellationToken);
             }
+            
+            if (!await context.RolePermissions.AnyAsync(cancellationToken))
+            {
+                var defaultRolePermissions = CreateRolePermissions();
+                await context.RolePermissions.AddRangeAsync(defaultRolePermissions, cancellationToken);
+            }
+            
             foreach (var machine in context.ChangeTracker
                          .Entries<Machine>()
                          .Select(x => x.Entity))
@@ -519,4 +527,18 @@ public static class DevelopmentDataSeeder
 
     private static DateTime Utc(DateTime value) =>
         DateTime.SpecifyKind(value, DateTimeKind.Utc);
+    
+    
+    private static List<RolePermission> CreateRolePermissions() =>
+    [
+        new() { Role = "Admin", Permission = "MachinesProvision" },
+        new() { Role = "Admin", Permission = "MachinesReissueToken" },
+        new() { Role = "Admin", Permission = "ShipmentsDispatch" },
+        new() { Role = "Admin", Permission = "ShipmentsCancel" },
+        new() { Role = "Admin", Permission = "SessionsPlay" },
+        new() { Role = "Technician", Permission = "MachinesProvision" },
+        new() { Role = "Technician", Permission = "MachinesReissueToken" },
+        new() { Role = "Operator", Permission = "ShipmentsDispatch" },
+        new() { Role = "Player", Permission = "SessionsPlay" }
+    ];
 }

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using NSubstitute;
 using WorldPinball.Api.Extensions;
 using WorldPinball.Api.Security.Permissions;
+using WorldPinball.Infrastructure.Security.Authorization;
 
 namespace WorldPinball.Tests.Api.Security;
 
@@ -25,6 +26,9 @@ public class RequirePermissionPolicyTests
 
         services.AddLogging();
         services.AddApiSecurity(config, env);
+        var store = Substitute.For<IRolePermissionStore>();
+        services.AddSingleton(store);
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
         var sp = services.BuildServiceProvider();
         _authService = sp.GetRequiredService<IAuthorizationService>();
