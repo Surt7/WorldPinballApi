@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using WorldPinball.Logistics.Api.Contracts.Shipment;
 using WorldPinball.Logistics.Application.Features.AllocateMachine;
 using WorldPinball.Logistics.Application.Features.AllocateMachine.Commands;
 using WorldPinball.Logistics.Application.Features.CancelShipment;
@@ -9,6 +10,9 @@ using WorldPinball.Logistics.Application.Features.DeliverShipment;
 using WorldPinball.Logistics.Application.Features.DeliverShipment.Commands;
 using WorldPinball.Logistics.Application.Features.DispatchShipment;
 using WorldPinball.Logistics.Application.Features.DispatchShipment.Commands;
+using WorldPinball.Logistics.Application.Features.GetShipment;
+using WorldPinball.Logistics.Application.Features.GetShipment.Queries;
+using GetShipmentByIdResult = WorldPinball.Logistics.Application.Features.GetShipment.GetShipmentByIdResult;
 
 namespace WorldPinball.Logistics.Api.Endpoints;
 
@@ -140,6 +144,29 @@ public static class ShipmentEndpoints
                 _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
             };
         });
+        
+        
+        group.MapGet("{id:guid}", async (
+            Guid id,
+            [FromServices] IGetShipmentByIdHandler handler,
+            CancellationToken ct) =>
+        {
+            var result = await handler.HandleAsync(new GetShipmentByIdQuery(id), ct);
+            return result switch
+            {
+                GetShipmentByIdResult.Success s => Results.Ok(new ShipmentResponse(
+                    s.Shipment.ShipmentId,
+                    s.Shipment.OrderId,
+                    s.Shipment.DestinationAddress,
+                    s.Shipment.Status,
+                    s.Shipment.MachineId,
+                    s.Shipment.TrackingNumber,
+                    s.Shipment.CancellationReason)),
+                GetShipmentByIdResult.NotFound n => Results.NotFound(new { error = $"Shipment '{n.ShipmentId}' not found" }),
+                _ => Results.StatusCode(StatusCodes.Status500InternalServerError)
+            };
+        });
+        
         
         return app;
     }

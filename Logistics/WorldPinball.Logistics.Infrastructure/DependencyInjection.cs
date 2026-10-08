@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using WorldPinball.Logistics.Application.Features.GetShipment;
 using WorldPinball.Logistics.Application.Interfaces;
 using WorldPinball.Logistics.Infrastructure.Persistence;
 using WorldPinball.Logistics.Infrastructure.Persistence.Interceptors;
@@ -24,7 +25,9 @@ public static class DependencyInjection
             options
                 .UseNpgsql(cs)
                 .AddInterceptors(sp.GetRequiredService<ConvertDomainEventsToOutboxMessagesInterceptor>()));
-
+        
+        services.AddScoped<IShipmentReadRepository, ShipmentReadRepository>();
+        
         // Outbox background processing
         services.AddSingleton<ILogisticsOutboxChannel, LogisticsOutboxChannel>();
         services.AddScoped<ILogisticsOutboxProcessor, LogisticsOutboxProcessor>();
