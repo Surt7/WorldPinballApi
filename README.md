@@ -35,6 +35,7 @@ flowchart TB
     subgraph Infrastructure_Layer["Infrastructure & Persistance"]
         Postgres[("PostgreSQL 16\n(Transactions ACID)")]
         Redis[("Redis\n(Leaderboard / Caching)")]
+        Kafka[("Apache Kafka\n(High-Throughput Stream)")]
         RabbitMQ[("RabbitMQ\n(Event-Driven Messaging)")]
     end
 
@@ -48,6 +49,7 @@ flowchart TB
     AuthZ --> Commands
     AuthZ --> Queries
     Commands --> Postgres
+    Commands --> Kafka
     Commands --> RabbitMQ
     Queries --> Postgres
     Queries --> Redis
@@ -149,7 +151,7 @@ classDiagram
 - **Langage / Framework** : C# 14 / .NET 10 (ASP.NET Core Minimal APIs)
 - **Accès Données** : Entity Framework Core 9 / Dapper / Npgsql
 - **Bases de Données & Cache** : PostgreSQL, Redis
-- **Messaging** : RabbitMQ (AMQP)
+- **Messaging & Event Streaming** : Apache Kafka, RabbitMQ (AMQP)
 - **Sécurité** : mTLS, ECDSA (BouncyCastle / System.Security.Cryptography), Keycloak (OpenID Connect / JWT)
 - **Tests** : xUnit, FluentAssertions, NSubstitute, WebApplicationFactory
 - **Frontend** : Angular 18+ (Signals, Standalone Components, Reactive)
@@ -162,7 +164,7 @@ classDiagram
 # 1. Cloner le repository
 git clone https://github.com/Surt7/WorldPinballApi.git
 
-# 2. Lancer l'infrastructure (PostgreSQL, RabbitMQ, Redis)
+# 2. Lancer l'infrastructure (PostgreSQL, Kafka, RabbitMQ, Redis)
 docker compose up -d
 
 # 3. Exécuter l'ensemble de la suite de tests
