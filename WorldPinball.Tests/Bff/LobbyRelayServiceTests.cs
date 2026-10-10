@@ -44,11 +44,14 @@ public class LobbyRelayServiceTests
     [Fact]
     public async Task EnsureWatchingLobbyAsync_WhenSessionNotBeingWatched_InitiatesGrpcWatchStream()
     {
+        _grpcClient.WatchLobby(Arg.Any<WatchLobbyRequest>(), cancellationToken: Arg.Any<CancellationToken>())
+            .Returns(CreateFakeStreamingCall());
+
         var sessionId = Guid.NewGuid();
         var sut = new LobbyRelayService(_grpcClient, _hubContext, _logger);
 
         await sut.EnsureWatchingLobbyAsync(sessionId, CancellationToken.None);
-        await Task.Delay(50);
+        await Task.Delay(250);
 
         _grpcClient.Received(1).WatchLobby(
             Arg.Is<WatchLobbyRequest>(r =>
@@ -69,7 +72,7 @@ public class LobbyRelayServiceTests
         // Act 
         await sut.EnsureWatchingLobbyAsync(sessionId, CancellationToken.None);
         await sut.EnsureWatchingLobbyAsync(sessionId, CancellationToken.None);
-        await Task.Delay(50);
+        await Task.Delay(250);
 
         // Assert  
         _grpcClient.Received(1).WatchLobby(
