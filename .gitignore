@@ -40,5 +40,9 @@ publish/
 # Node (si plus tard RN web build)
 node_modules/
 
+# AI assistant configs
+AGENTS.md
+GEMINI.md
+
 # Swagger temp
 swagger.json
