@@ -6,11 +6,11 @@
 [![Security](https://img.shields.io/badge/Security-mTLS%20%7C%20ECDSA%20P--256%20%7C%20PBAC-orange)](#security--iot-pipeline)
 
 Plateforme SaaS & IoT haute performance dédiée à la gestion, la télémétrie et le classement temps réel de flippers connectés.
-Conçue selon les standards de l'artisanat logiciel (**Clean Architecture**, **Domain-Driven Design**, **CQRS pragmatique** et **TDD strict**).
+Conçue selon les principes du **Domain-Driven Design (DDD)**, de la **Clean Architecture**, du **CQRS pragmatique** et du **TDD strict**.
 
 ---
 
-## 🏛️ Architecture & Flux Système
+## Architecture & Flux Système
 
 ```mermaid
 flowchart TB
@@ -56,7 +56,7 @@ flowchart TB
 
 ---
 
-## 🧩 Modélisation Métier (Domain-Driven Design)
+## Modélisation Métier (Domain-Driven Design)
 
 ```mermaid
 classDiagram
@@ -111,29 +111,29 @@ classDiagram
 
 ---
 
-## 🚀 Points Clés d'Ingénierie & Décisions Techniques
+## Choix d'Ingénierie & Décisions Techniques
 
-### 1. Sécurité & Pipeline IoT Anti-Triche
+### Sécurité & Pipeline IoT Anti-Triche
 - **Double Barrière de Confiance** :
   - **Couche Transport (mTLS X.509)** : Authentification mutuelle matérielle gérée au niveau Kestrel/Socket.
   - **Couche Applicative (Signature ECDSA P-256)** : Vérification cryptographique de chaque payload de score (`BuildCanonical` : timestamp, nonce, payload hash) pour garantir l'intégrité et la non-répudiation des parties.
 - **Autorisations Haute Performance (PBAC)** :
   - Contrôle d'accès basé sur les permissions granulaires.
-  - Mise en cache en mémoire via `FrozenDictionary<string, FrozenSet<string>>` garantissant des lookups en $O(1)$ lock-free avec zéro allocation GC.
+  - Mise en cache en mémoire via `FrozenDictionary<string, FrozenSet<string>>` garantissant des lookups en O(1) lock-free avec zéro allocation GC.
 
-### 2. CQRS Pragmatique & Performance Mémoire
+### CQRS Pragmatique & Performance Mémoire
 - **Écriture (Commands)** : Encapsulation stricte du domaine avec Value Objects (`ScoreValue`, `TournamentId`), règles d'invariants et persistance via Entity Framework Core.
 - **Lecture (Queries)** : Requêtes Dapper et projections optimisées `.AsNoTracking().Select(...)` sans surcharge d'entités de suivi.
-- **Optimisation Mémoire** : Utilisation intensive de `Span<T>` et `ref struct` pour le parsing zero-copy des signatures et buffers.
+- **Optimisation Mémoire** : Utilisation de `Span<T>` et `ref struct` pour le parsing zero-copy des signatures et buffers.
 
-### 3. Modularité & Découpage Bounded Contexts
+### Modularité & Bounded Contexts
 - Architecture en modules indépendants (Clean Architecture) :
   - `WorldPinball.Api` & `WorldPinball.Core` : Gestion du jeu, tournois et classements.
   - `WorldPinball.Logistics` : Module autonome de gestion du cycle de vie matériel et expéditions.
 
 ---
 
-## 🧪 Qualité Logicielle & TDD
+## Qualité Logicielle & TDD
 
 - **Couverture de Tests** : **496 tests automatisés (100% verts)** couvrant le Domaine, l'Application et l'Infrastructure.
 - **Standards de Test** :
@@ -144,7 +144,7 @@ classDiagram
 
 ---
 
-## 🛠️ Stack Technique
+## Stack Technique
 
 - **Langage / Framework** : C# 14 / .NET 10 (ASP.NET Core Minimal APIs)
 - **Accès Données** : Entity Framework Core 9 / Dapper / Npgsql
@@ -156,7 +156,7 @@ classDiagram
 
 ---
 
-## 💻 Démarrage Local
+## Démarrage Local
 
 ```bash
 # 1. Cloner le repository
