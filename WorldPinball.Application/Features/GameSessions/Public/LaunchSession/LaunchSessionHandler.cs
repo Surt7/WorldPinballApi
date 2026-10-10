@@ -1,11 +1,13 @@
 using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Features.GameSessions.Public.LaunchSession.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
+using WorldPinball.Application.Interfaces.Services;
 
 namespace WorldPinball.Application.Features.GameSessions.Public.LaunchSession;
 
 public sealed class LaunchSessionHandler(
     IGameSessionWriteRepository writeRepository,
+    ILobbyNotificationService lobbyNotifier,
     TimeProvider timeProvider,
     ILogger<LaunchSessionHandler> logger
 ) : ILaunchSessionHandler
@@ -32,6 +34,7 @@ public sealed class LaunchSessionHandler(
         }
 
         await writeRepository.UpdateSessionAsync(session, cancellationToken);
+        await lobbyNotifier.NotifySessionLaunchedAsync(session.SessionId, cancellationToken);
 
         return new LaunchSessionResult.Success(session.SessionId);
     }

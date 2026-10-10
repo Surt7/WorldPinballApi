@@ -32,6 +32,11 @@ public class GameSession : Entity
         public const string PlayerNotFound = "Player not found in the specified slot.";
         public const string CannotStartSession = "Can only start a session that is in Created or MatchFound state.";
         public const string CannotCancelSession = "Cannot cancel a session that is already active or closed.";
+        public const string CannotLaunchSession = "Cannot launch a session that is not in a valid joinable state.";
+        public const string AtLeastOnePlayerRequired = "Cannot launch a session without at least one player.";
+        public const string CannotRecordBallInactiveSession = "Cannot record ball score on a session that is not active.";
+        public const string InvalidBallNumber = "Ball number must be between 1 and 5.";
+        public const string InvalidScore = "Score cannot be negative.";
     }
     private GameSession() { }
 
@@ -56,19 +61,19 @@ public class GameSession : Entity
     public GameSessionState State { get; private set; }
     public string Nonce { get; private set; } = null!;
     public string ClientVersion { get; private set; } = null!;
-
-
+    
+/* BallCheckpointOnly =0  record score per ball validated, by default,
+   LiveStreaming =1 to activate livestreaming record for live display*/
+    public TelemetryMode TelemetryMode { get; private set; } = TelemetryMode.BallCheckpointOnly;
+    
 
     private readonly List<GameSessionPlayer> _players = [];
     public IReadOnlyCollection<GameSessionPlayer> Players => _players.AsReadOnly();
     
-    public GameSession(
-        Guid machineId,
-        Guid deviceId,
-        Guid modeId,
-        string clientVersion,
-        string nonce,
-        DateTime startedAtUtc)
+    
+    //Constructor
+    public GameSession(Guid machineId, Guid deviceId, 
+        Guid modeId, string clientVersion, string nonce, DateTime startedAtUtc)
     {
         if (machineId == Guid.Empty)
             throw new ArgumentException(ErrorMessages.MachineId, nameof(machineId));
@@ -88,153 +93,41 @@ public class GameSession : Entity
         if (startedAtUtc == default)
             throw new ArgumentException(ErrorMessages.StartedAtUtc, nameof(startedAtUtc));
         
+        
         SessionId = Guid.NewGuid();
         MachineId = machineId;
         DeviceId = deviceId;
         ModeId = modeId;
         ClientVersion = clientVersion;
         Nonce = nonce;
-        // StartedAtUtc is initially set to the creation time, can be updated on Start
+        // StartedAtUtc is initially set to the creation time, can be updated on Launch
         StartedAtUtc = startedAtUtc;
         State = GameSessionState.Created;
-    }
 
-    public void Launch(DateTime launchedAtUtc) => Start(launchedAtUtc);
-
-    public void Start(DateTime startedAtUtc)
-    {
-        if (State is not (GameSessionState.Created 
-            or GameSessionState.Pending
-            or  GameSessionState.SearchingPlayer
-            or GameSessionState.Joined
-            ))
-            throw new InvalidOperationException(ErrorMessages.CannotCancelSession);
-
-        StartedAtUtc = startedAtUtc;
-        State = GameSessionState.Started;
-
-        AddDomainEvent(new GameSessionStartedDomainEvent(
+        AddDomainEvent(new GameSessionCreatedDomainEvent(
             SessionId,
             MachineId,
             DeviceId,
             ModeId,
-            StartedAtUtc));
+            startedAtUtc));
     }
 
-    public void SearchPlayers()
-    {
-        if (State is not (GameSessionState.Created or GameSessionState.Pending or GameSessionState.MatchFound))
-            throw new InvalidOperationException(ErrorMessages.CannotSearchPlayers);
-
-        State = GameSessionState.SearchingPlayer;
-    }
+// -------------------- Lobby & Matchmaking --------------------
     
-    public void Pause()
-    {
-        if (State is not (GameSessionState.Started or GameSessionState.InGame or GameSessionState.Resumed))
-            throw new InvalidOperationException(ErrorMessages.PauseSession);
-
-        State = GameSessionState.Paused;
-    }
-
-    public void Resume()
-    {
-        if (State is not GameSessionState.Paused)
-            throw new InvalidOperationException(ErrorMessages.ResumeSession);
-
-        State = GameSessionState.Resumed;
-    }
+    #region Lobby & Matchmaking
     
-    public void SetMatchFound()
+
+    public void AddPlayer(int slotNumber, Guid? userId = null, string?
+        guestInitials = null, bool requiresRegisteredUser = true)
     {
-        if (State is not GameSessionState.SearchingPlayer)
-            throw new InvalidOperationException(ErrorMessages.MatchFoundNotSearching);
-        if (_players.Count < 2)
-            throw new InvalidOperationException(ErrorMessages.NotEnoughPlayersForMatch);
-
-        State = GameSessionState.MatchFound;
-    }
-
-    public void RemovePlayer(int slotNumber)
-    {
-        if (State is not (GameSessionState.Created 
-            or GameSessionState.Pending 
-            or GameSessionState.SearchingPlayer 
-            or GameSessionState.MatchFound
-            or GameSessionState.Joined))
-        {
-            throw new InvalidOperationException(ErrorMessages.CannotRemovePlayerActiveSession);
-        }
-
-        var player = _players.FirstOrDefault(p => p.SlotNumber == slotNumber);
-        if (player is null)
-            throw new InvalidOperationException(ErrorMessages.PlayerNotFound);
-                
-        _players.Remove(player);
-        if (State is GameSessionState.MatchFound)
-        {
-            State = GameSessionState.Pending; 
-        }
-        
-        if (_players.Count == 0 && State is GameSessionState.Joined)
-        {
-            State = GameSessionState.Created;
-        }
-    }
-    
-    public void End(DateTime endedAtUtc)
-    {
-        if (State is not (GameSessionState.Started or GameSessionState.InGame or GameSessionState.Resumed or GameSessionState.Paused))
-            throw new InvalidOperationException(ErrorMessages.EndSession);
-        if (endedAtUtc < StartedAtUtc)
-            throw new ArgumentException(ErrorMessages.Earlier, nameof(endedAtUtc));
-        EndedAtUtc = endedAtUtc;
-        State = GameSessionState.Ended;
-
-        AddDomainEvent(new GameSessionEndedDomainEvent(SessionId, endedAtUtc));
-    }
-
-    public void Abandon(DateTime abandonedAtUtc)
-    {
-        if (State is GameSessionState.Ended or GameSessionState.Abandoned or GameSessionState.Aborted or GameSessionState.Cancelled)
-            throw new InvalidOperationException(ErrorMessages.ClosedSession);
-        if (abandonedAtUtc < StartedAtUtc)
-            throw new ArgumentException(ErrorMessages.Earlier, nameof(abandonedAtUtc));
-        EndedAtUtc = abandonedAtUtc;
-        State = GameSessionState.Abandoned;
-    }
-
-    public void Abort(DateTime abortedAtUtc)
-    {
-        if (State is GameSessionState.Ended or GameSessionState.Abandoned or GameSessionState.Aborted or GameSessionState.Cancelled)
-            throw new InvalidOperationException(ErrorMessages.ClosedSession);
-        if (abortedAtUtc < StartedAtUtc)
-            throw new ArgumentException(ErrorMessages.Earlier, nameof(abortedAtUtc));
-        EndedAtUtc = abortedAtUtc;
-        State = GameSessionState.Aborted;
-    }
-
-    public void AddPlayer(
-        int slotNumber,
-        Guid? userId = null,
-        string? guestInitials = null,
-        bool requiresRegisteredUser = true)
-    {
-        
-      
         
         if (State is not (
             GameSessionState.Created
             or GameSessionState.Pending 
             or GameSessionState.SearchingPlayer 
-            or GameSessionState.Started 
-            or GameSessionState.Resumed
             or GameSessionState.Joined
             ))
             throw new InvalidOperationException(ErrorMessages.AddPlayerNotStarted);
-        
- 
-        
         
         if (slotNumber is < 1 or > 4)
             throw new ArgumentOutOfRangeException(nameof(slotNumber), ErrorMessages.InvalidSlotNumber);
@@ -269,4 +162,181 @@ public class GameSession : Entity
             State = GameSessionState.Joined;
         }
     }
+    
+    public void RemovePlayer(int slotNumber)
+    {
+        if (State is not (GameSessionState.Created 
+            or GameSessionState.Pending 
+            or GameSessionState.SearchingPlayer 
+            or GameSessionState.MatchFound
+            or GameSessionState.Joined))
+        {
+            throw new InvalidOperationException(ErrorMessages.CannotRemovePlayerActiveSession);
+        }
+
+        var player = _players.FirstOrDefault(p => p.SlotNumber == slotNumber);
+        if (player is null)
+            throw new InvalidOperationException(ErrorMessages.PlayerNotFound);
+                
+        _players.Remove(player);
+        if (State is GameSessionState.MatchFound)
+        {
+            State = GameSessionState.Pending; 
+        }
+        
+        if (_players.Count == 0 && State is GameSessionState.Joined)
+        {
+            State = GameSessionState.Created;
+        }
+    }
+    
+    public void SearchPlayers()
+    {
+        if (State is not (GameSessionState.Created or GameSessionState.Pending or GameSessionState.Joined or GameSessionState.MatchFound))
+            throw new InvalidOperationException(ErrorMessages.CannotSearchPlayers);
+
+        State = GameSessionState.SearchingPlayer;
+    }
+    
+    public void SetMatchFound(DateTime matchFoundAtUtc)
+    {
+        if (State is not GameSessionState.SearchingPlayer)
+            throw new InvalidOperationException(ErrorMessages.MatchFoundNotSearching);
+        if (_players.Count < 2)
+            throw new InvalidOperationException(ErrorMessages.NotEnoughPlayersForMatch);
+
+        State = GameSessionState.MatchFound;
+        AddDomainEvent(new GameSessionMatchFoundDomainEvent(
+            SessionId,
+            MachineId,
+            _players.Count,
+            matchFoundAtUtc));
+    }
+    
+    
+    #endregion
+    
+    
+
+// -------------------- Session Lifecycle --------------------
+    #region Session Lifecycle  
+    public void Launch(DateTime launchedAtUtc)
+    {
+        if (State is not (GameSessionState.Created 
+            or GameSessionState.Pending
+            or GameSessionState.SearchingPlayer
+            or GameSessionState.Joined))
+            throw new InvalidOperationException(ErrorMessages.CannotLaunchSession);
+
+        if (_players.Count == 0)
+            throw new InvalidOperationException(ErrorMessages.AtLeastOnePlayerRequired);
+
+        StartedAtUtc = launchedAtUtc;
+        State = GameSessionState.Started;
+
+        AddDomainEvent(new GameSessionLaunchedDomainEvent(
+            SessionId,
+            MachineId,
+            launchedAtUtc
+            ));
+    }
+    
+    public void Pause()
+    {
+        if (State is not (GameSessionState.Started or GameSessionState.InGame or GameSessionState.Resumed))
+            throw new InvalidOperationException(ErrorMessages.PauseSession);
+
+        State = GameSessionState.Paused;
+    }
+
+    public void Resume()
+    {
+        if (State is not GameSessionState.Paused)
+            throw new InvalidOperationException(ErrorMessages.ResumeSession);
+
+        State = GameSessionState.Resumed;
+    }
+    
+    public void End(DateTime endedAtUtc)
+    {
+        if (State is not (GameSessionState.Started or GameSessionState.InGame or GameSessionState.Resumed or GameSessionState.Paused))
+            throw new InvalidOperationException(ErrorMessages.EndSession);
+        if (endedAtUtc < StartedAtUtc)
+            throw new ArgumentException(ErrorMessages.Earlier, nameof(endedAtUtc));
+        EndedAtUtc = endedAtUtc;
+        State = GameSessionState.Ended;
+
+        AddDomainEvent(new GameSessionEndedDomainEvent(SessionId, endedAtUtc));
+    }
+    
+    public void Abandon(DateTime abandonedAtUtc)
+    {
+        if (State is GameSessionState.Ended or GameSessionState.Abandoned or GameSessionState.Aborted or GameSessionState.Cancelled)
+            throw new InvalidOperationException(ErrorMessages.ClosedSession);
+        if (abandonedAtUtc < StartedAtUtc)
+            throw new ArgumentException(ErrorMessages.Earlier, nameof(abandonedAtUtc));
+        EndedAtUtc = abandonedAtUtc;
+        State = GameSessionState.Abandoned;
+        AddDomainEvent(new GameSessionAbortedDomainEvent(SessionId, MachineId, abandonedAtUtc));
+    }
+
+    public void Abort(DateTime abortedAtUtc)
+    {
+        if (State is GameSessionState.Ended or GameSessionState.Abandoned or GameSessionState.Aborted or GameSessionState.Cancelled)
+            throw new InvalidOperationException(ErrorMessages.ClosedSession);
+        if (abortedAtUtc < StartedAtUtc)
+            throw new ArgumentException(ErrorMessages.Earlier, nameof(abortedAtUtc));
+        EndedAtUtc = abortedAtUtc;
+        State = GameSessionState.Aborted;
+        AddDomainEvent(new GameSessionAbortedDomainEvent(SessionId, MachineId, abortedAtUtc));
+    }
+    
+    #endregion
+
+
+
+// -------------------- Gameplay & Telemetry --------------------
+
+    #region Gameplay & Telemetry
+    
+    public void RecordBallScore(int slotNumber, int ballNumber, long score, DateTime recordedAtUtc)
+    {
+        if (State is not (GameSessionState.Started or GameSessionState.InGame or GameSessionState.Resumed))
+            throw new InvalidOperationException(ErrorMessages.CannotRecordBallInactiveSession);
+        
+        // Verify player is registered in the specified slot
+        var player = _players.FirstOrDefault(p => p.SlotNumber == slotNumber);
+        if (player is null)
+            throw new InvalidOperationException(ErrorMessages.PlayerNotFound);
+        
+        if (ballNumber is < 1 or > 5)
+            throw new ArgumentOutOfRangeException(nameof(ballNumber), ErrorMessages.InvalidBallNumber);
+        
+        if (score < 0)
+            throw new ArgumentOutOfRangeException(nameof(score), ErrorMessages.InvalidScore);
+        
+        
+        
+        AddDomainEvent(new BallScoreRecordedDomainEvent(
+            SessionId,
+            MachineId,
+            slotNumber,
+            ballNumber,
+            score,
+            recordedAtUtc
+        ));
+        
+    }
+    
+    public void EnableLiveStreaming()
+    {
+        if (State is GameSessionState.Ended or GameSessionState.Abandoned or GameSessionState.Aborted or GameSessionState.Cancelled)
+            throw new InvalidOperationException(ErrorMessages.ClosedSession);
+        // Switch telemetry mode to high-frequency streaming
+        TelemetryMode = TelemetryMode.LiveStreaming;
+    }
+    
+    
+    #endregion
+    
 }

@@ -5,10 +5,13 @@ using WorldPinball.Application.Interfaces.Services;
 
 namespace WorldPinball.Infrastructure.Services;
 
-public class InMemoryLobbyNotificationService :ILobbyNotificationService
+public class InMemoryLobbyNotificationService(int capacity = 50) :ILobbyNotificationService
 {
-    
+
+    private readonly int _capacity = capacity;
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Channel<Guid>, byte>> _subscribers = new();
+    private readonly ConcurrentDictionary<Channel<Guid>, byte> _globalSubscribers = new();
+    
     
     public void NotifyLobbyUpdated(Guid sessionId)
     {
@@ -18,10 +21,17 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
             {
                 channel.Writer.TryWrite(sessionId);
             }
+            
         }
+        
+            // Notify global admin subscribers
+            foreach (var globalChannel in _globalSubscribers.Keys)
+            {
+                globalChannel.Writer.TryWrite(sessionId);
+            }
     }
 
-    // the call attribute [EnumeratorCancellation] create an instance, because with extension meo 
+    // the call attribute [EnumeratorCancellation] create an instance, because of extension 
     public async IAsyncEnumerable<Guid> SubscribeAsync(
         Guid sessionId, 
         [EnumeratorCancellation] CancellationToken cancellationToken = default
@@ -36,7 +46,6 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
         var sessionChannels = _subscribers.GetOrAdd(
             sessionId, _ => new ConcurrentDictionary<Channel<Guid>, byte>());
         sessionChannels.TryAdd(channel, 0);
-        
         
         try
         {
@@ -60,8 +69,66 @@ public class InMemoryLobbyNotificationService :ILobbyNotificationService
                 _subscribers.TryRemove(sessionId, out _);
             }
         }
-        
-        
-        
     }
+    
+    
+    public Task NotifyScoreSubmittedAsync(Guid sessionId, int slotNumber, long score, CancellationToken ct = default)
+    {
+        NotifyLobbyUpdated(sessionId);
+        return Task.CompletedTask;
+    }
+    
+    
+    public Task NotifySessionLaunchedAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        NotifyLobbyUpdated(sessionId);
+        return Task.CompletedTask;
+    }
+    public Task NotifySessionEndedAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        NotifyLobbyUpdated(sessionId);
+        return Task.CompletedTask;
+    }
+    public Task NotifySessionAbortedAsync(Guid sessionId, CancellationToken ct = default)
+    {
+        NotifyLobbyUpdated(sessionId);
+        return Task.CompletedTask;
+    }
+
+    public Task NotifyMatchFoundAsync(Guid sessionId, Guid machineId, CancellationToken ct = default)
+    {
+        NotifyLobbyUpdated(sessionId);
+        return Task.CompletedTask;
+    }
+
+    public async IAsyncEnumerable<Guid> SubscribeAllAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+
+        var channel = Channel.CreateBounded<Guid>(new BoundedChannelOptions(_capacity)
+        {
+            SingleWriter = false,
+            SingleReader = true,
+            FullMode = BoundedChannelFullMode.DropOldest
+        });
+        
+        _globalSubscribers.TryAdd(channel, 0);
+        
+        
+        try
+        {
+            while (await channel.Reader.WaitToReadAsync(cancellationToken))
+            {
+                while (channel.Reader.TryRead(out var id))
+                {
+                    yield return id;
+                }
+            }
+        }
+        finally
+        {
+            _globalSubscribers.TryRemove(channel, out _);
+        }
+    }
+    
 }

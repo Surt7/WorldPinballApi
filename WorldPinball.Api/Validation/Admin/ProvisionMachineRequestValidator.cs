@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using WorldPinball.Api.Contracts.Machine;
 
 
@@ -34,10 +34,6 @@ public sealed class ProvisionMachineRequestValidator
             .NotEmpty()
             .When(request => request.PublicKey is not null)
             .WithMessage("The public key cannot be empty when provided.");
-        
-        RuleFor(request => request.IdempotencyKey)
-            .NotEmpty()
-            .WithMessage("The Idempotency Key is required and must be a valid GUID.");
         
         When(x => x.ValidityHours.HasValue, () =>
         {

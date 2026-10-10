@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WorldPinball.Application.Features.GameSessions.Public.CreateGameSession.Dtos;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Domain.Entities;
+using WorldPinball.Domain.Enums;
 
 namespace WorldPinball.Infrastructure.Persistence.Repositories;
 
@@ -50,5 +51,22 @@ public class GameSessionReadRepository : IGameSessionReadRepository
             .Where(gs => gs.SessionId == sessionId)
             .Include(gs => gs.Players)
             .FirstOrDefaultAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<Guid>> GetActiveSessionIdsAsync(CancellationToken cancellationToken = default)
+    {
+        var terminalStates = new[]
+        {
+            GameSessionState.Ended,
+            GameSessionState.Cancelled,
+            GameSessionState.Abandoned,
+            GameSessionState.Aborted
+        };
+        return await _db.GameSessions
+            .AsNoTracking()
+            .Where(gs => !terminalStates.Contains(gs.State))
+            .OrderByDescending(gs => gs.StartedAtUtc)
+            .Select(gs => gs.SessionId)
+            .ToListAsync(cancellationToken);
     }
 }

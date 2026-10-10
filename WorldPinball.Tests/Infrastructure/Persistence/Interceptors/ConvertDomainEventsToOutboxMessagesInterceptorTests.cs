@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
 using NSubstitute;
@@ -37,18 +37,17 @@ public class ConvertDomainEventsToOutboxMessagesInterceptorTests
     }
 
 
-[Fact]
+    [Fact]
     public async Task SavingChangesAsync_WhenEntityHasDomainEvents_ShouldCreateOutboxMessageAndClearEvents()
     {
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0", "nonce", now);
-        session.Start(now);
         
         _db.GameSessions.Add(session);
         await _db.SaveChangesAsync();
         var messages = await _db.OutboxMessages.ToListAsync();
         messages.Should().HaveCount(1);
-        messages[0].Type.Should().Be(nameof(GameSessionStartedDomainEvent));
+        messages[0].Type.Should().Be(nameof(GameSessionCreatedDomainEvent));
         messages[0].OccurredAtUtc.Should().Be(now);
         session.DomainEvents.Should().BeEmpty();
     }
@@ -56,14 +55,37 @@ public class ConvertDomainEventsToOutboxMessagesInterceptorTests
     [Fact]
     public async Task SavingChangesAsync_WhenEntityHasNoDomainEvents_ShouldNotCreateOutboxMessages()
     {
-       
         var now = _timeProvider.GetUtcNow().UtcDateTime;
-        var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "1.0", "nonce", now);
+        var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), 
+            Guid.NewGuid(), "1.0", "nonce", now);
+        session.ClearDomainEvents();
         
         _db.GameSessions.Add(session);
         await _db.SaveChangesAsync();
       
         var messages = await _db.OutboxMessages.ToListAsync();
         messages.Should().BeEmpty();
+    }
+    
+    
+    [Fact]
+    public async Task SaveChangesFailedSync_WhenSaveFails_ShouldNotNotifyChannel()
+    {
+            
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var session = new GameSession(Guid.NewGuid(), Guid.NewGuid(), 
+            Guid.NewGuid(), "1.0", "nonce", now);
+        
+        _db.GameSessions.Add(session); 
+
+            
+            
+            
+        // to simulate a cancellation
+        Func<Task> act = () => _db.SaveChangesAsync(new CancellationToken(canceled: true));
+
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        await _channel.DidNotReceive().TryNotifyAsync(Arg.Any<CancellationToken>());
     }
 }

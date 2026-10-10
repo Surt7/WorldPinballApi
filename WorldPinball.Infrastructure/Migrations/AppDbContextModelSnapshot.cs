@@ -513,6 +513,10 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("state");
 
+                    b.Property<int>("TelemetryMode")
+                        .HasColumnType("integer")
+                        .HasColumnName("telemetry_mode");
+
                     b.HasKey("SessionId")
                         .HasName("pk_game_sessions");
 
@@ -1181,6 +1185,189 @@ namespace WorldPinball.Infrastructure.Migrations
                     b.ToTable("score_entries", "public");
                 });
 
+            modelBuilder.Entity("WorldPinball.Domain.Entities.StreamAccessGrant", b =>
+                {
+                    b.Property<Guid>("GrantId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("grant_id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("display_name");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at_utc");
+
+                    b.Property<Guid?>("GrantedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("granted_by_user_id");
+
+                    b.Property<int>("Origin")
+                        .HasColumnType("integer")
+                        .HasColumnName("origin");
+
+                    b.Property<Guid>("PrincipalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("principal_id");
+
+                    b.Property<int>("PrincipalType")
+                        .HasColumnType("integer")
+                        .HasColumnName("principal_type");
+
+                    b.Property<string>("RevocationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("revocation_reason");
+
+                    b.Property<DateTime?>("RevokedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at_utc");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.HasKey("GrantId")
+                        .HasName("pk_stream_access_grants");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_stream_access_grants_status");
+
+                    b.HasIndex("PrincipalType", "PrincipalId")
+                        .HasDatabaseName("ix_stream_access_grants_principal_type_principal_id");
+
+                    b.ToTable("stream_access_grants", "public");
+                });
+
+            modelBuilder.Entity("WorldPinball.Domain.Entities.StreamSubscription", b =>
+                {
+                    b.Property<Guid>("SubscriptionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("subscription_id");
+
+                    b.Property<bool>("NotificationsEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("notifications_enabled");
+
+                    b.Property<DateTime>("SubscribedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("subscribed_at_utc");
+
+                    b.Property<Guid>("SubscriberUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subscriber_user_id");
+
+                    b.Property<Guid>("TargetPrincipalId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_principal_id");
+
+                    b.Property<int>("TargetType")
+                        .HasColumnType("integer")
+                        .HasColumnName("target_type");
+
+                    b.HasKey("SubscriptionId")
+                        .HasName("pk_stream_subscriptions");
+
+                    b.HasIndex("SubscriberUserId", "TargetType", "TargetPrincipalId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_stream_subscriptions_subscriber_user_id_target_type_target_");
+
+                    b.ToTable("stream_subscriptions", "public");
+                });
+
+            modelBuilder.Entity("WorldPinball.Domain.Entities.StreamingAccessRequest", b =>
+                {
+                    b.Property<Guid>("RequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<DateTime?>("ExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at_utc");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("rejection_reason");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requested_by_user_id");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at_utc");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("session_id");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.HasKey("RequestId")
+                        .HasName("pk_streaming_access_requests");
+
+                    b.HasIndex("SessionId")
+                        .HasDatabaseName("ix_streaming_access_requests_session_id");
+
+                    b.ToTable("streaming_access_requests", "public");
+                });
+
+            modelBuilder.Entity("WorldPinball.Domain.Entities.StreamingPartner", b =>
+                {
+                    b.Property<Guid>("PartnerId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("partner_id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("OrganizationName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("organization_name");
+
+                    b.Property<DateTime?>("RevokedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at_utc");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("PartnerId")
+                        .HasName("pk_streaming_partners");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_streaming_partners_user_id");
+
+                    b.ToTable("streaming_partners", "public");
+                });
+
             modelBuilder.Entity("WorldPinball.Domain.Entities.UserProfile", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -1224,6 +1411,24 @@ namespace WorldPinball.Infrastructure.Migrations
                         .HasName("pk_user_profiles");
 
                     b.ToTable("user_profiles", "public");
+                });
+
+            modelBuilder.Entity("WorldPinball.Infrastructure.Persistence.Entities.RolePermission", b =>
+                {
+                    b.Property<string>("Role")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("role");
+
+                    b.Property<string>("Permission")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("permission");
+
+                    b.HasKey("Role", "Permission")
+                        .HasName("pk_role_permissions");
+
+                    b.ToTable("role_permissions", "public");
                 });
 
             modelBuilder.Entity("ip_license_regions", b =>

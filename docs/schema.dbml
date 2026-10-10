@@ -1,0 +1,330 @@
+Table devices {
+  DeviceId uuid [pk]
+  ActivatedAtUtc "timestamp with time zone"
+  ClientVersion text
+  CreatedAtUtc "timestamp with time zone"
+  KeyAlgorithm text
+  KeyType text
+  LastCounter bigint
+  LastSeenAtUtc "timestamp with time zone"
+  Notes text
+  ProvisionedAtUtc "timestamp with time zone"
+  PublicKey text
+  PublicKeyFingerprint text
+  RevokedAtUtc "timestamp with time zone"
+  SerialPhysical text
+  Status "character varying(20)"
+  UpdatedAtUtc "timestamp with time zone"
+}
+
+Table ca_certificates {
+  CaId uuid [pk]
+  CaType integer
+  CertPem text
+  CreatedAt "timestamp with time zone"
+  IsActive boolean
+  IsTrusted boolean
+  IssuerDn text
+  NotAfterUtc "timestamp with time zone"
+  NotBeforeUtc "timestamp with time zone"
+  PrivateKeyRef text
+  SerialNumber text
+  SubjectDn text
+  ThumbprintSha256 text
+  UpdatedAt "timestamp with time zone"
+}
+
+Table device_certificates {
+  DeviceCertId uuid [pk]
+  CaId uuid
+  CertPem text
+  CertSerialNumber text
+  CertThumbprintSha256 text
+  DeviceId uuid
+  IssuedAtUtc "timestamp with time zone"
+  IssuerDn text
+  NotAfterUtc "timestamp with time zone"
+  NotBeforeUtc "timestamp with time zone"
+  RevokeReason text
+  RevokedAtUtc "timestamp with time zone"
+  Status integer
+  SubjectDn text
+  SupersededByDeviceCertId uuid
+}
+
+Ref: device_certificates.CaId > ca_certificates.CaId
+Ref: device_certificates.DeviceId > devices.DeviceId
+Ref: device_certificates.SupersededByDeviceCertId > device_certificates.DeviceCertId
+
+Table certificate_revocations {
+  RevocationId uuid [pk]
+  DeviceCertId uuid
+  Notes text
+  Reason integer
+  RevokedAtUtc "timestamp with time zone"
+  RevokedByUserId text
+}
+
+Ref: certificate_revocations.DeviceCertId > device_certificates.DeviceCertId
+
+Table machines {
+  MachineId uuid [pk]
+  Amperage "numeric(6,2)"
+  DisplayName "character varying(150)"
+  FrequencyHz integer
+  IdempotencyKey uuid
+  IpId uuid
+  Location "character varying(200)"
+  MachineNotes "character varying(1000)"
+  ManufacturedDate date
+  Manufacturer "character varying(100)"
+  ManufacturerModelCode "character varying(50)"
+  ManufacturerModelName "character varying(150)"
+  ManufacturerModelYear "character varying(20)"
+  ManufacturerNotes "character varying(1000)"
+  ManufacturerSerialNumber "character varying(100)"
+  Nonce "character varying(64)"
+  RegisteredAtUtc "timestamp with time zone"
+  Status "character varying(20)"
+  UpdatedAtUtc "timestamp with time zone"
+  Voltage integer
+  WorldPinballSerialNumber "character varying(32)"
+}
+
+Table machine_devices {
+  MachineId uuid [pk]
+  DeviceId uuid [pk]
+  AttachedAtUtc "timestamp with time zone"
+  DetachedAtUtc "timestamp with time zone"
+  IsActive boolean
+}
+
+Ref: machine_devices.DeviceId > devices.DeviceId
+Ref: machine_devices.MachineId > machines.MachineId
+
+Table enrollment_tokens {
+  token_id uuid [pk]
+  consumed_at "timestamp with time zone"
+  consumed_by_device_id uuid
+  device_id uuid
+  expires_at "timestamp with time zone"
+  issued_at "timestamp with time zone"
+  issued_by_user_id "character varying(450)"
+  machine_id uuid
+  max_uses integer
+  notes "character varying(1000)"
+  revoked_at "timestamp with time zone"
+  token_hash "character varying(256)"
+  token_type "character varying(20)"
+  uses_count integer
+  ValidityHours integer
+}
+
+Ref: enrollment_tokens.consumed_by_device_id > devices.DeviceId
+Ref: enrollment_tokens.device_id > devices.DeviceId
+Ref: enrollment_tokens.machine_id > machines.MachineId
+
+Table game_modes {
+  ModeId uuid [pk]
+  Code text
+  CreatedAtUtc "timestamp with time zone"
+  Description text
+  IsActive boolean
+  Name text
+  UpdatedAtUtc "timestamp with time zone"
+}
+
+Table game_sessions {
+  SessionId uuid [pk]
+  ClientVersion "character varying(50)"
+  DeviceId uuid
+  EndedAtUtc "timestamp with time zone"
+  MachineId uuid
+  ModeId uuid
+  Nonce "character varying(64)"
+  StartedAtUtc "timestamp with time zone"
+  State "character varying(20)"
+  TelemetryMode integer
+}
+
+Ref: game_sessions.DeviceId > devices.DeviceId
+Ref: game_sessions.MachineId > machines.MachineId
+Ref: game_sessions.ModeId > game_modes.ModeId
+
+Table user_profiles {
+  UserId uuid [pk]
+  AvatarUrl text
+  CountryCode text
+  CreatedAtUtc "timestamp with time zone"
+  DisplayName text
+  Initials text
+  IsProfilePublic boolean
+  UpdatedAtUtc "timestamp with time zone"
+}
+
+Table game_session_players {
+  SessionId uuid [pk]
+  SlotNumber integer [pk]
+  GuestInitials "character varying(4)"
+  JoinedAtUtc "timestamp with time zone"
+  UserId uuid
+  UserProfileUserId uuid
+}
+
+Ref: game_session_players.SessionId > game_sessions.SessionId
+Ref: game_session_players.UserProfileUserId > user_profiles.UserId
+
+Table publishers {
+  PublisherId uuid [pk]
+  CreatedAtUtc "timestamp with time zone"
+  Name text
+  Slug text
+  UpdatedAtUtc "timestamp with time zone"
+}
+
+Table ip_licenses {
+  IpId uuid [pk]
+  CreatedAtUtc "timestamp with time zone"
+  IpOwner text
+  IsActive boolean
+  Name text
+  Notes text
+  PublisherId uuid
+  ReleaseYear integer
+  Slug text
+  UpdatedAtUtc "timestamp with time zone"
+}
+
+Ref: ip_licenses.PublisherId > publishers.PublisherId
+Ref: machines.IpId > ip_licenses.IpId
+
+Table missions {
+  MissionId uuid [pk]
+  Code text
+  CreatedAtUtc "timestamp with time zone"
+  Description text
+  IpId uuid
+  IsActive boolean
+  MissionType "character varying(30)"
+  ModeId uuid
+  Title text
+  UpdatedAtUtc "timestamp with time zone"
+}
+
+Ref: missions.IpId > ip_licenses.IpId
+Ref: missions.ModeId > game_modes.ModeId
+
+Table mission_progress {
+  MissionProgressId uuid [pk]
+  CompletedAtUtc "timestamp with time zone"
+  CurrentValue integer
+  MissionId uuid
+  Status "character varying(20)"
+  UpdatedAtUtc "timestamp with time zone"
+  UserId text
+}
+
+Ref: mission_progress.MissionId > missions.MissionId
+
+Table operator_tokens {
+  token_id uuid [pk]
+  created_at "timestamp with time zone"
+  expires_at "timestamp with time zone"
+  is_active boolean
+  issued_by_user_id "character varying(450)"
+  name "character varying(100)"
+  prefix "character varying(32)"
+  revoked_at "timestamp with time zone"
+  scopes "character varying(500)"
+  token_hash "character varying(64)"
+}
+
+Table outbox_messages {
+  Id uuid [pk]
+  Content text
+  Error text
+  OccurredAtUtc "timestamp with time zone"
+  ProcessedAtUtc "timestamp with time zone"
+  RetryCount integer
+  Type "character varying(255)"
+}
+
+Table regions {
+  RegionId uuid [pk]
+  Code text
+  CreatedAtUtc "timestamp with time zone"
+  Name text
+  UpdatedAtUtc "timestamp with time zone"
+}
+
+Table score_entries {
+  ScoreEntryId uuid [pk]
+  AchievedAtUtc "timestamp with time zone"
+  DeviceId uuid
+  IpId uuid
+  IsValidated boolean
+  MachineId uuid
+  ModeId uuid
+  Score bigint
+  SessionId uuid
+  SlotNumber integer
+  UserId text
+  ValidationReason text
+}
+
+Ref: score_entries.DeviceId > devices.DeviceId
+Ref: score_entries.IpId > ip_licenses.IpId
+Ref: score_entries.MachineId > machines.MachineId
+Ref: score_entries.ModeId > game_modes.ModeId
+Ref: score_entries.SessionId > game_sessions.SessionId
+
+Table stream_access_grants {
+  GrantId uuid [pk]
+  CreatedAtUtc "timestamp with time zone"
+  DisplayName "character varying(150)"
+  ExpiresAtUtc "timestamp with time zone"
+  GrantedByUserId uuid
+  Origin integer
+  PrincipalId uuid
+  PrincipalType integer
+  RevocationReason "character varying(500)"
+  RevokedAtUtc "timestamp with time zone"
+  Status integer
+}
+
+Table stream_subscriptions {
+  SubscriptionId uuid [pk]
+  NotificationsEnabled boolean
+  SubscribedAtUtc "timestamp with time zone"
+  SubscriberUserId uuid
+  TargetPrincipalId uuid
+  TargetType integer
+}
+
+Table streaming_access_requests {
+  RequestId uuid [pk]
+  CreatedAtUtc "timestamp with time zone"
+  ExpiresAtUtc "timestamp with time zone"
+  RejectionReason "character varying(500)"
+  RequestedByUserId uuid
+  ReviewedAtUtc "timestamp with time zone"
+  SessionId uuid
+  Status integer
+}
+
+Table streaming_partners {
+  PartnerId uuid [pk]
+  CreatedAtUtc "timestamp with time zone"
+  IsActive boolean
+  OrganizationName "character varying(150)"
+  RevokedAtUtc "timestamp with time zone"
+  UserId uuid
+}
+
+Table ip_license_regions {
+  ip_id uuid [pk]
+  region_id uuid [pk]
+}
+
+Ref: ip_license_regions.ip_id > ip_licenses.IpId
+Ref: ip_license_regions.region_id > regions.RegionId

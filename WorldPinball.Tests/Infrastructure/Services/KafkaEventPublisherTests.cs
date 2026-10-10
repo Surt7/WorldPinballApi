@@ -1,6 +1,7 @@
 ﻿using Confluent.Kafka;
 using NSubstitute;
 using WorldPinball.Infrastructure.Services;
+using WorldPinball.Infrastructure.Services.KafkaProducers;
 using WorldPinball.Infrastructure.Services.Outbox;
 
 namespace WorldPinball.Tests.Infrastructure.Services;

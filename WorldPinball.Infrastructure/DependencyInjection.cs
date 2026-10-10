@@ -21,6 +21,9 @@ using WorldPinball.Infrastructure.Security.CA;
 using WorldPinball.Infrastructure.Security.OperatorTokens;
 using WorldPinball.Infrastructure.Security.Secrets;
 using WorldPinball.Infrastructure.Services;
+using WorldPinball.Infrastructure.Services.Authorization;
+using WorldPinball.Infrastructure.Services.KafkaConsumers;
+using WorldPinball.Infrastructure.Services.KafkaProducers;
 using WorldPinball.Infrastructure.Services.Outbox;
 using WorldPinball.Infrastructure.Services.Redis;
 
@@ -58,15 +61,6 @@ public static class DependencyInjection
         services.AddScoped<IMachineDashboardReadRepository, MachineDashboardReadRepository>();
         
         
-        // -------------------- health check --------------------
-        //Database health check
-        services
-            .AddHealthChecks()
-            .AddDbContextCheck<AppDbContext>(
-                name: "Database",
-                tags: ["database"]);
-        
-        
         // -------------------- Repositories registering --------------------
         // Security crypto
         services.AddScoped<ISecretService, SecretService>();
@@ -89,32 +83,55 @@ public static class DependencyInjection
         services.AddScoped<IGameSessionWriteRepository, GameSessionWriteRepository>();
         services.AddScoped<ICertificateAuthorityService, StepCaCertificateAuthorityService>();
         
+        // Stream broadcast live score
+        services.AddScoped<IStreamingPartnerRepository, StreamingPartnerRepository>();
+        services.AddScoped<IStreamingAccessRequestRepository, StreamingAccessRequestRepository>();
+        services.AddScoped<IStreamingAuthorizationService, StreamingAuthorizationService>();
+        services.AddScoped<IStreamAccessGrantRepository, StreamAccessGrantRepository>();
+        
+        services.AddScoped<ILiveTelemetryService, RedisLiveTelemetryService>();
+        
+        
         // For Auth policies check
         services.AddTransient<IClaimsTransformation, MachineClaimsTransformation>();
         
         // Auth policies handler
+        // Policy-Based
         services.AddSingleton<IAuthorizationHandler, ActiveMachineAuthorizationHandler>();
         services.AddSingleton<IAuthorizationHandler, OperatorScopeAuthorizationHandler>();
 
+        // Resources-Based
+        services.AddSingleton<IAuthorizationHandler, GameSessionParticipantAuthorizationHandler>();
+        
+        // Dynamic Role Permissions (Frozen L1 Cache)
+        services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
+        services.AddSingleton<DynamicRolePermissionStore>();
+        services.AddSingleton<IRolePermissionStore>(sp => sp.GetRequiredService<DynamicRolePermissionStore>());
+        services.AddSingleton<IRolePermissionReloader>(sp => sp.GetRequiredService<DynamicRolePermissionStore>());
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
         services.AddScoped<IOperatorTokenWriteRepository, OperatorTokenWriteRepository>();
         
-        // -------------------- Kafka & Outbox --------------------
-        services.AddSingleton<IProducer<string, string>>(_ =>
-        {
-            var producerConfig = new ProducerConfig
-            {
-                BootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092",
-                Acks = Acks.All,
-                EnableIdempotence = true
-            };
-            return new ProducerBuilder<string, string>(producerConfig).Build();
-        });
         
-        services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
+        
+        // -------------------- Kafka & Outbox --------------------
+        // Defined in Services/KafkaProducers/KafkaProducerExtensions.cs
+        services.AddKafkaProducer(config);
+
+        // Defined in Services/KafkaConsumers/KafkaConsumerExtensions.cs
+        services.AddLeaderboardKafkaConsumer(config);
+
         services.AddScoped<IOutboxProcessor, OutboxProcessor>();
+        
+        
+        // Outbox Services
         services.AddHostedService<OutboxBackgroundService>();
         services.AddSingleton<IOutboxNotificationChannel, OutboxNotificationChannel>();
         
+        // Outbox Cleanup Services
+        services.AddScoped<IOutboxCleaner, OutboxCleaner>();
+        services.AddSingleton<IOutboxCleanupChannel, OutboxCleanupChannel>();
+        services.AddHostedService<OutboxCleanupBackgroundService>();
        
         // -------------------- Redis --------------------
        
@@ -134,9 +151,26 @@ public static class DependencyInjection
             ConnectionMultiplexer.Connect(configurationOptions));
         
         services.AddScoped<IMachineStatusCacheService, RedisMachineStatusCacheService>();
+        services.AddScoped<IMatchmakingQueueService, RedisMatchmakingQueueService>();
         
         services.AddMemoryCache();
         services.AddScoped<IOperatorTokenValidator, OperatorTokenValidator>();
+        
+        
+        // -------------------- health check --------------------
+        //Database health check
+
+        services.AddHealthChecks()
+            .AddDbContextCheck<AppDbContext>(
+                name: "PostgreSQL",
+                tags: ["ready", "db"])
+            .AddRedis(
+                sp => sp.GetRequiredService<IConnectionMultiplexer>(),
+                name: "Redis",
+                tags: ["ready", "cache"])
+            .AddKafka(new ProducerConfig 
+                { BootstrapServers = config["Kafka:BootstrapServers"] ??
+                                     "localhost:9092" }, tags: ["ready", "kafka"]);
         
         
         // End Return service

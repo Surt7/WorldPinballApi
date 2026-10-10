@@ -26,7 +26,14 @@ public class AppDbContext : DbContext
     public DbSet<OperatorToken> OperatorTokens => Set<OperatorToken>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
     public DbSet<GameSessionPlayer> GameSessionPlayers => Set<GameSessionPlayer>();
-
+    public DbSet<StreamingPartner> StreamingPartners => Set<StreamingPartner>();
+    public DbSet<StreamingAccessRequest> StreamingAccessRequests => Set<StreamingAccessRequest>();
+    
+    public DbSet<StreamAccessGrant> StreamAccessGrants => Set<StreamAccessGrant>();
+    
+    public DbSet<StreamSubscription> StreamSubscriptions => Set<StreamSubscription>();
+    public DbSet<WorldPinball.Infrastructure.Persistence.Entities.RolePermission> RolePermissions => Set<WorldPinball.Infrastructure.Persistence.Entities.RolePermission>();
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

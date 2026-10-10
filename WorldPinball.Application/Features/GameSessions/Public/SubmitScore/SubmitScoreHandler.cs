@@ -10,21 +10,23 @@ namespace WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 public sealed class SubmitScoreHandler(
     IGameSessionWriteRepository writeRepository,
     IRealtimeLeaderboardService realtimeLeaderboardService,
+    ILobbyNotificationService lobbyNotifier,
     ILogger<SubmitScoreHandler> logger,
     TimeProvider timeProvider
     ) : ISubmitScoreHandler
 {
     private static readonly EventId SessionNotFound = new EventId(2400, nameof(SessionNotFound));
     private static readonly EventId SessionAlreadyEnded = new EventId(2401, nameof(SessionAlreadyEnded));
-    private static readonly EventId DeviceMisMatch = new EventId(2402, nameof(DeviceMisMatch));
-    private static readonly EventId SlotNotFound = new EventId(2403, nameof(SlotNotFound));
+    private static readonly EventId SessionNotStarted = new EventId(2402, nameof(SessionNotStarted));
+    private static readonly EventId DeviceMisMatch = new EventId(2403, nameof(DeviceMisMatch));
+    private static readonly EventId SlotNotFound = new EventId(2404, nameof(SlotNotFound));
 
     public async Task<SubmitScoreResult> HandleAsync(SubmitScoreCommand command, CancellationToken token = default)
     {
         var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
         
         var gameSession = await writeRepository.GetSessionWithMachineAsync(command.SessionId, token);
-
+     
         if (gameSession is null)
         {
             logger.LogWarning(
@@ -33,7 +35,9 @@ public sealed class SubmitScoreHandler(
                 command.SessionId);
             return new SubmitScoreResult.SessionNotFound(command.SessionId);
         }
-
+        
+ 
+        
         if (gameSession.DeviceId != command.DeviceId)
         {
             logger.LogWarning(
@@ -53,6 +57,13 @@ public sealed class SubmitScoreHandler(
             return new SubmitScoreResult.SessionAlreadyEnded(gameSession.SessionId);
         }
 
+        if (gameSession.State is not (GameSessionState.Started or GameSessionState.InGame or GameSessionState.Resumed or GameSessionState.Paused))
+        {
+            logger.LogWarning(SessionNotStarted, "Session {SessionId} is not started.", command.SessionId);
+            return new SubmitScoreResult.SessionNotStarted(command.SessionId);
+        }
+        
+        
         if (command.Scores.Count == 0)
         {
             return new SubmitScoreResult.EmptyScores();
@@ -91,7 +102,7 @@ public sealed class SubmitScoreHandler(
         gameSession.End(nowUtc);
 
         await writeRepository.SaveScoreEntriesAsync(gameSession, scoreEntries, token);
-
+        
         foreach (var scoreEntry in scoreEntries)
         {
             await realtimeLeaderboardService.AddScoreAsync(
@@ -101,7 +112,16 @@ public sealed class SubmitScoreHandler(
                 scoreEntry.Score,
                 token
             );
+            
+            await lobbyNotifier.NotifyScoreSubmittedAsync(
+                gameSession.SessionId,
+                scoreEntry.SlotNumber,
+                scoreEntry.Score,
+                token
+            );
         }
+
+        await lobbyNotifier.NotifySessionEndedAsync(gameSession.SessionId, token);
 
         return new SubmitScoreResult.Success(scoreEntries.Select(s => s.ScoreEntryId).ToList());
     }

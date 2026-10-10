@@ -1,5 +1,6 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using WorldPinball.Domain.Entities;
+using WorldPinball.Domain.Events;
 
 namespace WorldPinball.Tests.Domain.Entities;
 
@@ -44,6 +45,8 @@ public class ScoreEntryTests
         entry.UserId.Should().Be(userId);
         entry.IsValidated.Should().BeTrue();
         entry.ValidationReason.Should().BeNull();
+        entry.DomainEvents.Should().ContainSingle()
+            .Which.Should().BeOfType<ScoreSubmittedDomainEvent>();
     }
 
     [Theory]

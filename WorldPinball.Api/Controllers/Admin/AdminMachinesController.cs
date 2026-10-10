@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using WorldPinball.Api.Filters.Idempotency;
+using WorldPinball.Api.Security.Permissions;
 using WorldPinball.Application.Contracts.Admin.Machine;
-using WorldPinball.Application.Features.Machines.Admin;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using Microsoft.AspNetCore.WebUtilities;
 using WorldPinball.Api.Contracts.Machine;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard;
 using WorldPinball.Application.Features.Leaderboard.Admin.Dashboard.Dtos;
@@ -14,11 +13,14 @@ using WorldPinball.Application.Features.Machines.Admin.Provision;
 using WorldPinball.Application.Features.Machines.Admin.Provision.Commands;
 using WorldPinball.Application.Features.Machines.Admin.ReissueToken;
 using WorldPinball.Application.Features.Machines.Admin.ReissueToken.Commands;
+using WorldPinball.Application.Features.Machines.Admin.Provision.Dtos;
+using WorldPinball.Application.Features.Machines.Admin.GetAllMachines;
+using WorldPinball.Application.Features.Machines.Admin.GetAllMachines.Queries;
 
 namespace WorldPinball.Api.Controllers.Admin;
 
 
-[Authorize(Roles = "Admin")]
+[Authorize]
 [ApiController]
 [Route("api/v1/admin/machines")]
 public sealed class AdminMachinesController(
@@ -29,6 +31,8 @@ public sealed class AdminMachinesController(
 {
     
     [HttpPost("provision")]
+    [RequirePermission(Permission.MachinesProvision)]
+    [Idempotent(ExpirationMinutes = 30)]
     [EndpointSummary("Creates a new machine and generates an enrollment token")]
     [EndpointDescription("POST to create a new machine.  Accepts a ProvisionMachineRequest.")]
     [ProducesResponseType(
@@ -40,7 +44,8 @@ public sealed class AdminMachinesController(
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ProvisionMachineResponse>> Provision(
         [FromBody] ProvisionMachineRequest req,
-        CancellationToken ct)
+        CancellationToken ct = default,
+        [FromHeader(Name = "X-Idempotency-Key")] string? idempotencyHeader = null)
     {
         var issuedByUser = User.FindFirstValue("sub");
         if (string.IsNullOrWhiteSpace(issuedByUser))
@@ -64,7 +69,9 @@ public sealed class AdminMachinesController(
         var displayName = req.DisplayName;
         var serialNumber = req.WorldPinballSerialNumber;
         var ip = req.IpSlug;
-        var idempotencyKey = req.IdempotencyKey;
+        var idempotencyKey = Guid.TryParse(idempotencyHeader, out var parsedGuid) 
+            ? parsedGuid 
+            : Guid.NewGuid();
 
 
         var cmd = new ProvisionMachineCommand(
@@ -106,6 +113,7 @@ public sealed class AdminMachinesController(
     }
 
     [HttpPost("{machineId:guid}/tokens")]
+    [RequirePermission(Permission.MachinesReissueToken)]
     [EndpointSummary("Reissues a new enrollment token for an existing machine")]
     [EndpointDescription("POST to reissue an enrollment token for a machine in PendingEnrollment status.")]
     [ProducesResponseType(typeof(ReissueEnrollmentTokenResponse), StatusCodes.Status200OK)]
@@ -154,15 +162,16 @@ public sealed class AdminMachinesController(
     
     
     [HttpGet("{machineId:guid}/dashboard")]
+    [Authorize(Roles = "Admin")]
     [EndpointSummary("Retrieves aggregate statistics for a machine dashboard")]
     [ProducesResponseType(typeof(MachineDashboardDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<MachineDashboardDto>> GetDashboard(
         [FromRoute] Guid machineId,
-        [FromServices] IGetMachineDashboardHandler handler,
+        [FromServices] IGetMachineDashboardHandler handlerDash,
         CancellationToken ct)
     {
-        var result = await handler.HandleAsync(new GetMachineDashboardQuery(machineId), ct);
+        var result = await handlerDash.HandleAsync(new GetMachineDashboardQuery(machineId), ct);
         return result switch
         {
             GetMachineDashboardResult.Success s => Ok(s.Stats),
@@ -170,9 +179,22 @@ public sealed class AdminMachinesController(
             _ => throw new InvalidOperationException($"Unsupported result: {result.GetType().Name}")
         };
     }
-    
-    
-    
-    
-    
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    [EndpointSummary("Retrieves all registered machines")]
+    [EndpointDescription("GET to list all machines for administration.")]
+    [ProducesResponseType(typeof(IReadOnlyList<MachineRowDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IReadOnlyList<MachineRowDto>>> GetAllMachines(
+        [FromServices] IGetAllMachinesHandler handlerAllMachines,
+        CancellationToken ct)
+    {
+        var result = await handlerAllMachines.HandleAsync(new GetAllMachinesQuery(), ct);
+        return result switch
+        {
+            GetAllMachinesResult.Success success => Ok(success.Machines),
+            GetAllMachinesResult.NotFound => NotFound(new { message = "No machines found." }),
+            _ => throw new InvalidOperationException($"Unsupported result: {result.GetType().Name}")
+        };
+    }
 }

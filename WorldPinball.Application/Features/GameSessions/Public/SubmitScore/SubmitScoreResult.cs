@@ -10,6 +10,7 @@ public abstract record SubmitScoreResult
     
     public sealed record SessionAlreadyEnded(Guid GameSessionId) : SubmitScoreResult;
     
+    public sealed record SessionNotStarted(Guid GameSessionId) : SubmitScoreResult;
     public sealed record DeviceMisMatch(Guid ExpectedDeviceId, Guid ActualDeviceId) : SubmitScoreResult;
 
     public sealed record SlotNotFound(int SlotNumber) : SubmitScoreResult;

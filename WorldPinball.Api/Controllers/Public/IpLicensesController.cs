@@ -1,18 +1,31 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using WorldPinball.Application.Interfaces.Repositories;
+using Microsoft.AspNetCore.Mvc;
+using WorldPinball.Application.Features.IpLicenses.Public.GetAllIpLicenses;
+using WorldPinball.Application.Features.IpLicenses.Public.GetAllIpLicenses.Queries;
 
-namespace WorldPinball.Api.Controllers.Public
+namespace WorldPinball.Api.Controllers.Public;
+
+[Route("api/v1/ip-licenses")]
+[ApiController]
+public class IpLicensesController(
+    IGetAllIpLicensesHandler getAllIpLicensesHandler
+) : ControllerBase
 {
-    [Route("api/v1/ip-licenses")]
-    [ApiController]
-    public class IpLicensesController(IIpLicenseReadRepository ipLicenseRepository) : ControllerBase
+    [HttpGet]
+    [EndpointSummary("Returns all available IP licenses")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        [HttpGet]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-        {
-            var allIpLicenses = await ipLicenseRepository.GetAllAsync(cancellationToken);
+        var result = await getAllIpLicensesHandler.HandleAsync(new GetAllIpLicensesQuery(), ct);
 
-            return Ok(allIpLicenses);
-        }
+        return result switch
+        {
+            GetAllIpLicensesResult.Success success => Ok(success.IpLicenses),
+            GetAllIpLicensesResult.NotFound => NotFound(new
+            {
+                message = "No IP licenses found."
+            }),
+            _ => throw new InvalidOperationException($"Unsupported result: {result.GetType().Name}")
+        };
     }
 }

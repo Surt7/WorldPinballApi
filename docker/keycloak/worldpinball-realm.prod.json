@@ -1,0 +1,86 @@
+{
+  "realm": "worldpinball",
+  "enabled": true,
+  "displayName": "WorldPinball Production",
+  "sslRequired": "all",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "Admin", "description": "Administrator" },
+      { "name": "Player", "description": "Player" },
+      { "name": "MachinesProvision", "description": "Provision machines permission" },
+      { "name": "MachinesReissueToken", "description": "Reissue token permission" },
+      { "name": "ShipmentsDispatch", "description": "Dispatch shipment permission" },
+      { "name": "ShipmentsCancel", "description": "Cancel shipment permission" },
+      { "name": "SessionsPlay", "description": "Play game session permission" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "worldpinball-api",
+      "name": "WorldPinball API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
+    },
+    {
+      "clientId": "worldpinball-spa",
+      "name": "WorldPinball Angular SPA",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "bearerOnly": false,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "https://${DOMAIN}/*",
+        "https://www.${DOMAIN}/*"
+      ],
+      "webOrigins": [
+        "https://${DOMAIN}",
+        "https://www.${DOMAIN}"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+      "optionalClientScopes": ["offline_access"],
+      "protocolMappers": [
+        {
+          "name": "worldpinball-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "worldpinball-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ]
+}

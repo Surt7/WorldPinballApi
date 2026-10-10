@@ -66,6 +66,7 @@ public class OutboxProcessor(
             }
             catch (Exception ex)
             {
+                // Kafka is down: increment retry count and keep message safe in PostgreSQL
                 message.RecordFailure(ex.Message);
             }
         }

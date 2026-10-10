@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\WorldPinball.Logistics.Application\WorldPinball.Logistics.Application.csproj" />
+    <ProjectReference Include="..\WorldPinball.Logistics.Infrastructure\WorldPinball.Logistics.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Aspire\ServiceDefaults\ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

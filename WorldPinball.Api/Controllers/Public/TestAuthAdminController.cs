@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -30,7 +30,7 @@ namespace WorldPinball.Api.Controllers.Public
                 User.FindFirstValue("email");
 
             var roles = User.Claims
-                .Where(c => c.Type == ClaimTypes.Role || c.Type == "role" || c.Type.EndsWith("/role"))
+                .Where(c => c.Type == ClaimTypes.Role || c.Type == "role" || c.Type == "roles" || c.Type.EndsWith("/role"))
                 .Select(c => c.Value)
                 .Distinct()
                 .ToArray();
