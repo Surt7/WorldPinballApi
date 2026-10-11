@@ -158,7 +158,11 @@ classDiagram
 
 ---
 
-## Démarrage Local
+## Démarrage Local & Gestion des Secrets
+
+### Stratégie de Provisioning des Secrets
+- **Environnement Dev Local** : CLI Go interne (`tools/wp-cli`) pour générer et injecter les clés de test dans le `dotnet user-secrets` local sans aucun secret en clair dans le code.
+- **Environnement Production** : Injection Zero-Trust via **Azure Key Vault** orchestré par GitHub Actions (OIDC / Managed Identity).
 
 ```bash
 # 1. Cloner le repository
