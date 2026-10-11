@@ -152,7 +152,7 @@ classDiagram
 - **Accès Données** : Entity Framework Core 9 / Dapper / Npgsql
 - **Bases de Données & Cache** : PostgreSQL, Redis
 - **Messaging & Event Streaming** : Apache Kafka, RabbitMQ (AMQP)
-- **Sécurité** : mTLS, ECDSA (BouncyCastle / System.Security.Cryptography), Keycloak (OpenID Connect / JWT)
+- **Sécurité** : mTLS, ECDSA (`System.Security.Cryptography` natif), Keycloak (OpenID Connect / JWT)
 - **Tests** : xUnit, FluentAssertions, NSubstitute, WebApplicationFactory
 - **Frontend** : Angular 18+ (Signals, Standalone Components, Reactive)
 
