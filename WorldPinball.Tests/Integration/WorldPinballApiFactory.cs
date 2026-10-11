@@ -34,6 +34,15 @@ public sealed class WorldPinballApiFactory:WebApplicationFactory<global::WorldPi
             services.RemoveAll<WorldPinball.Api.Filters.Idempotency.IIdempotencyStore>();
             services.AddSingleton<WorldPinball.Api.Filters.Idempotency.IIdempotencyStore, WorldPinball.Api.Filters.Idempotency.InMemoryIdempotencyStore>();
 
+            services.RemoveAll<WorldPinball.Application.Interfaces.Services.IRolePermissionReloader>();
+            var reloaderMock = Substitute.For<WorldPinball.Application.Interfaces.Services.IRolePermissionReloader>();
+            services.AddSingleton(reloaderMock);
+
+            services.RemoveAll<WorldPinball.Infrastructure.Security.Authorization.IRolePermissionStore>();
+            services.AddSingleton<WorldPinball.Infrastructure.Security.Authorization.IRolePermissionStore>(
+                new WorldPinball.Infrastructure.Security.Authorization.FrozenRolePermissionStore(
+                    new Dictionary<string, IEnumerable<string>>()));
+
             // Replace JWT/Keycloak authentication only; ASP.NET Core authorization remains real.
             services
                 .AddAuthentication(options =>
