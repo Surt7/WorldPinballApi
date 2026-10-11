@@ -1,4 +1,4 @@
-namespace WorldPinball.Application.Features.Machines.Public;
+namespace WorldPinball.Application.Features.Machines.Public.Enroll;
 
 public abstract record EnrollDeviceResult
 {
