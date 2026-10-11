@@ -1,13 +1,11 @@
-
 using Microsoft.Extensions.Logging;
 using WorldPinball.Application.Features.Machines.Public.Commands;
 using WorldPinball.Application.Interfaces.Repositories;
 using WorldPinball.Application.Security.CA;
-using WorldPinball.Domain.Entities;
 using WorldPinball.Application.Security.Secrets;
-using WorldPinball.Domain.Enums;
+using WorldPinball.Domain.Entities;
 
-namespace WorldPinball.Application.Features.Machines.Public;
+namespace WorldPinball.Application.Features.Machines.Public.Enroll;
 
 public sealed class EnrollDeviceHandler(
     IDeviceEnrollmentWriteRepository deviceEnrollmentWriteRepository,

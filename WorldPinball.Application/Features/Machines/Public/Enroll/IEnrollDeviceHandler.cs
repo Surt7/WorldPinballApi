@@ -1,6 +1,6 @@
 using WorldPinball.Application.Features.Machines.Public.Commands;
 
-namespace WorldPinball.Application.Features.Machines.Public;
+namespace WorldPinball.Application.Features.Machines.Public.Enroll;
 
 public interface IEnrollDeviceHandler
 {

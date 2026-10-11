@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using WorldPinball.Api.Contracts.Machine;
 using WorldPinball.Application.Features.Machines.Public;
 using WorldPinball.Application.Features.Machines.Public.Commands;
+using WorldPinball.Application.Features.Machines.Public.Enroll;
 
 namespace WorldPinball.Api.Controllers.Public;
 
