@@ -7,6 +7,14 @@ using WorldPinball.Domain.Enums;
 
 namespace WorldPinball.Application.Features.GameSessions.Public.SubmitScore;
 
+
+/// <summary>
+/// Orchestrates score submission workflow for completed game sessions.
+/// Implements the Result pattern (returning a discriminated union of <see cref="SubmitScoreResult"/>)
+/// instead of throwing exceptions for predictable domain outcomes (e.g., mismatched device, expired session).
+/// Leverages <see cref="TimeProvider"/> for deterministic clock abstraction during unit testing.
+/// Persists entries to relational storage before updating high-throughput Redis leaderboards and broadcasting via SignalR.
+/// </summary>
 public sealed class SubmitScoreHandler(
     IGameSessionWriteRepository writeRepository,
     IRealtimeLeaderboardService realtimeLeaderboardService,

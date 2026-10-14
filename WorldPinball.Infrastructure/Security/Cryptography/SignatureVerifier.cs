@@ -3,7 +3,14 @@ using System.Security.Cryptography;
 
 namespace WorldPinball.Infrastructure.Security.Cryptography
 {
-    public sealed class EcdsaP256SignatureVerifier : ISignatureVerifier
+    /// <summary>
+/// High-performance, zero-allocation cryptographic signature verifier using ECDSA over the NIST P-256 curve (SHA-256).
+/// Employs <see cref="Span{T}"/> and <c>stackalloc</c> to parse Base64 signatures entirely on the stack, eliminating Heap allocations
+/// and reducing Garbage Collection pressure under high packet ingestion.
+/// Automatically detects and supports both raw IEEE P1363 (64-byte r||s concatenation typical of hardware TPM/microcontrollers)
+/// and RFC 3279 ASN.1 DER sequence formats emitted by standard OpenSSL toolchains.
+/// </summary>
+public sealed class EcdsaP256SignatureVerifier : ISignatureVerifier
     {
 
         private const string AllowedAlg = "ecdsa-p256-sha256";

@@ -1,7 +1,14 @@
-﻿using WorldPinball.Infrastructure.Security;
+using WorldPinball.Infrastructure.Security;
 
 namespace WorldPinball.Api.Middleware;
 
+/// <summary>
+/// HTTP middleware that establishes an enriched, ambient logging scope for distributed tracing and observability.
+/// Injects the request's <see cref="HttpContext.TraceIdentifier"/> as a CorrelationId so all log entries across
+/// downstream services and handlers can be correlated in log aggregators (e.g., Grafana Loki, Elasticsearch).
+/// Sanitizes and masks sensitive identifiers (such as session tokens) via <see cref="SensitiveDataMasker"/>
+/// before adding them to the logging scope, enforcing security and GDPR compliance.
+/// </summary>
 public sealed class CorrelationContextLoggingMiddleware(
     RequestDelegate next,
     ILogger<CorrelationContextLoggingMiddleware> logger,

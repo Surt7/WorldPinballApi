@@ -1,12 +1,23 @@
-﻿// WorldPinball.Infrastructure/Security/CanonicalJson.cs
+// WorldPinball.Infrastructure/Security/CanonicalJson.cs
 
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace WorldPinball.Infrastructure.Security;
+namespace WorldPinball.Infrastructure.Security.Cryptography;
 
+/// <summary>
+/// Implements deterministic JSON canonicalization (aligned with RFC 8785 - JSON Canonicalization Scheme).
+/// Cryptographic signatures (ECDSA/SHA-256) are byte-sensitive: differences in whitespace, line endings,
+/// or dictionary property ordering between client and server would produce completely different hashes.
+/// Recursively sorts all JSON object keys using <see cref="StringComparer.Ordinal"/> (byte-level ordering, avoiding culture issues)
+/// to produce a reproducible canonical byte representation for signature verification.
+/// </summary>
 public static class CanonicalJson
 {
+    /// <summary>
+    /// Parses a raw JSON payload, recursively sorts object properties deterministically,
+    /// and formats a normalized JSON string ready for cryptographic hashing.
+    /// </summary>
     public static string Canonicalize(string rawJson)
     {
         ArgumentException.ThrowIfNullOrEmpty(rawJson);
