@@ -5,7 +5,7 @@
 namespace WorldPinball.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class rectif : Migration
+    public partial class Rectif : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

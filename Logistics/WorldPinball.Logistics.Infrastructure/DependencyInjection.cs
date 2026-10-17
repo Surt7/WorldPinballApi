@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using WorldPinball.Logistics.Application.Features.GetShipment;
+
 using WorldPinball.Logistics.Application.Interfaces;
+using WorldPinball.Logistics.Infrastructure.OptionConfigurations;
 using WorldPinball.Logistics.Infrastructure.Persistence;
 using WorldPinball.Logistics.Infrastructure.Persistence.Interceptors;
 using WorldPinball.Logistics.Infrastructure.Persistence.Repositories;
 using WorldPinball.Logistics.Infrastructure.Services.Outbox;
+using WorldPinball.Logistics.Infrastructure.Services.RabbitMq;
 
 namespace WorldPinball.Logistics.Infrastructure;
 
@@ -33,6 +35,9 @@ public static class DependencyInjection
         services.AddScoped<ILogisticsOutboxProcessor, LogisticsOutboxProcessor>();
         services.AddHostedService<LogisticsOutboxBackgroundService>();
 
+        // RabbitMQ
+        services.Configure<RabbitMqOptions>(configuration.GetSection(RabbitMqOptions.SectionName));
+        services.AddSingleton<ILogisticsEventPublisher, RabbitMqLogisticsEventPublisher>();
         return services;
     }
 }

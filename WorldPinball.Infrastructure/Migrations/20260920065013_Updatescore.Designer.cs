@@ -13,7 +13,7 @@ namespace WorldPinball.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260920065013_updatescore")]
-    partial class updatescore
+    partial class Updatescore
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
