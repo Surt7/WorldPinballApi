@@ -4,11 +4,8 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using WorldPinball.Logistics.Infrastructure.OptionConfigurations;
 using WorldPinball.Logistics.Infrastructure.Services.RabbitMq;
-using Xunit;
 
-
-
-namespace WorldPinball.Tests.Infrastructure.Services.RabbitMq;
+namespace WorldPinball.Tests.Logistics.Infrastructure.Services.RabbitMq;
 
 public class RabbitMqLogisticsEventPublisherTests
 {
