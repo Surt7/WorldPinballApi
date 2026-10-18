@@ -35,6 +35,8 @@ public class Shipment:Entity
         OrderId = orderId.Trim();
         DestinationAddress = destinationAddress.Trim();
         Status = ShipmentStatus.PendingAllocation;
+        
+        AddDomainEvent(new ShipmentCreatedDomainEvent(ShipmentId, OrderId, DestinationAddress));
     }
     
     public string? CancellationReason { get; private set; }

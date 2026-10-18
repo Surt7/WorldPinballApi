@@ -42,19 +42,20 @@ public class CancelShipmentHandlerTests
 
         // Assert
         result.Should().BeOfType<CancelShipmentResult.Success>();
-         
+
         shipment.Status.Should().Be(ShipmentStatus.Cancelled);
         shipment.CancellationReason.Should().Be("Client cancelled");
-
-        shipment.DomainEvents.Should().ContainSingle()
-            .Which.Should().BeOfType<ShipmentCancelledDomainEvent>();
+        
+        // Filter linq with only ShipmentCancelledDomainEvent (DomainEvent is a List)
+        shipment.DomainEvents.OfType<ShipmentCancelledDomainEvent>()
+            .Should().ContainSingle();
 
 
         await _repository.Received(1).UpdateAsync(shipment,
             Arg.Any<CancellationToken>());
     }
-    
-    
+
+
     [Fact]
     public async Task HandleAsync_WhenShipmentNotFound_ShouldReturnShipmentNotFound()
     {
@@ -62,19 +63,19 @@ public class CancelShipmentHandlerTests
         var shipmentId = Guid.NewGuid();
         _repository.GetByIdAsync(shipmentId, Arg.Any<CancellationToken>())
             .Returns((Shipment?)null);
-        
+
         // Act
         var result = await _sut.HandleAsync(new CancelShipmentCommand(
             shipmentId, "Some reason"));
-        
-        
+
+
         // Assert
         result.Should().BeOfType<CancelShipmentResult.ShipmentNotFound>()
             .Which.ShipmentId.Should().Be(shipmentId);
         await _repository.DidNotReceive().UpdateAsync(
             Arg.Any<Shipment>(), Arg.Any<CancellationToken>());
     }
-    
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -91,8 +92,8 @@ public class CancelShipmentHandlerTests
         result.Should().BeOfType<CancelShipmentResult.InvalidCancellationReason>();
         await _repository.DidNotReceive().GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
-    
-    
+
+
     [Fact]
     public async Task HandleAsync_WhenShipmentInTransit_ShouldReturnCannotCancel()
     {
@@ -111,4 +112,3 @@ public class CancelShipmentHandlerTests
         await _repository.DidNotReceive().UpdateAsync(shipment, Arg.Any<CancellationToken>());
     }
 }
-

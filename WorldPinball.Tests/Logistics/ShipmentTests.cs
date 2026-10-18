@@ -20,6 +20,10 @@ public class ShipmentTests
         // Assert
         shipment.OrderId.Should().Be(orderId);
         shipment.Status.Should().Be(ShipmentStatus.PendingAllocation);
+        
+        shipment.DomainEvents.OfType<ShipmentCreatedDomainEvent>()
+            .Should().ContainSingle()
+            .Which.OrderId.Should().Be(orderId);
     }
 
     
@@ -93,8 +97,8 @@ public class ShipmentTests
         shipment.Cancel(reason);
 
         // Assert
-        shipment.DomainEvents.Should().ContainSingle()
-            .Which.Should().BeOfType<ShipmentCancelledDomainEvent>()
+        shipment.DomainEvents.OfType<ShipmentCancelledDomainEvent>()
+            .Should().ContainSingle()
             .Which.Reason.Should().Be(reason);
     }
 }
