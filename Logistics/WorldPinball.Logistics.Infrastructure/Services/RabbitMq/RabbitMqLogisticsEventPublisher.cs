@@ -11,7 +11,7 @@ public sealed class RabbitMqLogisticsEventPublisher(
     ILogger<RabbitMqLogisticsEventPublisher> logger
     ) :ILogisticsEventPublisher, IAsyncDisposable
 {
-    
+    private bool _disposed;
     private readonly RabbitMqOptions _options = options.Value;
     private readonly ILogger<RabbitMqLogisticsEventPublisher> _logger = logger;
     private IConnection? _connection;
@@ -37,44 +37,53 @@ public sealed class RabbitMqLogisticsEventPublisher(
     public async Task PublishAsync(string topic, string key, string message, CancellationToken ct = default)
     {
         
+        
         // Defensive clause guard
-        ArgumentException.ThrowIfNullOrEmpty(topic);
+        ArgumentException.ThrowIfNullOrWhiteSpace(topic);
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         ArgumentException.ThrowIfNullOrWhiteSpace(message);
-        
-        var connection = await GetConnectionAsync(ct);
-        await using var channel = await connection.CreateChannelAsync(cancellationToken: ct);
-        
-        await channel.ExchangeDeclareAsync(
-            exchange: _options.ExchangeName,
-            type: ExchangeType.Topic,
-            durable: true,
-            autoDelete: false,
-            cancellationToken: ct);
-        
-        var body = System.Text.Encoding.UTF8.GetBytes(message);
-        var props = new BasicProperties
+        if (!_disposed)
         {
-            DeliveryMode = DeliveryModes.Persistent,
-            ContentType = "application/json",
-            MessageId = key
-        };
-        
-        await channel.BasicPublishAsync(
-            exchange: _options.ExchangeName,
-            routingKey: topic,
-            mandatory: false,
-            basicProperties: props,
-            body: body,
-            cancellationToken: ct);
-        
-        _logger.LogInformation("Published logistics event {Key} to {Exchange}/{RoutingKey}", key, _options.ExchangeName, topic);
-        
-        
+            var connection = await GetConnectionAsync(ct);
+            await using var channel = await connection.CreateChannelAsync(cancellationToken: ct);
+
+            await channel.ExchangeDeclareAsync(
+                exchange: _options.ExchangeName,
+                type: ExchangeType.Topic,
+                durable: true,
+                autoDelete: false,
+                cancellationToken: ct);
+
+            var body = System.Text.Encoding.UTF8.GetBytes(message);
+            var props = new BasicProperties
+            {
+                DeliveryMode = DeliveryModes.Persistent,
+                ContentType = "application/json",
+                MessageId = key
+            };
+
+            await channel.BasicPublishAsync(
+                exchange: _options.ExchangeName,
+                routingKey: topic,
+                mandatory: false,
+                basicProperties: props,
+                body: body,
+                cancellationToken: ct);
+
+            _logger.LogInformation("Published logistics event {Key} to {Exchange}/{RoutingKey}", key,
+                _options.ExchangeName, topic);
+        }
+        else
+        {
+            throw new ObjectDisposedException(nameof(RabbitMqLogisticsEventPublisher));
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
+        if (_disposed) return;
+        _disposed = true;
+        
         if (_connection is not null)
         {
             await _connection.CloseAsync();
