@@ -146,7 +146,7 @@ try
     builder.Services.AddSingleton<ISignatureVerifier,
         EcdsaP256SignatureVerifier>();
     builder.Services.AddScoped<GetLeaderboardHandler>();
-    builder.Services.AddSingleton<SensitiveDataMasker>();
+  
 
 
     //Validators

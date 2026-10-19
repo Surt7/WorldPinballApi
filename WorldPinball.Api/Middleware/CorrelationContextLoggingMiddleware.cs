@@ -11,8 +11,7 @@ namespace WorldPinball.Api.Middleware;
 /// </summary>
 public sealed class CorrelationContextLoggingMiddleware(
     RequestDelegate next,
-    ILogger<CorrelationContextLoggingMiddleware> logger,
-    SensitiveDataMasker masker
+    ILogger<CorrelationContextLoggingMiddleware> logger
     )
 {
     public async Task InvokeAsync(HttpContext context)
@@ -38,7 +37,7 @@ public sealed class CorrelationContextLoggingMiddleware(
         if (!string.IsNullOrWhiteSpace(rawSessionId))
         {
             // Then we apply the mask 
-            scopeData["GameSessionId"] = masker.Mask("GameSessionId", rawSessionId)!;
+            scopeData["GameSessionId"] = SensitiveDataMasker.Mask("GameSessionId", rawSessionId)!;
         }
         
         using (logger.BeginScope(scopeData))

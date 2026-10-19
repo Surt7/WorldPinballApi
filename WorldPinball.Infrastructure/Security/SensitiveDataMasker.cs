@@ -1,7 +1,7 @@
 ﻿namespace WorldPinball.Infrastructure.Security;
 
     
-public class SensitiveDataMasker
+public static class SensitiveDataMasker
 {
     
     private static readonly HashSet<string> SensitiveKeys = new(StringComparer.OrdinalIgnoreCase)
@@ -11,14 +11,9 @@ public class SensitiveDataMasker
     
     
     
-    public string? Mask(string key, string? value)
+    public static string? Mask(string key, string? value)
     {
-        if (SensitiveKeys.Contains(key))
-        {
-            return "[REDACTED]";
-        }
-        
-        return value;
+        return SensitiveKeys.Contains(key) ? "[REDACTED]" : value;
     }
     
     
