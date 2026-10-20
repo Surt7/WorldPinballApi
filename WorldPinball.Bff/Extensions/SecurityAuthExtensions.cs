@@ -109,7 +109,7 @@ public static class SecurityAuthExtensions
                 
                 // Query mode with http issue - ephemeral cookie (the pkce protect against that too)
                 options.ResponseMode = OpenIdConnectResponseMode.Query;
-                options.CorrelationCookie.SameSite = SameSiteMode.Unspecified;
+                options.CorrelationCookie.SameSite = SameSiteMode.None;
                 options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.NonceCookie.SameSite = SameSiteMode.Unspecified;
                 

@@ -78,3 +78,10 @@ services:
     environment:
       KC_HOSTNAME: "https://auth.worldpinball.local"
       KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: "xforwarded"
+
+  # Angular Frontend SPA
+  frontend:
+    image: worldpinball-frontend:latest
+    container_name: worldpinball-frontend
+    restart: unless-stopped

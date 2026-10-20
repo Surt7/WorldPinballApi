@@ -1,14 +1,13 @@
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Timeouts;
 using WorldPinball.Bff.Extensions;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using WorldPinball.Bff.Endpoints;
 using WorldPinball.Bff.Hubs;
 using WorldPinball.Bff.Services;
 using WorldPinball.Protos.V1.GameSessions;
 using Yarp.ReverseProxy.Transforms;
+using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,6 +84,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseRequestTimeouts();
+app.UseForwardedHeadersForReverseProxy();
+
 app.UseHttpsRedirection();
 app.UseCors("AngularDevPolicy");
 app.MapHealthChecks("/alive", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions

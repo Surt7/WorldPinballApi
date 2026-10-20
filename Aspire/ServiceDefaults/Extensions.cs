@@ -1,6 +1,8 @@
+using System.Net;
 using Azure.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -9,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using IPNetwork = System.Net.IPNetwork;
 
 namespace ServiceDefaults;
 public static class OtelConstants
@@ -153,6 +156,24 @@ public static class Extensions
             });
         
 
+        return app;
+    }
+    
+    public static WebApplication UseForwardedHeadersForReverseProxy(this WebApplication app)
+    {
+        var forwardedHeadersOptions = new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        };
+        forwardedHeadersOptions.KnownIPNetworks.Clear();
+        forwardedHeadersOptions.KnownProxies.Clear();
+        if (!app.Environment.IsDevelopment())
+        {
+            // In production, restrict trusted proxies to the internal Docker private network (RFC 1918)
+            forwardedHeadersOptions.KnownIPNetworks.Add(
+                new IPNetwork(IPAddress.Parse("172.16.0.0"), 12));
+        }
+        app.UseForwardedHeaders(forwardedHeadersOptions);
         return app;
     }
 }

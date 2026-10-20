@@ -6,6 +6,7 @@ using WorldPinball.Infrastructure.Security;
 using WorldPinball.Infrastructure;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.Timeouts;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using ServiceDefaults;
 using WorldPinball.Api.Errors;
@@ -172,7 +173,10 @@ try
     var app = builder.Build();
 
     app.UseSerilogRequestLogging();
-
+    
+    app.UseForwardedHeadersForReverseProxy();
+    
+    
     if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
         await app.Services.MigrateDatabaseAsync();
@@ -204,6 +208,7 @@ try
 
 // -------------------- USE -------------------- USE -------------------- USE --------------------//
 
+    
 
     app.UseMiddleware<RequireHttpsMiddleware>();
     app.UseRequestTimeouts();

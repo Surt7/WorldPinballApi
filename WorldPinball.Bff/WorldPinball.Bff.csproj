@@ -40,5 +40,7 @@
     <ItemGroup>
       <Folder Include="Controllers\" />
     </ItemGroup>
-
+    <ItemGroup>
+        <ProjectReference Include="..\Aspire\ServiceDefaults\ServiceDefaults.csproj" />
+    </ItemGroup>
 </Project>
