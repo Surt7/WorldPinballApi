@@ -35,7 +35,10 @@ public static class SecurityAuthExtensions
         {
             options.AddPolicy("AngularDevPolicy", policy =>
             {
-                policy.WithOrigins("https://localhost:4200")
+                policy.WithOrigins(
+                        "https://localhost:4200",
+                        "https://worldpinball.local"
+                        )
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials(); // Mandatory for session and antiforgery cookies

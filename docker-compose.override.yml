@@ -1,0 +1,58 @@
+services:
+  # Local development reverse proxy for fake domains topology (*.worldpinball.local)
+  dev-nginx:
+    image: nginx:1.27-alpine
+    container_name: worldpinball-dev-nginx
+    profiles: ["nginx", "apps"]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/dev-nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/certs:/etc/nginx/certs:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - auth.worldpinball.local
+          - api.worldpinball.local
+          - bff.worldpinball.local
+          - worldpinball.local
+    restart: unless-stopped
+
+  # Core API service (containerized)
+  api:
+    build:
+      context: .
+      dockerfile: WorldPinball.Api/Dockerfile
+    image: worldpinball-api:dev
+    container_name: worldpinball-api
+    profiles: ["apps"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      Kafka__BootstrapServers: "kafka:29092"
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=worldpinball;Username=postgres;Password=${POSTGRES_PASSWORD}"
+      Keycloak__Authority: "https://auth.worldpinball.local/realms/worldpinball"
+      Keycloak__MetadataAddress: "http://keycloak:8080/realms/worldpinball/.well-known/openid-configuration"
+      Keycloak__Audience: "worldpinball-api"
+      Redis__Host: "redis:6379"
+      Redis__Password: "${REDIS_PASSWORD}"
+      OtelCollector__OTEL_EXPORTER_OTLP_ENDPOINT: "http://seq:5341"
+    depends_on:
+      db:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Allow Keycloak to accept requests from auth.worldpinball.local
+  keycloak:
+    environment:
+      KC_HOSTNAME: "https://auth.worldpinball.local"
+      KC_HOSTNAME_STRICT: "false"

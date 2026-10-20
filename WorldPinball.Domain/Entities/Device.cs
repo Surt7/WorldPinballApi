@@ -19,7 +19,7 @@ public class Device
         public const string CounterMustBeStrictlyIncreasing = "Counter value {0} is invalid. It must be strictly greater than last counter {1}.";
     }
 
-    private Device() { } // Used by EF Core
+    public Device() { } // Used by EF Core & Bogus seeder
 
     public Device(
         string serialPhysical,
