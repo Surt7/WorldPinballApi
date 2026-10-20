@@ -21,6 +21,7 @@ public static class SecurityExtensions
                                 ?? throw new InvalidOperationException("Keycloak:Authority is missing.");
         var keycloakAudience = configuration["Keycloak:Audience"]
                                ?? throw new InvalidOperationException("Keycloak:Audience is missing.");
+        var keycloakMetadataAddress = configuration["Keycloak:MetadataAddress"];
 
 
         // 1. Authentication (JWT Bearer for Web/Admin + mTLS Client Certificate for IoT Machines)
@@ -30,12 +31,25 @@ public static class SecurityExtensions
             {
                 options.Authority = keycloakAuthority;
                 options.Audience = keycloakAudience;
+                if (!string.IsNullOrWhiteSpace(keycloakMetadataAddress))
+                {
+                    options.MetadataAddress = keycloakMetadataAddress;
+                }
                 options.RequireHttpsMetadata = !environment.IsDevelopment();
                 options.MapInboundClaims = false;
+                if (environment.IsDevelopment())
+                {
+                    options.BackchannelHttpHandler = new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                    };
+                }
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
+                    ValidIssuer = keycloakAuthority,
                     ValidateAudience = true,
+                    ValidAudience = keycloakAudience,
                     ValidateLifetime = true,
                     NameClaimType = "preferred_username",
                     RoleClaimType = "roles",

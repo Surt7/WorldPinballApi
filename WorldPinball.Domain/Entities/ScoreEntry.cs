@@ -1,8 +1,14 @@
-﻿using WorldPinball.Domain.Common;
+using WorldPinball.Domain.Common;
 using WorldPinball.Domain.Events;
 
 namespace WorldPinball.Domain.Entities;
 
+/// <summary>
+/// Immutable record of a game score submission.
+/// Follows append-only / event-driven principles: scores are never overwritten in place to preserve full audit history.
+/// Automatically raises a <see cref="ScoreSubmittedDomainEvent"/> upon creation to decouple persistence
+/// from downstream projections (Kafka streaming, Redis Sorted Sets leaderboard cache) ensuring eventual consistency.
+/// </summary>
 public class ScoreEntry:Entity
 {
     private static class ErrorMessages
@@ -44,7 +50,8 @@ public class ScoreEntry:Entity
 
     public bool IsValidated { get; private set; }
     public string? ValidationReason { get; private set; }
-
+    
+    
     public ScoreEntry(
         Guid sessionId,
         int slotNumber,
@@ -89,6 +96,11 @@ public class ScoreEntry:Entity
         
     }
 
+    
+    /// <summary>
+    /// Flags the score entry as fraudulent or invalid without altering historical records,
+    /// preserving full auditability for anti-cheat and tournament arbitration.
+    /// </summary>
     public void Invalidate(string reason)
     {
         if (string.IsNullOrWhiteSpace(reason))

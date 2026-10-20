@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WorldPinball.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class updatescore : Migration
+    public partial class Updatescore : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using ServiceDefaults;
 using Xunit;
 
 namespace WorldPinball.Tests.Infrastructure;

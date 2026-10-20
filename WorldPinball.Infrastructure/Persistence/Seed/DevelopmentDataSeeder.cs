@@ -443,6 +443,7 @@ public static class DevelopmentDataSeeder
                     nonce,
                     startedAt);
 
+                session.AddPlayer(1, f.Random.Guid(), "DEV", requiresRegisteredUser: false);
                 session.Launch(startedAt);
                 session.End(startedAt.AddMinutes(f.Random.Int(3, 45)));
 

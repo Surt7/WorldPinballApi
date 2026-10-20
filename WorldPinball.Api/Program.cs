@@ -7,6 +7,7 @@ using WorldPinball.Infrastructure;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
+using ServiceDefaults;
 using WorldPinball.Api.Errors;
 using WorldPinball.Api.Middleware;
 using WorldPinball.Application.Features.GameSessions.Public.AddPlayer;
@@ -145,7 +146,7 @@ try
     builder.Services.AddSingleton<ISignatureVerifier,
         EcdsaP256SignatureVerifier>();
     builder.Services.AddScoped<GetLeaderboardHandler>();
-    builder.Services.AddSingleton<SensitiveDataMasker>();
+  
 
 
     //Validators

@@ -13,7 +13,7 @@ namespace WorldPinball.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260905101611_rectif")]
-    partial class rectif
+    partial class Rectif
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

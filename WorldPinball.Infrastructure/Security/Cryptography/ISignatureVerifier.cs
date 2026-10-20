@@ -1,4 +1,4 @@
-﻿namespace WorldPinball.Infrastructure.Security;
+﻿namespace WorldPinball.Infrastructure.Security.Cryptography;
 
 public interface ISignatureVerifier
 {

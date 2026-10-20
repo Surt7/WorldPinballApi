@@ -36,11 +36,13 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
       "redirectUris": [
+        "https://api.worldpinball.local/swagger/oauth2-redirect.html",
         "https://localhost:7010/swagger/oauth2-redirect.html",
         "http://localhost:5085/swagger/oauth2-redirect.html",
         "https://localhost:7285/*"
       ],
       "webOrigins": [
+        "https://api.worldpinball.local",
         "https://localhost:7010",
         "http://localhost:4200",
         "http://localhost:7285"
@@ -48,7 +50,7 @@
       "attributes": {
         "pkce.code.challenge.method": "S256"
       },
-      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email"],
       "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"],
       "protocolMappers": [
         {
@@ -90,18 +92,23 @@
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
       "redirectUris": [
+        "https://bff.worldpinball.local/signin-oidc",
+        "https://bff.worldpinball.local/*",
+        "https://worldpinball.local/*",
         "https://localhost:7285/signin-oidc",
         "https://localhost:7285/*",
         "http://localhost:4200/*"
       ],
       "webOrigins": [
+        "https://bff.worldpinball.local",
+        "https://worldpinball.local",
         "https://localhost:7285",
         "http://localhost:4200"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256"
       },
-      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email"],
       "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"],
       "protocolMappers": [
         {

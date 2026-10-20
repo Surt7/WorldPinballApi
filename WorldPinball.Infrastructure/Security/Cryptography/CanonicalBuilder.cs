@@ -1,7 +1,7 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 
-namespace WorldPinball.Infrastructure.Security;
+namespace WorldPinball.Infrastructure.Security.Cryptography;
 
 public interface ICanonicalBuilder
 {

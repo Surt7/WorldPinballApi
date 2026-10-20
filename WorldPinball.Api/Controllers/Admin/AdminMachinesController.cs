@@ -47,7 +47,8 @@ public sealed class AdminMachinesController(
         CancellationToken ct = default,
         [FromHeader(Name = "X-Idempotency-Key")] string? idempotencyHeader = null)
     {
-        var issuedByUser = User.FindFirstValue("sub");
+        var issuedByUser = User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+                           User.FindFirstValue("sub");
         if (string.IsNullOrWhiteSpace(issuedByUser))
         {
             return Unauthorized(new

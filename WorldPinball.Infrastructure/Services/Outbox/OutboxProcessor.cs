@@ -10,11 +10,22 @@ public interface IOutboxProcessor
     Task ProcessBatchAsync(CancellationToken ct = default);
 }
 
+/// <summary>
+/// Processes pending Outbox messages in transactional batches to guarantee reliable At-Least-Once event delivery to Kafka.
+/// Leverages PostgreSQL's <c>FOR UPDATE SKIP LOCKED</c> to enable horizontal scalability across multiple container instances
+/// without lock contention or duplicate event dispatching.
+/// If the messaging broker is unreachable, messages remain safely stored with incrementing retry counters and error logs.
+/// </summary>
 public class OutboxProcessor(
     AppDbContext db,
     IEventPublisher publisher,
     TimeProvider timeProvider) : IOutboxProcessor
 {
+    /// <summary>
+    /// Fetches up to 20 unhandled messages concurrently, publishes them to the Kafka broker,
+    /// and flags them as processed within a database transaction.
+    /// Resilient against broker outages via backoff retry tracking.
+    /// </summary>
     public async Task ProcessBatchAsync(CancellationToken ct = default)
     {
         await using var tx = db.Database.IsRelational() 

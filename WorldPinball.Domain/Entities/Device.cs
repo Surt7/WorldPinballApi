@@ -2,6 +2,12 @@ using WorldPinball.Domain.Enums;
 
 namespace WorldPinball.Domain.Entities;
 
+
+/// <summary>
+/// Represents the cryptographic IoT identity (TPM / Secure Element / controller) of a physical machine.
+/// Decouples cryptographic credentials (public keys, revocation status, enrollment tokens)
+/// from the commercial <see cref="Machine"/> entity, allowing hardware replacements without losing machine history.
+/// </summary>
 public class Device
 {
     private static class ErrorMessages
@@ -13,7 +19,7 @@ public class Device
         public const string CounterMustBeStrictlyIncreasing = "Counter value {0} is invalid. It must be strictly greater than last counter {1}.";
     }
 
-    private Device() { } // Used by EF Core
+    public Device() { } // Used by EF Core & Bogus seeder
 
     public Device(
         string serialPhysical,
@@ -114,6 +120,11 @@ public class Device
         }
     }
 
+    /// <summary>
+    /// Enforces monotonic counter validation as a hardware-level anti-replay mechanism.
+    /// Rejects any packet whose counter is less than or equal to <see cref="LastCounter"/>,
+    /// preventing replay attacks of captured valid payloads over the network.
+    /// </summary>
     public void VerifyAndIncrementCounter(long incomingCounter)
     {
         if (Status == DeviceStatus.Revoked)

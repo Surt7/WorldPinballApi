@@ -4,6 +4,11 @@ using WorldPinball.Domain.Events;
 
 namespace WorldPinball.Domain.Entities;
 
+/// <summary>
+/// Root Aggregate managing the full lifecycle state machine of a connected pinball session
+/// (Lobby -> Matchmaking -> Active gameplay -> Completion) and emitting domain events
+/// to synchronize distributed services (Kafka, SignalR, Leaderboards).
+/// </summary>
 public class GameSession : Entity
 {
     private static class ErrorMessages
@@ -59,11 +64,20 @@ public class GameSession : Entity
     public DateTime? EndedAtUtc { get; private set; }
 
     public GameSessionState State { get; private set; }
+    
+    /// <summary>
+    /// Unique cryptographic salt generated at session creation.
+    /// Used as anti-replay protection to bind machine score signatures strictly to this session.
+    /// </summary>
     public string Nonce { get; private set; } = null!;
     public string ClientVersion { get; private set; } = null!;
     
-/* BallCheckpointOnly =0  record score per ball validated, by default,
-   LiveStreaming =1 to activate livestreaming record for live display*/
+    
+    /// <summary>
+    /// Determines score telemetry ingestion mode:
+    /// - <see cref="TelemetryMode.BallCheckpointOnly"/>: Persisted per ball drained; updates Redis leaderboard.
+    /// - <see cref="TelemetryMode.LiveStreaming"/>: High-frequency telemetry broadcasted in real time via SignalR.
+    /// </summary>
     public TelemetryMode TelemetryMode { get; private set; } = TelemetryMode.BallCheckpointOnly;
     
 
