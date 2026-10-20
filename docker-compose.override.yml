@@ -30,7 +30,6 @@ services:
       context: .
       dockerfile: WorldPinball.Api/Dockerfile
     image: worldpinball-api:dev
-    container_name: worldpinball-api
     profiles: ["apps"]
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
@@ -47,6 +46,29 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # BFF Gateway service (containerized)
+  bff:
+    build:
+      context: .
+      dockerfile: WorldPinball.Bff/Dockerfile
+    image: worldpinball-bff:dev
+    profiles: ["apps"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      ReverseProxy__Clusters__core-api-cluster__Destinations__destination1__Address: "http://api:8080"
+      Keycloak__Authority: "https://auth.worldpinball.local/realms/worldpinball"
+      Keycloak__MetadataAddress: "http://keycloak:8080/realms/worldpinball/.well-known/openid-configuration"
+      Keycloak__Audience: "worldpinball-bff"
+      OtelCollector__OTEL_EXPORTER_OTLP_ENDPOINT: "http://seq:5341"
+    depends_on:
+      api:
+        condition: service_started
       keycloak:
         condition: service_healthy
     restart: unless-stopped
