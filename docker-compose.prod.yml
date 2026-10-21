@@ -23,14 +23,16 @@ services:
     container_name: worldpinball-prod-bff
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - Kestrel__Endpoints__Http__Url=http://0.0.0.0:8080
-      - Kestrel__Endpoints__Http__Protocols=Http1
-      - Kestrel__Endpoints__Grpc__Url=http://0.0.0.0:8082
-      - Kestrel__Endpoints__Grpc__Protocols=Http2
-      - ReverseProxy__Clusters__core-api-cluster__Destinations__destination1__Address=http://api:8080
-      - Keycloak__Authority=https://${DOMAIN}/realms/worldpinball
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+      - Services__CoreApi__Https=https://api:8443
+      - ReverseProxy__Clusters__core-api-cluster__Destinations__destination1__Address=https://api:8443
+      - Keycloak__Authority=https://auth.${DOMAIN:-localhost}/realms/worldpinball
       - Keycloak__ClientId=worldpinball-bff
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - SSL_CERT_FILE=/app/certs/rootCA.pem
+    volumes:
+      - ./docker/nginx/certs/dev-rootCA.pem:/app/certs/rootCA.pem:ro
     depends_on:
       - api
     restart: unless-stopped
@@ -45,17 +47,26 @@ services:
     container_name: worldpinball-prod-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - Kestrel__Endpoints__Http__Url=http://0.0.0.0:8080
-      - Kestrel__Endpoints__Http__Protocols=Http1
-      - Kestrel__Endpoints__Grpc__Url=http://0.0.0.0:8082
-      - Kestrel__Endpoints__Grpc__Protocols=Http2
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=worldpinball;Username=postgres;Password=${POSTGRES_PASSWORD}
       - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD}
+      - Keycloak__Authority=https://auth.${DOMAIN:-localhost}/realms/worldpinball
+      - Keycloak__MetadataAddress=http://keycloak:8080/realms/worldpinball/.well-known/openid-configuration
+      - Keycloak__Audience=worldpinball-api
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=WorldPinball.Api
+      - KeyVault__VaultUri=
+      - Kafka__BootstrapServers=kafka:29092
+    volumes:
+      - ./docker/nginx/certs/worldpinball.local.crt:/app/certs/api.crt:ro
+      - ./docker/nginx/certs/worldpinball.local.key:/app/certs/api.key:ro
+      - ./docker/nginx/certs/dev-rootCA.pem:/app/certs/rootCA.pem:ro
     depends_on:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -91,6 +102,36 @@ services:
       - worldpinball_prod_redisdata:/data
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - worldpinball-network
+
+  # 4b. Apache Kafka Message Broker
+  kafka:
+    image: apache/kafka:4.3.1
+    container_name: worldpinball-prod-kafka
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: CONTROLLER://:9093,PLAINTEXT://:29092,PLAINTEXT_HOST://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+    volumes:
+      - worldpinball_prod_kafkadata:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -140,7 +181,7 @@ services:
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD:?KEYCLOAK_DB_PASSWORD must be set}
-      KC_HOSTNAME: https://auth.${DOMAIN:?DOMAIN must be set}
+      KC_HOSTNAME: https://auth.${DOMAIN:-localhost}
       KC_HOSTNAME_STRICT: "true"
       KC_PROXY_HEADERS: xforwarded
       KC_HTTP_ENABLED: "true"
@@ -159,6 +200,7 @@ volumes:
   worldpinball_prod_pgdata:
   worldpinball_prod_redisdata:
   worldpinball_prod_keycloak_pgdata:
+  worldpinball_prod_kafkadata:
 
 networks:
   worldpinball-network:
