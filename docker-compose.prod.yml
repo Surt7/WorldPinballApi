@@ -48,6 +48,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+      - DOTNET_RUN_MIGRATIONS=true
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=worldpinball;Username=postgres;Password=${POSTGRES_PASSWORD}
       - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD}
       - Keycloak__Authority=https://auth.${DOMAIN:-localhost}/realms/worldpinball

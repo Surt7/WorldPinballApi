@@ -214,9 +214,13 @@ try
     app.UseForwardedHeadersForReverseProxy();
     
     
-    if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+    if (app.Environment.IsDevelopment() || app.Environment.IsStaging() || app.Configuration.GetValue<bool>("DOTNET_RUN_MIGRATIONS"))
     {
         await app.Services.MigrateDatabaseAsync();
+    }
+
+    if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+    {
         await app.Services.SeedDevelopmentDataAsync();
 
         app.UseDeveloperExceptionPage();
