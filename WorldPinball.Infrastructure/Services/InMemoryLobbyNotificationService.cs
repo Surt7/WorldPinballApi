@@ -2,18 +2,36 @@ using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using WorldPinball.Application.Interfaces.Services;
+using StackExchange.Redis;
 
 namespace WorldPinball.Infrastructure.Services;
 
-public class InMemoryLobbyNotificationService(int capacity = 50) :ILobbyNotificationService
+public class InMemoryLobbyNotificationService :ILobbyNotificationService
 {
-
-    private readonly int _capacity = capacity;
+    private readonly ISubscriber? _redisSubscriber;
+    private static readonly RedisChannel ChannelName = RedisChannel.Literal("worldpinball:lobby:updates");
+    private readonly int _capacity;
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Channel<Guid>, byte>> _subscribers = new();
     private readonly ConcurrentDictionary<Channel<Guid>, byte> _globalSubscribers = new();
     
+    public InMemoryLobbyNotificationService(IConnectionMultiplexer? redis = null, int capacity = 50)
+    {
+        _capacity = capacity;
+        if (redis is not null)
+        {
+            _redisSubscriber = redis.GetSubscriber();
+            // Whenever an update arrives from Redis, wake up our local subscribers
+            _redisSubscriber.Subscribe(ChannelName, (_, message) =>
+            {
+                if (Guid.TryParse(message.ToString(), out var sessionId))
+                {
+                    NotifyLocalSubscribers(sessionId);
+                }
+            });
+        }
+    }
     
-    public void NotifyLobbyUpdated(Guid sessionId)
+    private void NotifyLocalSubscribers(Guid sessionId)
     {
         if (_subscribers.TryGetValue(sessionId, out var channels))
         {
@@ -21,14 +39,20 @@ public class InMemoryLobbyNotificationService(int capacity = 50) :ILobbyNotifica
             {
                 channel.Writer.TryWrite(sessionId);
             }
-            
         }
-        
-            // Notify global admin subscribers
-            foreach (var globalChannel in _globalSubscribers.Keys)
-            {
-                globalChannel.Writer.TryWrite(sessionId);
-            }
+        // Notify global admin subscribers
+        foreach (var globalChannel in _globalSubscribers.Keys)
+        {
+            globalChannel.Writer.TryWrite(sessionId);
+        }
+    }
+    
+    public void NotifyLobbyUpdated(Guid sessionId)
+    {
+        // 1. Notify local subscribers on this instance
+        NotifyLocalSubscribers(sessionId);
+        // 2. Broadcast across all replicas via Redis Pub/Sub
+        _redisSubscriber?.PublishAsync(ChannelName, sessionId.ToString());
     }
 
     // the call attribute [EnumeratorCancellation] create an instance, because of extension 

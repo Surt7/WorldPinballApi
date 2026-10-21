@@ -23,7 +23,10 @@ services:
     container_name: worldpinball-prod-bff
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_HTTP_PORTS=8080
+      - Kestrel__Endpoints__Http__Url=http://0.0.0.0:8080
+      - Kestrel__Endpoints__Http__Protocols=Http1
+      - Kestrel__Endpoints__Grpc__Url=http://0.0.0.0:8082
+      - Kestrel__Endpoints__Grpc__Protocols=Http2
       - ReverseProxy__Clusters__core-api-cluster__Destinations__destination1__Address=http://api:8080
       - Keycloak__Authority=https://${DOMAIN}/realms/worldpinball
       - Keycloak__ClientId=worldpinball-bff
@@ -42,7 +45,10 @@ services:
     container_name: worldpinball-prod-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_HTTP_PORTS=8080
+      - Kestrel__Endpoints__Http__Url=http://0.0.0.0:8080
+      - Kestrel__Endpoints__Http__Protocols=Http1
+      - Kestrel__Endpoints__Grpc__Url=http://0.0.0.0:8082
+      - Kestrel__Endpoints__Grpc__Protocols=Http2
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=worldpinball;Username=postgres;Password=${POSTGRES_PASSWORD}
       - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318

@@ -46,5 +46,13 @@
   <ItemGroup>
     <Folder Include="Contracts\Licenses\" />
   </ItemGroup>
-
+    
+    <ItemGroup>
+        <None Update="root_ca.crt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="intermediate_ca.crt">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>

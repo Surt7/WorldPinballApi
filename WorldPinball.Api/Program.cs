@@ -2,11 +2,9 @@ using Serilog;
 using WorldPinball.Api.Extensions;
 using WorldPinball.Api.Logging;
 using WorldPinball.Api.Filters.Idempotency;
-using WorldPinball.Infrastructure.Security;
 using WorldPinball.Infrastructure;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.Timeouts;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using ServiceDefaults;
 using WorldPinball.Api.Errors;
@@ -45,7 +43,7 @@ using WorldPinball.Application.Features.Roles.Admin.GrantPermission;
 using WorldPinball.Application.Features.Roles.Admin.RevokePermission;
 using WorldPinball.Application.Interfaces.Services;
 using WorldPinball.Infrastructure.Services;
-
+using System.Security.Cryptography.X509Certificates;
 
 // -------------------- BUILDER -------------------- BUILDER -------------------- BUILDER --------------------//
 
@@ -60,12 +58,40 @@ try
         options.AddServerHeader = false;
         options.Limits.Http2.KeepAlivePingDelay = TimeSpan.FromSeconds(60);
         options.Limits.Http2.KeepAlivePingTimeout = TimeSpan.FromSeconds(30);
+        
 
+        
+        // Resolve SSL certificate path (Docker container or local host)
+        var certPath = "/app/certs/api.crt";
+        var keyPath = "/app/certs/api.key";
+        
+        if (!File.Exists(certPath))
+        {
+            certPath = Path.Combine(builder.Environment.ContentRootPath, "..", "docker", "nginx", "certs", "worldpinball.local.crt");
+            keyPath = Path.Combine(builder.Environment.ContentRootPath, "..", "docker", "nginx", "certs", "worldpinball.local.key");
+        }
+        
+        // Production-grade HTTPS port with ALPN (handles both HTTP/1.1 and HTTP/2 simultaneously)
+        options.ListenAnyIP(8443, listenOptions =>
+        {
+            listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
+            if (File.Exists(certPath) && File.Exists(keyPath))
+            {
+                var serverCertificate = X509Certificate2.CreateFromPemFile(certPath, keyPath);
+                listenOptions.UseHttps(serverCertificate);
+            }
+            else
+            {
+                listenOptions.UseHttps();
+            }
+        });
+        
+ 
+        // Allow optional client certificates (mTLS support for enrolled pinball machines)
         options.ConfigureHttpsDefaults(httpsOptions =>
         {
             httpsOptions.ClientCertificateMode = ClientCertificateMode.AllowCertificate;
-            httpsOptions.ClientCertificateValidation =
-                (certificate, chain, sslPolicyErrors) => true;
+            httpsOptions.ClientCertificateValidation = (certificate, chain, sslPolicyErrors) => true;
         });
     });
 
@@ -74,6 +100,17 @@ try
     // Registers our custom IExceptionHandler in the pipeline
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     
+    // Reads forwarded client certificates from Nginx (X-Client-Cert header)
+    builder.Services.AddCertificateForwarding(options =>
+    {
+        options.CertificateHeader = "X-Client-Cert";
+        options.HeaderConverter = headerValue =>
+        {
+            if (string.IsNullOrWhiteSpace(headerValue)) return null!;
+            var unescaped = System.Uri.UnescapeDataString(headerValue);
+            return X509Certificate2.CreateFromPem(unescaped);
+        };
+    });
 
     builder.AddWorldPinballLogging();
 
@@ -220,6 +257,7 @@ try
      *(e.g., sessionId) are resolved before opening the logging scope.
      */
     app.UseMiddleware<CorrelationContextLoggingMiddleware>();
+    app.UseCertificateForwarding();
     app.UseAuthentication();
     app.UseAuthorization();
 

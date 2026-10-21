@@ -10,7 +10,7 @@ public sealed class LobbyHub(ILobbyRelayService relayService) : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
         if (Guid.TryParse(sessionId, out var parsedId))
         {
-            await relayService.EnsureWatchingLobbyAsync(parsedId, Context.ConnectionAborted);
+            await relayService.EnsureWatchingLobbyAsync(parsedId, CancellationToken.None);
         }
     }
 
@@ -29,7 +29,7 @@ public sealed class LobbyHub(ILobbyRelayService relayService) : Hub
         }
      
         await Groups.AddToGroupAsync(Context.ConnectionId, "AdminSupervision");
-        await relayService.EnsureWatchingAllLobbiesAsync(Context.ConnectionAborted);
+        await relayService.EnsureWatchingAllLobbiesAsync(CancellationToken.None);
         
         foreach (var lobby in relayService.GetCurrentLobbies())
         {

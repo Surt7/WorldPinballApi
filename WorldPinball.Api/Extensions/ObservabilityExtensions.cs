@@ -1,6 +1,5 @@
 using Npgsql;
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Logs;
+using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -11,38 +10,32 @@ public static class ObservabilityExtensions
 {
     public static WebApplicationBuilder AddObservability(this WebApplicationBuilder builder)
     {
-        builder.Services
+        var otlpEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]
+                           ?? builder.Configuration["OtelCollector:OTEL_EXPORTER_OTLP_ENDPOINT"];
+
+        var otel = builder.Services
             .AddOpenTelemetry()
             .ConfigureResource(resource =>
-                resource.AddService(builder.Environment.ApplicationName))
+                resource.AddService("WorldPinball.Api", serviceInstanceId: Environment.MachineName))
             .WithTracing(tracing =>
             {
                 tracing
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddNpgsql()
-                    .AddRedisInstrumentation()
-                    .AddOtlpExporter(options =>
-                        {
-                            options.Endpoint = new Uri("http://localhost:4318/v1/traces");
-                            options.Protocol = OtlpExportProtocol.HttpProtobuf;
-                        });
+                    .AddRedisInstrumentation();
             })
             .WithMetrics(metrics =>
             {
                 metrics
                     .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .AddOtlpExporter();
-            })
-            .WithLogging(logging =>
-            {
-                logging.AddOtlpExporter(options =>
-                {
-                    options.Endpoint = new Uri("http://localhost:4318/v1/logs");
-                    options.Protocol = OtlpExportProtocol.HttpProtobuf;
-                });
+                    .AddHttpClientInstrumentation();
             });
+
+        if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+        {
+            otel.UseOtlpExporter();
+        }
 
         return builder;
     }

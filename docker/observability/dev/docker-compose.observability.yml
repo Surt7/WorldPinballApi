@@ -14,6 +14,9 @@ services:
     depends_on:
       - tempo
       - loki
+    networks:
+      - default
+      - app-net
     restart: unless-stopped
 
   tempo:
@@ -65,3 +68,9 @@ services:
       - prometheus
       - loki
     restart: unless-stopped
+
+networks:
+  default:
+  app-net:
+    name: worldpinball-dev_default
+    external: true

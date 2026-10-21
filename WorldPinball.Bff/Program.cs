@@ -67,12 +67,17 @@ builder.Services.AddReverseProxy()
     builder.Services.AddSignalR();
     builder.Services.AddSingleton<ILobbyRelayService, LobbyRelayService>();
     builder.Services.AddGrpcClient<GameSessionService.GameSessionServiceClient>(options =>
-    {
-        var coreApiUrl = builder.Configuration["Services:CoreApi:Https"] 
-                         ?? builder.Configuration["ReverseProxy:Clusters:core-api-cluster:Destinations:destination1:Address"]
-                         ?? "https://localhost:7010";
-        options.Address = new Uri(coreApiUrl);
-    });
+        {
+            var coreApiUrl = builder.Configuration["Services:CoreApi:Https"] 
+                             ?? builder.Configuration["ReverseProxy:Clusters:core-api-cluster:Destinations:destination1:Address"]
+                             ?? "https://localhost:7010";
+            options.Address = new Uri(coreApiUrl);
+        }) // Standard resilience (30s) is activated at ServiceDefault level but for gRPC we need to let it open long time
+        .AddStandardResilienceHandler(options =>
+        {
+            options.TotalRequestTimeout.Timeout = TimeSpan.FromHours(24);
+            options.AttemptTimeout.Timeout = TimeSpan.FromHours(24);
+        });
 // -------------------- RESOLVE APP USE --------------------
     
 var app = builder.Build();

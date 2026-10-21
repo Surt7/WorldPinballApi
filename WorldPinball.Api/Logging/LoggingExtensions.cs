@@ -39,7 +39,8 @@ public static class LoggingExtensions
                     options.Endpoint = otelEndpoint;
                     options.ResourceAttributes = new Dictionary<string, object>
                     {
-                        ["service.name"] = "WorldPinball.Api"
+                        ["service.name"] = "WorldPinball.Api",
+                        ["service.instance.id"] = Environment.MachineName
                     };
                 });
             }
