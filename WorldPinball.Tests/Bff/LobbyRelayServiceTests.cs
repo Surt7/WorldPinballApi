@@ -44,14 +44,19 @@ public class LobbyRelayServiceTests
     [Fact]
     public async Task EnsureWatchingLobbyAsync_WhenSessionNotBeingWatched_InitiatesGrpcWatchStream()
     {
+        var callInvoked = new TaskCompletionSource<bool>();
         _grpcClient.WatchLobby(Arg.Any<WatchLobbyRequest>(), cancellationToken: Arg.Any<CancellationToken>())
-            .Returns(CreateFakeStreamingCall());
+            .Returns(_ =>
+            {
+                callInvoked.TrySetResult(true);
+                return CreateFakeStreamingCall();
+            });
 
         var sessionId = Guid.NewGuid();
         var sut = new LobbyRelayService(_grpcClient, _hubContext, _logger);
 
         await sut.EnsureWatchingLobbyAsync(sessionId, CancellationToken.None);
-        await Task.Delay(250);
+        await Task.WhenAny(callInvoked.Task, Task.Delay(5000));
 
         _grpcClient.Received(1).WatchLobby(
             Arg.Is<WatchLobbyRequest>(r =>
@@ -62,8 +67,13 @@ public class LobbyRelayServiceTests
     [Fact]
     public async Task EnsureWatchingLobbyAsync_WhenSessionAlreadyBeingWatched_DoesNotInitiateDuplicateGrpcStream()
     {
+        var callInvoked = new TaskCompletionSource<bool>();
         _grpcClient.WatchLobby(Arg.Any<WatchLobbyRequest>(), cancellationToken: Arg.Any<CancellationToken>())
-            .Returns(CreateFakeStreamingCall());
+            .Returns(_ =>
+            {
+                callInvoked.TrySetResult(true);
+                return CreateFakeStreamingCall();
+            });
 
         // Arrange
         var sessionId = Guid.NewGuid();
@@ -72,7 +82,7 @@ public class LobbyRelayServiceTests
         // Act 
         await sut.EnsureWatchingLobbyAsync(sessionId, CancellationToken.None);
         await sut.EnsureWatchingLobbyAsync(sessionId, CancellationToken.None);
-        await Task.Delay(250);
+        await Task.WhenAny(callInvoked.Task, Task.Delay(5000));
 
         // Assert  
         _grpcClient.Received(1).WatchLobby(
