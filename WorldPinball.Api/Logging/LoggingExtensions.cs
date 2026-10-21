@@ -31,15 +31,16 @@ public static class LoggingExtensions
                 configuration.WriteTo.Seq(seqServerUrl);
             }
 
-            if (!builder.Environment.IsEnvironment("Testing") && !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
+            var otelEndpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
+            if (!builder.Environment.IsEnvironment("Testing") && !string.IsNullOrWhiteSpace(otelEndpoint))
             {
                 configuration.WriteTo.OpenTelemetry(options =>
                 {
-                    options.Endpoint = "http://localhost:4318/v1/logs";
-                    options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.HttpProtobuf;
+                    options.Endpoint = otelEndpoint;
                     options.ResourceAttributes = new Dictionary<string, object>
                     {
-                        ["service.name"] = "WorldPinball.Api"
+                        ["service.name"] = "WorldPinball.Api",
+                        ["service.instance.id"] = Environment.MachineName
                     };
                 });
             }

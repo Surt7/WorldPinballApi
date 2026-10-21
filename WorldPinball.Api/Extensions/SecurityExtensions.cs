@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -39,10 +40,7 @@ public static class SecurityExtensions
                 options.MapInboundClaims = false;
                 if (environment.IsDevelopment())
                 {
-                    options.BackchannelHttpHandler = new HttpClientHandler
-                    {
-                        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                    };
+                    options.BackchannelHttpHandler = CreateDevBackchannelHandler(configuration);
                 }
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -187,5 +185,41 @@ public static class SecurityExtensions
         context.Principal = new ClaimsPrincipal(new ClaimsIdentity(claims, context.Scheme.Name));
         context.Success();
         return Task.CompletedTask;
+    }
+
+    private static HttpClientHandler CreateDevBackchannelHandler(IConfiguration config)
+    {
+        var handler = new HttpClientHandler();
+
+        var possiblePaths = new[]
+        {
+            config["DevTls:RootCaPath"],
+            "/app/certs/dev-rootCA.pem",
+            Path.Combine(AppContext.BaseDirectory, "certs", "dev-rootCA.pem"),
+            Path.Combine(Directory.GetCurrentDirectory(), "docker", "nginx", "certs", "dev-rootCA.pem"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "mkcert", "rootCA.pem")
+        };
+
+        var certPath = possiblePaths.FirstOrDefault(p => !string.IsNullOrEmpty(p) && File.Exists(p));
+        if (certPath != null)
+        {
+            var rootCert = X509CertificateLoader.LoadCertificateFromFile(certPath);
+            handler.ServerCertificateCustomValidationCallback = (request, cert, chain, sslErrors) =>
+            {
+                if (sslErrors == SslPolicyErrors.None)
+                    return true;
+
+                if (cert == null)
+                    return false;
+
+                using var customChain = new X509Chain();
+                customChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                customChain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                customChain.ChainPolicy.CustomTrustStore.Add(rootCert);
+                return customChain.Build(cert);
+            };
+        }
+
+        return handler;
     }
 }

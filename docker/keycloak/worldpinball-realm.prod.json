@@ -31,8 +31,8 @@
       "serviceAccountsEnabled": false
     },
     {
-      "clientId": "worldpinball-spa",
-      "name": "WorldPinball Angular SPA",
+      "clientId": "worldpinball-bff",
+      "name": "WorldPinball BFF",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": true,
@@ -51,7 +51,7 @@
       "attributes": {
         "pkce.code.challenge.method": "S256"
       },
-      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email"],
       "optionalClientScopes": ["offline_access"],
       "protocolMappers": [
         {

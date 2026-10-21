@@ -30,11 +30,9 @@ services:
       context: .
       dockerfile: WorldPinball.Api/Dockerfile
     image: worldpinball-api:dev
-    container_name: worldpinball-api
     profiles: ["apps"]
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
-      ASPNETCORE_HTTP_PORTS: "8080"
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
       Kafka__BootstrapServers: "kafka:29092"
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=worldpinball;Username=postgres;Password=${POSTGRES_PASSWORD}"
@@ -43,10 +41,52 @@ services:
       Keycloak__Audience: "worldpinball-api"
       Redis__Host: "redis:6379"
       Redis__Password: "${REDIS_PASSWORD}"
-      OtelCollector__OTEL_EXPORTER_OTLP_ENDPOINT: "http://seq:5341"
+      OtelCollector__OTEL_EXPORTER_OTLP_ENDPOINT: "http://worldpinball-otel-collector:4317"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://worldpinball-otel-collector:4317"
+      OTEL_SERVICE_NAME: "WorldPinball.Api"
+      Seq__ServerUrl: "http://seq:5341"
+    volumes:
+      - ./docker/nginx/certs/dev-rootCA.pem:/app/certs/dev-rootCA.pem:ro
+      - ./docker/nginx/certs/worldpinball.local.crt:/app/certs/api.crt:ro
+      - ./docker/nginx/certs/worldpinball.local.key:/app/certs/api.key:ro
     depends_on:
       db:
         condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      default:
+        aliases:
+          - core-api.worldpinball.local
+        
+
+  # BFF Gateway service (containerized)
+  bff:
+    build:
+      context: .
+      dockerfile: WorldPinball.Bff/Dockerfile
+    image: worldpinball-bff:dev
+    profiles: ["apps"]
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_HTTP_PORTS: "8080"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
+      SSL_CERT_FILE: "/app/certs/dev-rootCA.pem"
+      Services__CoreApi__Https: "https://core-api.worldpinball.local:8443"
+      ReverseProxy__Clusters__core-api-cluster__Destinations__destination1__Address: "https://core-api.worldpinball.local:8443"
+      Keycloak__Authority: "https://auth.worldpinball.local/realms/worldpinball"
+      Keycloak__MetadataAddress: "http://keycloak:8080/realms/worldpinball/.well-known/openid-configuration"
+      Keycloak__Audience: "worldpinball-bff"
+      OtelCollector__OTEL_EXPORTER_OTLP_ENDPOINT: "http://worldpinball-otel-collector:4317"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://worldpinball-otel-collector:4317"
+      OTEL_SERVICE_NAME: "WorldPinball.Bff"
+      Seq__ServerUrl: "http://seq:5341"
+    volumes:
+      - ./docker/nginx/certs/dev-rootCA.pem:/app/certs/dev-rootCA.pem:ro
+    depends_on:
+      api:
+        condition: service_started
       keycloak:
         condition: service_healthy
     restart: unless-stopped
@@ -56,3 +96,10 @@ services:
     environment:
       KC_HOSTNAME: "https://auth.worldpinball.local"
       KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: "xforwarded"
+
+  # Angular Frontend SPA
+  frontend:
+    image: worldpinball-frontend:latest
+    container_name: worldpinball-frontend
+    restart: unless-stopped

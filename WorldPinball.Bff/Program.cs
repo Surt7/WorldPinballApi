@@ -1,14 +1,13 @@
+
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Timeouts;
 using WorldPinball.Bff.Extensions;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
 using WorldPinball.Bff.Endpoints;
 using WorldPinball.Bff.Hubs;
 using WorldPinball.Bff.Services;
 using WorldPinball.Protos.V1.GameSessions;
 using Yarp.ReverseProxy.Transforms;
+using ServiceDefaults;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,10 +39,7 @@ builder.Services.AddHealthChecks()
             .Healthy(), 
         ["live"]);
 
-builder.Services.ConfigureHttpClientDefaults(http =>
-{
-    http.AddStandardResilienceHandler();
-});
+// HttpClient resilience is handled per-client to preserve long-lived gRPC streams
 
 builder.AddObservability();
 
@@ -68,12 +64,12 @@ builder.Services.AddReverseProxy()
     builder.Services.AddSignalR();
     builder.Services.AddSingleton<ILobbyRelayService, LobbyRelayService>();
     builder.Services.AddGrpcClient<GameSessionService.GameSessionServiceClient>(options =>
-    {
-        var coreApiUrl = builder.Configuration["Services:CoreApi:Https"] 
-                         ?? builder.Configuration["ReverseProxy:Clusters:core-api-cluster:Destinations:destination1:Address"]
-                         ?? "https://localhost:7010";
-        options.Address = new Uri(coreApiUrl);
-    });
+        {
+            var coreApiUrl = builder.Configuration["Services:CoreApi:Https"] 
+                             ?? builder.Configuration["ReverseProxy:Clusters:core-api-cluster:Destinations:destination1:Address"]
+                             ?? "https://localhost:7010";
+            options.Address = new Uri(coreApiUrl);
+        });
 // -------------------- RESOLVE APP USE --------------------
     
 var app = builder.Build();
@@ -85,6 +81,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseRequestTimeouts();
+app.UseForwardedHeadersForReverseProxy();
+
 app.UseHttpsRedirection();
 app.UseCors("AngularDevPolicy");
 app.MapHealthChecks("/alive", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions

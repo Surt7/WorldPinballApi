@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Confluent.Kafka;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -147,8 +148,13 @@ public static class DependencyInjection
         }
         configurationOptions.AbortOnConnectFail = false;
         
-        services.AddSingleton<IConnectionMultiplexer>(sp => 
-            ConnectionMultiplexer.Connect(configurationOptions));
+        var redisMultiplexer = ConnectionMultiplexer.Connect(configurationOptions);
+        services.AddSingleton<IConnectionMultiplexer>(redisMultiplexer);
+        
+        // Persist Data Protection keys to Redis to support load balancing & rebuilds
+        services.AddDataProtection()
+            .SetApplicationName("worldpinball")
+            .PersistKeysToStackExchangeRedis(redisMultiplexer, "DataProtection-Keys");
         
         services.AddScoped<IMachineStatusCacheService, RedisMachineStatusCacheService>();
         services.AddScoped<IMatchmakingQueueService, RedisMatchmakingQueueService>();

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WorldPinball.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -85,6 +85,45 @@ namespace WorldPinball.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "operator_tokens",
+                schema: "public",
+                columns: table => new
+                {
+                    token_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    token_hash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    prefix = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    scopes = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false),
+                    issued_by_user_id = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: true),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    expires_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    revoked_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_operator_tokens", x => x.token_id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "outbox_messages",
+                schema: "public",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    type = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
+                    content = table.Column<string>(type: "text", nullable: false),
+                    occurred_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    processed_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    error = table.Column<string>(type: "text", nullable: true),
+                    retry_count = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_outbox_messages", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "publishers",
                 schema: "public",
                 columns: table => new
@@ -114,6 +153,113 @@ namespace WorldPinball.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_regions", x => x.region_id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "role_permissions",
+                schema: "public",
+                columns: table => new
+                {
+                    role = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    permission = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_role_permissions", x => new { x.role, x.permission });
+                });
+
+            migrationBuilder.CreateTable(
+                name: "stream_access_grants",
+                schema: "public",
+                columns: table => new
+                {
+                    grant_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    principal_type = table.Column<int>(type: "integer", nullable: false),
+                    principal_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    display_name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    origin = table.Column<int>(type: "integer", nullable: false),
+                    status = table.Column<int>(type: "integer", nullable: false),
+                    created_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    expires_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    revoked_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    revocation_reason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
+                    granted_by_user_id = table.Column<Guid>(type: "uuid", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_stream_access_grants", x => x.grant_id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "stream_subscriptions",
+                schema: "public",
+                columns: table => new
+                {
+                    subscription_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    subscriber_user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    target_type = table.Column<int>(type: "integer", nullable: false),
+                    target_principal_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    subscribed_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    notifications_enabled = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_stream_subscriptions", x => x.subscription_id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "streaming_access_requests",
+                schema: "public",
+                columns: table => new
+                {
+                    request_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    session_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    requested_by_user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    status = table.Column<int>(type: "integer", nullable: false),
+                    created_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    reviewed_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    expires_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    rejection_reason = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_streaming_access_requests", x => x.request_id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "streaming_partners",
+                schema: "public",
+                columns: table => new
+                {
+                    partner_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    organization_name = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false),
+                    created_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    revoked_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_streaming_partners", x => x.partner_id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "user_profiles",
+                schema: "public",
+                columns: table => new
+                {
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    display_name = table.Column<string>(type: "text", nullable: false),
+                    initials = table.Column<string>(type: "text", nullable: false),
+                    avatar_url = table.Column<string>(type: "text", nullable: false),
+                    country_code = table.Column<string>(type: "text", nullable: false),
+                    is_profile_public = table.Column<bool>(type: "boolean", nullable: false),
+                    created_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    updated_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_user_profiles", x => x.user_id);
                 });
 
             migrationBuilder.CreateTable(
@@ -249,8 +395,8 @@ namespace WorldPinball.Infrastructure.Migrations
                 {
                     machine_id = table.Column<Guid>(type: "uuid", nullable: false),
                     ip_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    idempotency_key = table.Column<Guid>(type: "uuid", maxLength: 32, nullable: false),
-                    nonce = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    idempotency_key = table.Column<Guid>(type: "uuid", nullable: false),
+                    nonce = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     world_pinball_serial_number = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     manufacturer = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     manufacturer_model_code = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
@@ -322,19 +468,20 @@ namespace WorldPinball.Infrastructure.Migrations
                 columns: table => new
                 {
                     token_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    token_hash = table.Column<string>(type: "text", nullable: false),
-                    token_type = table.Column<int>(type: "integer", nullable: false),
+                    token_hash = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    token_type = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     machine_id = table.Column<Guid>(type: "uuid", nullable: true),
                     device_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    issued_by_user_id = table.Column<string>(type: "text", nullable: false),
+                    issued_by_user_id = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
                     issued_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     expires_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    consumed_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    consumed_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     consumed_by_device_id = table.Column<Guid>(type: "uuid", nullable: true),
                     revoked_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     max_uses = table.Column<int>(type: "integer", nullable: false),
                     uses_count = table.Column<int>(type: "integer", nullable: false),
-                    notes = table.Column<string>(type: "text", nullable: true)
+                    notes = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
+                    validity_hours = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -370,13 +517,13 @@ namespace WorldPinball.Infrastructure.Migrations
                     session_id = table.Column<Guid>(type: "uuid", nullable: false),
                     machine_id = table.Column<Guid>(type: "uuid", nullable: false),
                     device_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<string>(type: "text", nullable: true),
                     mode_id = table.Column<Guid>(type: "uuid", nullable: false),
                     started_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ended_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     state = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    nonce = table.Column<string>(type: "text", nullable: false),
-                    client_version = table.Column<string>(type: "text", nullable: true)
+                    nonce = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    client_version = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    telemetry_mode = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -460,18 +607,49 @@ namespace WorldPinball.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "game_session_players",
+                schema: "public",
+                columns: table => new
+                {
+                    session_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    slot_number = table.Column<int>(type: "integer", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    user_profile_user_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    guest_initials = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: true),
+                    joined_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_game_session_players", x => new { x.session_id, x.slot_number });
+                    table.ForeignKey(
+                        name: "fk_game_session_players_game_sessions_session_id",
+                        column: x => x.session_id,
+                        principalSchema: "public",
+                        principalTable: "game_sessions",
+                        principalColumn: "session_id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "fk_game_session_players_user_profiles_user_profile_user_id",
+                        column: x => x.user_profile_user_id,
+                        principalSchema: "public",
+                        principalTable: "user_profiles",
+                        principalColumn: "user_id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "score_entries",
                 schema: "public",
                 columns: table => new
                 {
                     score_entry_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    slot_number = table.Column<int>(type: "integer", nullable: false),
                     session_id = table.Column<Guid>(type: "uuid", nullable: false),
                     user_id = table.Column<string>(type: "text", nullable: true),
                     device_id = table.Column<Guid>(type: "uuid", nullable: false),
                     machine_id = table.Column<Guid>(type: "uuid", nullable: false),
                     ip_id = table.Column<Guid>(type: "uuid", nullable: false),
                     mode_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    score = table.Column<int>(type: "integer", nullable: false),
+                    score = table.Column<long>(type: "bigint", nullable: false),
                     achieved_at_utc = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     is_validated = table.Column<bool>(type: "boolean", nullable: false),
                     validation_reason = table.Column<string>(type: "text", nullable: true)
@@ -661,6 +839,18 @@ namespace WorldPinball.Infrastructure.Migrations
                 column: "is_active");
 
             migrationBuilder.CreateIndex(
+                name: "ix_game_session_players_user_id_joined_at_utc",
+                schema: "public",
+                table: "game_session_players",
+                columns: new[] { "user_id", "joined_at_utc" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_game_session_players_user_profile_user_id",
+                schema: "public",
+                table: "game_session_players",
+                column: "user_profile_user_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_game_sessions_device_id_started_at_utc",
                 schema: "public",
                 table: "game_sessions",
@@ -684,12 +874,6 @@ namespace WorldPinball.Infrastructure.Migrations
                 table: "game_sessions",
                 column: "nonce",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "ix_game_sessions_user_id_started_at_utc",
-                schema: "public",
-                table: "game_sessions",
-                columns: new[] { "user_id", "started_at_utc" });
 
             migrationBuilder.CreateIndex(
                 name: "ix_ip_license_regions_region_id",
@@ -736,6 +920,13 @@ namespace WorldPinball.Infrastructure.Migrations
                 columns: new[] { "machine_id", "is_active" });
 
             migrationBuilder.CreateIndex(
+                name: "ix_machines_idempotency_key",
+                schema: "public",
+                table: "machines",
+                column: "idempotency_key",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "ix_machines_ip_id",
                 schema: "public",
                 table: "machines",
@@ -746,6 +937,13 @@ namespace WorldPinball.Infrastructure.Migrations
                 schema: "public",
                 table: "machines",
                 column: "manufacturer_serial_number");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_machines_nonce",
+                schema: "public",
+                table: "machines",
+                column: "nonce",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "ix_machines_status",
@@ -811,6 +1009,25 @@ namespace WorldPinball.Infrastructure.Migrations
                 column: "mode_id");
 
             migrationBuilder.CreateIndex(
+                name: "ix_operator_tokens_is_active",
+                schema: "public",
+                table: "operator_tokens",
+                column: "is_active");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_operator_tokens_token_hash",
+                schema: "public",
+                table: "operator_tokens",
+                column: "token_hash",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_outbox_messages_processed_at_utc",
+                schema: "public",
+                table: "outbox_messages",
+                column: "processed_at_utc");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_publishers_name",
                 schema: "public",
                 table: "publishers",
@@ -859,7 +1076,13 @@ namespace WorldPinball.Infrastructure.Migrations
                 name: "ix_score_entries_session_id",
                 schema: "public",
                 table: "score_entries",
-                column: "session_id",
+                column: "session_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_score_entries_session_id_slot_number",
+                schema: "public",
+                table: "score_entries",
+                columns: new[] { "session_id", "slot_number" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -867,6 +1090,38 @@ namespace WorldPinball.Infrastructure.Migrations
                 schema: "public",
                 table: "score_entries",
                 columns: new[] { "user_id", "achieved_at_utc" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_stream_access_grants_principal_type_principal_id",
+                schema: "public",
+                table: "stream_access_grants",
+                columns: new[] { "principal_type", "principal_id" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_stream_access_grants_status",
+                schema: "public",
+                table: "stream_access_grants",
+                column: "status");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_stream_subscriptions_subscriber_user_id_target_type_target_",
+                schema: "public",
+                table: "stream_subscriptions",
+                columns: new[] { "subscriber_user_id", "target_type", "target_principal_id" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_streaming_access_requests_session_id",
+                schema: "public",
+                table: "streaming_access_requests",
+                column: "session_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_streaming_partners_user_id",
+                schema: "public",
+                table: "streaming_partners",
+                column: "user_id",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -878,6 +1133,10 @@ namespace WorldPinball.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "enrollment_tokens",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "game_session_players",
                 schema: "public");
 
             migrationBuilder.DropTable(
@@ -893,11 +1152,43 @@ namespace WorldPinball.Infrastructure.Migrations
                 schema: "public");
 
             migrationBuilder.DropTable(
+                name: "operator_tokens",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "outbox_messages",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "role_permissions",
+                schema: "public");
+
+            migrationBuilder.DropTable(
                 name: "score_entries",
                 schema: "public");
 
             migrationBuilder.DropTable(
+                name: "stream_access_grants",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "stream_subscriptions",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "streaming_access_requests",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "streaming_partners",
+                schema: "public");
+
+            migrationBuilder.DropTable(
                 name: "device_certificates",
+                schema: "public");
+
+            migrationBuilder.DropTable(
+                name: "user_profiles",
                 schema: "public");
 
             migrationBuilder.DropTable(
