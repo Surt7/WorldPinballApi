@@ -43,6 +43,8 @@ services:
       Redis__Host: "redis:6379"
       Redis__Password: "${REDIS_PASSWORD}"
       OtelCollector__OTEL_EXPORTER_OTLP_ENDPOINT: "http://seq:5341"
+    volumes:
+      - ./docker/nginx/certs/dev-rootCA.pem:/app/certs/dev-rootCA.pem:ro
     depends_on:
       db:
         condition: service_healthy
@@ -66,6 +68,8 @@ services:
       Keycloak__MetadataAddress: "http://keycloak:8080/realms/worldpinball/.well-known/openid-configuration"
       Keycloak__Audience: "worldpinball-bff"
       OtelCollector__OTEL_EXPORTER_OTLP_ENDPOINT: "http://seq:5341"
+    volumes:
+      - ./docker/nginx/certs/dev-rootCA.pem:/app/certs/dev-rootCA.pem:ro
     depends_on:
       api:
         condition: service_started

@@ -2,6 +2,9 @@ namespace WorldPinball.Bff.Extensions;
 
 using Azure.Identity;
 using System.IO;
+using System.Linq;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -102,7 +105,16 @@ public static class SecurityAuthExtensions
                 options.ResponseType = OpenIdConnectResponseType.Code;
                 options.SaveTokens = true;
                 options.GetClaimsFromUserInfoEndpoint = true;
+                var metadataAddress = config["Keycloak:MetadataAddress"];
+                if (!string.IsNullOrWhiteSpace(metadataAddress))
+                {
+                    options.MetadataAddress = metadataAddress;
+                }
                 options.RequireHttpsMetadata = false; // local dev
+                if (env.IsDevelopment())
+                {
+                    options.BackchannelHttpHandler = CreateDevBackchannelHandler(config);
+                }
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
@@ -133,5 +145,41 @@ public static class SecurityAuthExtensions
 
 
         return services;
+    }
+
+    private static HttpClientHandler CreateDevBackchannelHandler(IConfiguration config)
+    {
+        var handler = new HttpClientHandler();
+
+        var possiblePaths = new[]
+        {
+            config["DevTls:RootCaPath"],
+            "/app/certs/dev-rootCA.pem",
+            Path.Combine(AppContext.BaseDirectory, "certs", "dev-rootCA.pem"),
+            Path.Combine(Directory.GetCurrentDirectory(), "docker", "nginx", "certs", "dev-rootCA.pem"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "mkcert", "rootCA.pem")
+        };
+
+        var certPath = possiblePaths.FirstOrDefault(p => !string.IsNullOrEmpty(p) && File.Exists(p));
+        if (certPath != null)
+        {
+            var rootCert = X509CertificateLoader.LoadCertificateFromFile(certPath);
+            handler.ServerCertificateCustomValidationCallback = (request, cert, chain, sslErrors) =>
+            {
+                if (sslErrors == SslPolicyErrors.None)
+                    return true;
+
+                if (cert == null)
+                    return false;
+
+                using var customChain = new X509Chain();
+                customChain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                customChain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+                customChain.ChainPolicy.CustomTrustStore.Add(rootCert);
+                return customChain.Build(cert);
+            };
+        }
+
+        return handler;
     }
 }
