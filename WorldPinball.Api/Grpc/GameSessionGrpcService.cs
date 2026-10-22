@@ -245,34 +245,15 @@ public sealed class GameSessionGrpcService(
         await responseStream.WriteAsync(MapToLobbyResponse(initialSuccess.Lobby));
 
 
-        if (initialSuccess
-                .Lobby.SessionState
-            is "Started"
-            or "InGame"
-            or "Ended"
-            or "Closed"
-            or "Cancelled"
-            or "Abandoned"
-            or "Aborted")
-            return;
+        if (IsTerminalState(initialSuccess.Lobby.SessionState)) return;
 
         await foreach (var _ in lobbyNotifier.SubscribeAsync(sessionId, context.CancellationToken))
         {
             var result = await getLobbyHandler.HandleAsync(new GetLobbyQuery(sessionId), context.CancellationToken);
-            if (result is GetLobbyResult.Success success)
-            {
-                await responseStream.WriteAsync(MapToLobbyResponse(success.Lobby));
-                if (success.Lobby.SessionState is
-                    "Started"
-                    or "InGame"
-                    or "Ended"
-                    or "Closed"
-                    or "Cancelled"
-                    or "Abandoned"
-                    or "Aborted"
-                   )
-                    break;
-            }
+            
+            if (result is not GetLobbyResult.Success success) continue;
+            await responseStream.WriteAsync(MapToLobbyResponse(success.Lobby));
+            if (IsTerminalState(success.Lobby.SessionState)) break;
         }
     }
 
@@ -418,5 +399,7 @@ public sealed class GameSessionGrpcService(
         }
     }
 
+    private static bool IsTerminalState(string state) =>
+        state is "Ended" or "Closed" or "Cancelled" or "Abandoned" or "Aborted";
     
 }

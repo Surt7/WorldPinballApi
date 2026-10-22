@@ -31,6 +31,8 @@ services:
       dockerfile: WorldPinball.Api/Dockerfile
     image: worldpinball-api:dev
     profiles: ["apps"]
+    deploy:
+      replicas: 2
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
@@ -67,6 +69,7 @@ services:
       context: .
       dockerfile: WorldPinball.Bff/Dockerfile
     image: worldpinball-bff:dev
+    container_name: worldpinball-dev-bff
     profiles: ["apps"]
     environment:
       ASPNETCORE_ENVIRONMENT: "Development"

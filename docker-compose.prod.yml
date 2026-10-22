@@ -44,7 +44,8 @@ services:
     build:
       context: .
       dockerfile: WorldPinball.Api/Dockerfile
-    container_name: worldpinball-prod-api
+    deploy:
+      replicas: 2
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
